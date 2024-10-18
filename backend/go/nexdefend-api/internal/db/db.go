@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"log"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -10,7 +11,7 @@ import (
 
 var db *sql.DB
 
-// InitDB initializes the database connection
+// InitDB initializes the database connection and runs the init.sql script
 func InitDB() {
 	var err error
 	connStr := "user=nexdefend password=password dbname=nexdefend_db sslmode=disable"
@@ -25,6 +26,27 @@ func InitDB() {
 	}
 
 	fmt.Println("Database connection successful!")
+
+	// Execute the init.sql script to create tables
+	if err := executeSQLScript("database/sql-scripts/init.sql"); err != nil {
+		log.Fatalf("Failed to initialize the database schema: %v", err)
+	}
+}
+
+// executeSQLScript reads and executes a SQL script file
+func executeSQLScript(filepath string) error {
+	sqlBytes, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return fmt.Errorf("unable to read SQL file: %v", err)
+	}
+
+	_, err = db.Exec(string(sqlBytes))
+	if err != nil {
+		return fmt.Errorf("error executing SQL script: %v", err)
+	}
+
+	fmt.Println("Database schema initialized successfully!")
+	return nil
 }
 
 // CloseDB closes the database connection

@@ -11,21 +11,36 @@ import (
 
 	"nexdefend-api/internal/auth"
 	"nexdefend-api/internal/db"
+	"nexdefend-api/internal/logging"
+	"nexdefend-api/internal/middleware"
+	"nexdefend-api/internal/reports"
+	"nexdefend-api/internal/upload"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	// Initialize logging
+	logging.InitLogging()
+
 	// Initialize the database connection
 	db.InitDB()
 	defer db.CloseDB() // Ensure the database connection is closed at the end
 
 	router := mux.NewRouter()
 
+	// Apply middlewares
+	router.Use(logging.LogRequest)      // Logs each request
+	router.Use(middleware.ErrorHandler) // Error handling middleware
+
 	// API Endpoints
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 	router.Handle("/api/v1/threats", auth.JWTMiddleware(http.HandlerFunc(ThreatDetectionHandler))).Methods("POST")
 	router.HandleFunc("/api/v1/alerts", AlertsHandler).Methods("GET")
+	router.HandleFunc("/api/v1/upload", upload.UploadFileHandler).Methods("POST")    // File upload endpoint
+	router.HandleFunc("/api/v1/report", reports.GenerateThreatReport).Methods("GET") // Threat report generation
+	router.HandleFunc("/register", auth.RegisterHandler).Methods("POST")             // User registration
+	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")                   // User login
 
 	// Create a new HTTP server
 	srv := &http.Server{
@@ -36,7 +51,7 @@ func main() {
 	// Run the server in a goroutine
 	go func() {
 		fmt.Println("Starting NexDefend API server on port 8080...")
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %v", err)
 		}
 	}()

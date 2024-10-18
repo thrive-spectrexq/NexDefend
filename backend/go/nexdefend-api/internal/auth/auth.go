@@ -11,15 +11,24 @@ import (
 
 var jwtKey = []byte("secret_key")
 
-// GenerateJWT generates a JWT token for a user
+// Claims struct for storing the user ID in the JWT token
+type Claims struct {
+	UserID int `json:"user_id"`
+	jwt.StandardClaims
+}
+
+// GenerateJWT generates a JWT token for a user based on user ID
 func GenerateJWT(userId int) (string, error) {
 	// Set expiration time for the token (24 hours)
 	expirationTime := time.Now().Add(24 * time.Hour)
-	claims := &jwt.StandardClaims{
-		ExpiresAt: expirationTime.Unix(),
-		Subject:   fmt.Sprint(userId),
+	claims := &Claims{
+		UserID: userId, // Store user ID in the claims
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+			Subject:   fmt.Sprint(userId), // Use userId as the subject
+		},
 	}
-	// Create a new token with claims
+	// Create a new token with the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
 }
@@ -44,7 +53,7 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		tokenStr = tokenParts[1]
 
 		// Parse and validate the token
-		claims := &jwt.StandardClaims{}
+		claims := &Claims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
