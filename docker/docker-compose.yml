@@ -1,25 +1,19 @@
 version: '3.8'
 services:
   api:
-    build: ./backend/go/nexdefend-api
+    build: ./docker/api
     ports:
       - "8080:8080"
-    networks:
-      - nexdefend-net
 
   ai:
-    build: ./backend/python/nexdefend-ai
+    build: ./docker/ai
     ports:
       - "5000:5000"
-    networks:
-      - nexdefend-net
 
   frontend:
     build: ./frontend/nexdefend-frontend
     ports:
       - "3000:3000"
-    networks:
-      - nexdefend-net
 
   db:
     image: postgres
@@ -27,12 +21,5 @@ services:
       POSTGRES_USER: nexdefend
       POSTGRES_PASSWORD: password
       POSTGRES_DB: nexdefend_db
-    volumes:
-      - ./database/sql-scripts:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
-    networks:
-      - nexdefend-net
-
-networks:
-  nexdefend-net:
