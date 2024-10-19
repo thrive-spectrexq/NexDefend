@@ -9,13 +9,6 @@
 - Incident management and response
 - Compliance and security auditing
 
-### Tech Stack
-- **Go** for backend API services
-- **Python** for AI-powered security modules
-- **React(TypeScript)** for frontend
-- **PostgreSQL** for database management
-- **Docker** for containerization and deployment
-
 ### In Development
 NexDefend aims to simplify and enhance cybersecurity operations through advanced automation and AI, making it easier for organizations to stay ahead of cyber threats.
 
