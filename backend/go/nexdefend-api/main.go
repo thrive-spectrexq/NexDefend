@@ -17,6 +17,7 @@ import (
 	"nexdefend-api/internal/upload"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -42,10 +43,18 @@ func main() {
 	router.HandleFunc("/register", auth.RegisterHandler).Methods("POST")             // User registration
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")                   // User login
 
+	// Configure CORS options
+	corsOptions := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},         // Allow requests from your frontend
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // HTTP methods allowed
+		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Headers allowed
+		AllowCredentials: true,                                      // Allow credentials like cookies, authorization headers
+	})
+
 	// Create a new HTTP server
 	srv := &http.Server{
-		Addr:    ":8080", // You can replace this with a configurable port
-		Handler: router,
+		Addr:    ":8080",                     // You can replace this with a configurable port
+		Handler: corsOptions.Handler(router), // Wrap the router with CORS handler
 	}
 
 	// Run the server in a goroutine
