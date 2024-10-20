@@ -1,12 +1,16 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate(); // Use navigate for redirection
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true); // Start loading
 
         const response = await fetch("/api/v1/login", {
             method: "POST",
@@ -16,6 +20,8 @@ const Login: React.FC = () => {
             body: JSON.stringify({ username, password }),
         });
 
+        setIsLoading(false); // Stop loading
+
         if (!response.ok) {
             setError("Invalid login credentials");
             return;
@@ -24,6 +30,7 @@ const Login: React.FC = () => {
         const data = await response.json();
         localStorage.setItem("token", data.token); // Store token
         setError(null);
+        navigate("/dashboard"); // Redirect to dashboard
     };
 
     return (
@@ -42,7 +49,9 @@ const Login: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <button type="submit">Login</button>
+                <button type="submit" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Login"}
+                </button>
             </form>
             {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
