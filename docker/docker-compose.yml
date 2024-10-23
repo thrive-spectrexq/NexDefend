@@ -3,19 +3,19 @@ services:
   api:
     build:
       context: ../backend/go/nexdefend-api
-      dockerfile: ../docker/api/Dockerfile
+      dockerfile: /api/Dockerfile
     ports:
       - "8080:8080"
 
   ai:
     build:
       context: ../backend/python/nexdefend-ai
-      dockerfile: ../docker/ai/Dockerfile
+      dockerfile: /ai/Dockerfile
     ports:
       - "5000:5000"
 
   frontend:
-    build: ./frontend/nexdefend-frontend
+    build: /frontend/nexdefend-frontend
     ports:
       - "3000:3000"
 
