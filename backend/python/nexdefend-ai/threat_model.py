@@ -12,5 +12,14 @@ model.fit(X_train, y_train)
 
 # Function to use the model for prediction
 def detect_threat(features):
+    # Validate input features
+    if (
+        not isinstance(features, (list, np.ndarray))
+        or len(features) != X_train.shape[1]
+    ):
+        raise ValueError(
+            f"Invalid input features. Expected {X_train.shape[1]} features, got {len(features)}."
+        )
+
     prediction = model.predict([features])
     return bool(prediction[0])

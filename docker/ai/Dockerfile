@@ -1,9 +1,17 @@
+# Use the official Python slim image
 FROM python:3.9-slim
 
+# Set the working directory inside the container
 WORKDIR /app
 
-COPY . .
+# Copy only the requirements.txt first to leverage Docker caching
+COPY ../../backend/python/nexdefend-ai/requirements.txt ./
 
-RUN pip install -r requirements.txt
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the rest of the application files
+COPY ../../backend/python/nexdefend-ai/ ./
+
+# Command to run the application
 CMD ["python", "app.py"]

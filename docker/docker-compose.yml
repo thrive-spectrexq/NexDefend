@@ -1,12 +1,16 @@
-version: '3.8'
+version: "3.8"
 services:
   api:
-    build: ./docker/api
+    build:
+      context: ../backend/go/nexdefend-api
+      dockerfile: ../docker/api/Dockerfile
     ports:
       - "8080:8080"
 
   ai:
-    build: ./docker/ai
+    build:
+      context: ../backend/python/nexdefend-ai
+      dockerfile: ../docker/ai/Dockerfile
     ports:
       - "5000:5000"
 

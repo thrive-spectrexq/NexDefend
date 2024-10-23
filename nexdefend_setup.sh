@@ -10,10 +10,10 @@ export FRONTEND_PORT="3000"
 export BACKEND_PORT="5000"
 
 # Paths
-SQL_SCRIPT="database/sql-scripts/init.sql"
-GO_APP_DIR="backend"
-FRONTEND_DIR="frontend"
-DOCKER_COMPOSE_FILE="docker-compose.yml"
+SQL_SCRIPT="../database/sql-scripts/init.sql"  # Adjusted path to the SQL script
+GO_APP_DIR="../backend/go/nexdefend-api"        # Adjusted path to the Go app
+FRONTEND_DIR="../frontend/nexdefend-frontend"   # Adjusted path to the frontend
+DOCKER_COMPOSE_FILE="../docker/docker-compose.yml" # Adjusted path to the docker-compose file
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -22,7 +22,7 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Starting NexDefend Setup...${NC}"
 
-# 1. Initialize Database
+# Initialize Database
 init_database() {
     echo -e "${GREEN}Initializing the database...${NC}"
     psql -U $POSTGRES_USER -d $POSTGRES_DB -f $SQL_SCRIPT
@@ -34,49 +34,49 @@ init_database() {
     fi
 }
 
-# 2. Install Dependencies (Go, Python, JavaScript)
+# Install Dependencies (Go, Python, JavaScript)
 install_dependencies() {
     echo -e "${GREEN}Installing Go dependencies...${NC}"
-    cd $GO_APP_DIR && go mod tidy && cd ..
+    cd $GO_APP_DIR && go mod tidy && cd - # Changed to go back to the previous directory
 
     echo -e "${GREEN}Installing Python dependencies...${NC}"
     pip install -r requirements.txt
 
     echo -e "${GREEN}Installing JavaScript dependencies (React frontend)...${NC}"
-    cd $FRONTEND_DIR && npm install && cd ..
+    cd $FRONTEND_DIR && npm install && cd - # Changed to go back to the previous directory
 }
 
-# 3. Build and Start Backend (Go)
+# Build and Start Backend (Go)
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
     cd $GO_APP_DIR
-    go run main.go &
+    go run main.go & 
     BACKEND_PID=$!
-    cd ..
+    cd - # Changed to go back to the previous directory
     echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
 }
 
-# 4. Start Frontend (React)
+# Start Frontend (React)
 start_frontend() {
     echo -e "${GREEN}Starting the React frontend...${NC}"
     cd $FRONTEND_DIR
-    npm start &
+    npm start & 
     FRONTEND_PID=$!
-    cd ..
+    cd - # Changed to go back to the previous directory
     echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
 }
 
-# 5. Option to use Docker
+# Option to use Docker
 use_docker() {
     if [ -f "$DOCKER_COMPOSE_FILE" ]; then
         echo -e "${GREEN}Starting services using Docker Compose...${NC}"
-        docker-compose up --build -d
+        docker-compose -f "$DOCKER_COMPOSE_FILE" up --build -d # Specify the compose file
     else
         echo -e "${RED}Docker Compose file not found. Skipping Docker setup.${NC}"
     fi
 }
 
-# 6. Clean up (stopping services)
+# Clean up (stopping services)
 cleanup() {
     echo -e "${RED}Stopping backend and frontend services...${NC}"
     kill $BACKEND_PID $FRONTEND_PID
