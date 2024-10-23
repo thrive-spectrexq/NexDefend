@@ -11,7 +11,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # URL to access the Go backend threat detection service
-GO_BACKEND_URL = "http://api:8080/api/v1/threats"
+GO_BACKEND_URL = "http://localhost:8080/api/v1/threats"
 
 
 @app.route("/detect", methods=["POST"])
