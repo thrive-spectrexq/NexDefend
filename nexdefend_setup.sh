@@ -10,15 +10,27 @@ export FRONTEND_PORT="3000"
 export BACKEND_PORT="5000"
 
 # Paths
-SQL_SCRIPT="../database/sql-scripts/init.sql"  # Adjusted path to the SQL script
-GO_APP_DIR="../backend/go/nexdefend-api"        # Adjusted path to the Go app
-FRONTEND_DIR="../frontend/nexdefend-frontend"   # Adjusted path to the frontend
-DOCKER_COMPOSE_FILE="../docker/docker-compose.yml" # Adjusted path to the docker-compose file
+SQL_SCRIPT="/database/sql-scripts/init.sql"
+GO_APP_DIR="/backend/go/nexdefend-api"
+PYTHON_APP_DIR="/backend/python/nexdefend-ai"
+FRONTEND_DIR="/frontend/nexdefend-frontend"
+DOCKER_COMPOSE_FILE="/docker/docker-compose.yml"
 
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
+
+# ASCII Art for NexDefend
+NEXDEFEND_ART=$(cat << "EOF"
+  _   _           ____        __                _ 
+ | \ | | _____  _|  _ \  ___ / _| ___ _ __   __| |
+ |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \ '_ \ / _` |
+ | |\  |  __/>  <| |_| |  __/  _|  __/ | | | (_| |
+ |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_|
+                                                  
+EOF
+)
 
 echo -e "${GREEN}Starting NexDefend Setup...${NC}"
 
@@ -40,7 +52,7 @@ install_dependencies() {
     cd $GO_APP_DIR && go mod tidy && cd - # Changed to go back to the previous directory
 
     echo -e "${GREEN}Installing Python dependencies...${NC}"
-    pip install -r requirements.txt
+    cd $PYTHON_APP_DIR && pip install -r requirements.txt
 
     echo -e "${GREEN}Installing JavaScript dependencies (React frontend)...${NC}"
     cd $FRONTEND_DIR && npm install && cd - # Changed to go back to the previous directory
@@ -95,6 +107,7 @@ elif [ "$1" == "docker" ]; then
 elif [ "$1" == "stop" ]; then
     cleanup
 else
+    echo "$NEXDEFEND_ART"
     echo -e "${GREEN}Usage: ./nexdefend_setup.sh [initdb|start|docker|stop]${NC}"
     echo "initdb - Initialize the PostgreSQL database"
     echo "start  - Install dependencies and start backend & frontend services"
