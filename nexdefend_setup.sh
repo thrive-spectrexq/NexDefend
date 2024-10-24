@@ -21,6 +21,9 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Exit immediately if a command exits with a non-zero status
+set -e
+
 # ASCII Art for NexDefend
 NEXDEFEND_ART=$(cat << "EOF"
   _   _           ____        __                _ 
@@ -50,37 +53,63 @@ init_database() {
 install_dependencies() {
     echo -e "${GREEN}Installing Go dependencies...${NC}"
     cd $GO_APP_DIR && go mod tidy
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to install Go dependencies.${NC}"
+        exit 1
+    fi
+    cd -
 
     echo -e "${GREEN}Installing Python dependencies...${NC}"
     cd $PYTHON_APP_DIR && pip install -r requirements.txt
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to install Python dependencies.${NC}"
+        exit 1
+    fi
 
     echo -e "${GREEN}Installing JavaScript dependencies (React frontend)...${NC}"
     cd $FRONTEND_DIR && npm install
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to install JavaScript dependencies.${NC}"
+        exit 1
+    fi
+    cd -
 }
 
 # Build and Start Backend (Go)
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
     cd $GO_APP_DIR
-    go run main.go
-    BACKEND_PID=$!
-    echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
+    go run main.go & BACKEND_PID=$!
+    sleep 5  # Wait for the backend to start
+    if netstat -an | grep ":$BACKEND_PORT.*LISTEN" > /dev/null; then
+        echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
+    else
+        echo -e "${RED}Failed to start the backend service.${NC}"
+        exit 1
+    fi
+    cd -
 }
 
 # Start Frontend (React)
 start_frontend() {
     echo -e "${GREEN}Starting the React frontend...${NC}"
     cd $FRONTEND_DIR
-    npm start & 
-    FRONTEND_PID=$!
-    echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
+    npm start & FRONTEND_PID=$!
+    sleep 5  # Wait for the frontend to start
+    if netstat -an | grep ":$FRONTEND_PORT.*LISTEN" > /dev/null; then
+        echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
+    else
+        echo -e "${RED}Failed to start the frontend service.${NC}"
+        exit 1
+    fi
+    cd -
 }
 
 # Option to use Docker
 use_docker() {
     if [ -f "$DOCKER_COMPOSE_FILE" ]; then
         echo -e "${GREEN}Starting services using Docker Compose...${NC}"
-        docker-compose -f "$DOCKER_COMPOSE_FILE" up --build -d # Specify the compose file
+        docker-compose -f "$DOCKER_COMPOSE_FILE" up --build -d
     else
         echo -e "${RED}Docker Compose file not found. Skipping Docker setup.${NC}"
     fi
