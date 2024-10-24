@@ -10,11 +10,11 @@ export FRONTEND_PORT="3000"
 export BACKEND_PORT="5000"
 
 # Paths
-SQL_SCRIPT="/database/sql-scripts/init.sql"
-GO_APP_DIR="/backend/go/nexdefend-api"
-PYTHON_APP_DIR="/backend/python/nexdefend-ai"
-FRONTEND_DIR="/frontend/nexdefend-frontend"
-DOCKER_COMPOSE_FILE="/docker/docker-compose.yml"
+SQL_SCRIPT="database/sql-scripts/init.sql"
+GO_APP_DIR="backend/go/nexdefend-api"
+PYTHON_APP_DIR="backend/python/nexdefend-ai"
+FRONTEND_DIR="frontend/nexdefend-frontend"
+DOCKER_COMPOSE_FILE="docker-compose.yml"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -49,22 +49,21 @@ init_database() {
 # Install Dependencies (Go, Python, JavaScript)
 install_dependencies() {
     echo -e "${GREEN}Installing Go dependencies...${NC}"
-    cd $GO_APP_DIR && go mod tidy && cd - # Changed to go back to the previous directory
+    cd $GO_APP_DIR && go mod tidy
 
     echo -e "${GREEN}Installing Python dependencies...${NC}"
     cd $PYTHON_APP_DIR && pip install -r requirements.txt
 
     echo -e "${GREEN}Installing JavaScript dependencies (React frontend)...${NC}"
-    cd $FRONTEND_DIR && npm install && cd - # Changed to go back to the previous directory
+    cd $FRONTEND_DIR && npm install
 }
 
 # Build and Start Backend (Go)
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
     cd $GO_APP_DIR
-    go run main.go & 
+    go run main.go
     BACKEND_PID=$!
-    cd - # Changed to go back to the previous directory
     echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
 }
 
@@ -74,7 +73,6 @@ start_frontend() {
     cd $FRONTEND_DIR
     npm start & 
     FRONTEND_PID=$!
-    cd - # Changed to go back to the previous directory
     echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
 }
 
