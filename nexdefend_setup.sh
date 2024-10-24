@@ -31,7 +31,6 @@ NEXDEFEND_ART=$(cat << "EOF"
  |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \ '_ \ / _` |
  | |\  |  __/>  <| |_| |  __/  _|  __/ | | | (_| |
  |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_|
-                                                  
 EOF
 )
 
@@ -81,7 +80,7 @@ start_backend() {
     cd $GO_APP_DIR
     go run main.go & BACKEND_PID=$!
     sleep 5  # Wait for the backend to start
-    if netstat -an | grep ":$BACKEND_PORT.*LISTEN" > /dev/null; then
+    if lsof -i :$BACKEND_PORT > /dev/null; then
         echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
     else
         echo -e "${RED}Failed to start the backend service.${NC}"
@@ -96,7 +95,7 @@ start_frontend() {
     cd $FRONTEND_DIR
     npm start & FRONTEND_PID=$!
     sleep 5  # Wait for the frontend to start
-    if netstat -an | grep ":$FRONTEND_PORT.*LISTEN" > /dev/null; then
+    if lsof -i :$FRONTEND_PORT > /dev/null; then
         echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
     else
         echo -e "${RED}Failed to start the frontend service.${NC}"
