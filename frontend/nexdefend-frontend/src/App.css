@@ -36,3 +36,40 @@
     transform: rotate(360deg);
   }
 }
+
+/* Navbar Styles */
+.navbar {
+  background-color: #333;
+  padding: 1rem;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+}
+
+.navbar a:hover {
+  background-color: #444;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #282c34;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Home Page Styles */
+.home {
+  padding: 2rem;
+  font-size: 1.5rem;
+}
