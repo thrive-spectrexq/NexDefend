@@ -13,7 +13,7 @@
 
 Before setting up NexDefend, ensure the following are installed on your system:
 
-- **Go** (1.16+)
+- **Go** (1.22+)
 - **Python** (3.11+)
 - **Node.js** (20+)
 - **npm** (10+)
@@ -44,7 +44,19 @@ Before setting up NexDefend, ensure the following are installed on your system:
 1. Run the `nexdefend_setup.ps1` script:
 
     ```powershell
+    .\nexdefend_setup.ps1
+    ```
+
+    ```powershell
+    .\nexdefend_setup.ps1 initdb
+    ```
+
+    ```powershell
     .\nexdefend_setup.ps1 start
+    ```
+
+    ```powershell
+    .\nexdefend_setup.ps1 stop
     ```
 
 ### Option 3: Running on Linux/macOS
@@ -53,7 +65,23 @@ Before setting up NexDefend, ensure the following are installed on your system:
 
     ```bash
     chmod +x nexdefend_setup.sh
+    ./nexdefend_setup.sh
+    ```
+
+    ```bash
+    ./nexdefend_setup.sh initdb
+    ```
+
+    ```bash
     ./nexdefend_setup.sh start
+    ```
+
+    ```bash
+    ./nexdefend_setup.sh stop
+    ```
+
+    ```bash
+    ./nexdefend_setup.sh docker
     ```
 
 ### In Development

@@ -28,7 +28,7 @@ func InitDB() {
 	fmt.Println("Database connection successful!")
 
 	// Execute the init.sql script to create tables
-	if err := executeSQLScript("../../database/sql-scripts/init.sql"); err != nil {
+	if err := executeSQLScript("database/sql-scripts/init.sql"); err != nil {
 		log.Fatalf("Failed to initialize the database schema: %v", err)
 	}
 }
