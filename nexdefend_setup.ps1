@@ -45,13 +45,23 @@ function Initialize-Database {
 function Install-Dependencies {
     Write-Host "Installing Go dependencies..."
     Set-Location $GO_APP_DIR
-    go mod tidy
+    if (!(Test-Path "go.sum")) {
+        go mod tidy
+    }
+    else {
+        Write-Host "Go dependencies are already installed. Skipping..."
+    }
     Set-Location $OriginalDir  # Return to the original directory
 
     Write-Host "Installing Python dependencies..."
     if (Test-Path $PYTHON_APP_DIR) {
         Set-Location $PYTHON_APP_DIR
-        pip install -r requirements.txt
+        if (!(pip freeze | Select-String -Pattern "Flask")) {
+            pip install -r requirements.txt
+        }
+        else {
+            Write-Host "Python dependencies are already installed. Skipping..."
+        }
         Set-Location $OriginalDir  # Return to the original directory
     }
     else {
@@ -61,7 +71,12 @@ function Install-Dependencies {
     Write-Host "Installing JavaScript dependencies (React frontend)..."
     if (Test-Path $FRONTEND_DIR) {
         Set-Location $FRONTEND_DIR
-        npm install
+        if (!(Test-Path "node_modules")) {
+            npm install
+        }
+        else {
+            Write-Host "JavaScript dependencies are already installed. Skipping..."
+        }
         Set-Location $OriginalDir  # Return to the original directory
     }
     else {

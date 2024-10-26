@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Store the original directory
+OriginalDir=$(pwd)
+
 # Set environment variables
 export POSTGRES_USER="nexdefend"
 export POSTGRES_PASSWORD="password"
@@ -50,58 +53,84 @@ init_database() {
 
 # Install Dependencies (Go, Python, JavaScript)
 install_dependencies() {
+    # Go Dependencies
     echo -e "${GREEN}Installing Go dependencies...${NC}"
-    cd $GO_APP_DIR && go mod tidy
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to install Go dependencies.${NC}"
-        exit 1
+    if [ -d "$GO_APP_DIR" ]; then
+        cd "$GO_APP_DIR"
+        if [ -f "go.sum" ]; then
+            echo -e "${GREEN}Go dependencies already installed. Skipping...${NC}"
+        else
+            go mod tidy || { echo -e "${RED}Go dependencies installation failed.${NC}"; exit 1; }
+        fi
+        cd "$OriginalDir"
+    else
+        echo -e "${RED}Go directory path does not exist.${NC}"
     fi
-    cd -
 
+    # Python Dependencies
     echo -e "${GREEN}Installing Python dependencies...${NC}"
-    cd $PYTHON_APP_DIR && pip install -r requirements.txt
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to install Python dependencies.${NC}"
-        exit 1
+    if [ -d "$PYTHON_APP_DIR" ]; then
+        cd "$PYTHON_APP_DIR"
+        while IFS= read -r pkg; do
+            if ! pip show "$pkg" &> /dev/null; then
+                echo -e "${GREEN}Installing missing Python packages...${NC}"
+                pip install -r requirements.txt || { echo -e "${RED}Python dependencies installation failed.${NC}"; exit 1; }
+                break
+            fi
+        done < <(awk '{print $1}' requirements.txt)
+        echo -e "${GREEN}Python dependencies already installed. Skipping...${NC}"
+        cd "$OriginalDir"
+    else
+        echo -e "${RED}Python directory path does not exist.${NC}"
     fi
 
+    # JavaScript Dependencies
     echo -e "${GREEN}Installing JavaScript dependencies (React frontend)...${NC}"
-    cd $FRONTEND_DIR && npm install
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to install JavaScript dependencies.${NC}"
-        exit 1
+    if [ -d "$FRONTEND_DIR" ]; then
+        cd "$FRONTEND_DIR"
+        if [ -d "node_modules" ] && [ "$(ls -A node_modules)" ]; then
+            echo -e "${GREEN}JavaScript dependencies already installed. Skipping...${NC}"
+        else
+            npm install || { echo -e "${RED}JavaScript dependencies installation failed.${NC}"; exit 1; }
+        fi
+        cd "$OriginalDir"
+    else
+        echo -e "${RED}Frontend directory path does not exist.${NC}"
     fi
-    cd -
 }
 
 # Build and Start Backend (Go)
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
-    cd $GO_APP_DIR
+    cd "$GO_APP_DIR"
     go run main.go & BACKEND_PID=$!
     sleep 5  # Wait for the backend to start
+
+    # Check if backend is running on the specified port
     if lsof -i :$BACKEND_PORT > /dev/null; then
         echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
     else
         echo -e "${RED}Failed to start the backend service.${NC}"
         exit 1
     fi
-    cd -
+    cd "$OriginalDir"
 }
 
 # Start Frontend (React)
 start_frontend() {
     echo -e "${GREEN}Starting the React frontend...${NC}"
-    cd $FRONTEND_DIR
+    cd "$FRONTEND_DIR"
     npm start & FRONTEND_PID=$!
     sleep 5  # Wait for the frontend to start
+
+    # Check if frontend is running on the specified port
     if lsof -i :$FRONTEND_PORT > /dev/null; then
         echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
     else
         echo -e "${RED}Failed to start the frontend service.${NC}"
         exit 1
     fi
-    cd -
+    cd "$OriginalDir"
 }
 
 # Option to use Docker
