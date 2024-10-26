@@ -57,10 +57,11 @@ install_dependencies() {
     echo -e "${GREEN}Installing Go dependencies...${NC}"
     if [ -d "$GO_APP_DIR" ]; then
         cd "$GO_APP_DIR"
-        if [ -f "go.sum" ]; then
-            echo -e "${GREEN}Go dependencies already installed. Skipping...${NC}"
-        else
+        if [ -f "go.mod" ]; then
             go mod tidy || { echo -e "${RED}Go dependencies installation failed.${NC}"; exit 1; }
+            echo -e "${GREEN}Go dependencies installed successfully!${NC}"
+        else
+            echo -e "${RED}go.mod file not found. Skipping Go dependencies installation.${NC}"
         fi
         cd "$OriginalDir"
     else
@@ -71,14 +72,12 @@ install_dependencies() {
     echo -e "${GREEN}Installing Python dependencies...${NC}"
     if [ -d "$PYTHON_APP_DIR" ]; then
         cd "$PYTHON_APP_DIR"
-        while IFS= read -r pkg; do
-            if ! pip show "$pkg" &> /dev/null; then
-                echo -e "${GREEN}Installing missing Python packages...${NC}"
-                pip install -r requirements.txt || { echo -e "${RED}Python dependencies installation failed.${NC}"; exit 1; }
-                break
-            fi
-        done < <(awk '{print $1}' requirements.txt)
-        echo -e "${GREEN}Python dependencies already installed. Skipping...${NC}"
+        if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt || { echo -e "${RED}Python dependencies installation failed.${NC}"; exit 1; }
+            echo -e "${GREEN}Python dependencies installed successfully!${NC}"
+        else
+            echo -e "${RED}requirements.txt file not found. Skipping Python dependencies installation.${NC}"
+        fi
         cd "$OriginalDir"
     else
         echo -e "${RED}Python directory path does not exist.${NC}"
@@ -92,6 +91,7 @@ install_dependencies() {
             echo -e "${GREEN}JavaScript dependencies already installed. Skipping...${NC}"
         else
             npm install || { echo -e "${RED}JavaScript dependencies installation failed.${NC}"; exit 1; }
+            echo -e "${GREEN}JavaScript dependencies installed successfully!${NC}"
         fi
         cd "$OriginalDir"
     else
@@ -103,16 +103,24 @@ install_dependencies() {
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
     cd "$GO_APP_DIR"
-    go run main.go & BACKEND_PID=$!
-    sleep 5  # Wait for the backend to start
+    
+    # Build the application to check for compile errors
+    go build -o nexdefend main.go || { echo -e "${RED}Failed to build the Go application.${NC}"; exit 1; }
+    
+    # Run the application and capture output
+    ./nexdefend > backend.log 2>&1 &
+    BACKEND_PID=$!
+
+    sleep 10  # Increase wait time for the backend to start
 
     # Check if backend is running on the specified port
     if lsof -i :$BACKEND_PORT > /dev/null; then
         echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
     else
-        echo -e "${RED}Failed to start the backend service.${NC}"
+        echo -e "${RED}Failed to start the backend service. Check backend.log for details.${NC}"
         exit 1
     fi
+
     cd "$OriginalDir"
 }
 
@@ -120,14 +128,16 @@ start_backend() {
 start_frontend() {
     echo -e "${GREEN}Starting the React frontend...${NC}"
     cd "$FRONTEND_DIR"
-    npm start & FRONTEND_PID=$!
-    sleep 5  # Wait for the frontend to start
+    npm start > frontend.log 2>&1 &
+    FRONTEND_PID=$!
+
+    sleep 10  # Wait for the frontend to start
 
     # Check if frontend is running on the specified port
     if lsof -i :$FRONTEND_PORT > /dev/null; then
         echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
     else
-        echo -e "${RED}Failed to start the frontend service.${NC}"
+        echo -e "${RED}Failed to start the frontend service. Check frontend.log for details.${NC}"
         exit 1
     fi
     cd "$OriginalDir"

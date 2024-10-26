@@ -28,6 +28,9 @@ Before setting up NexDefend, ensure the following are installed on your system:
 
     ```bash
     git clone https://github.com/thrive-spectrexq/NexDefend.git
+    ```
+
+    ```bash
     cd NexDefend
     ```
 
@@ -55,10 +58,6 @@ Before setting up NexDefend, ensure the following are installed on your system:
     .\nexdefend_setup.ps1 start
     ```
 
-    ```powershell
-    .\nexdefend_setup.ps1 stop
-    ```
-
 ### Option 3: Running on Linux/macOS
 
 1. Run the `nexdefend_setup.sh` script:
@@ -76,9 +75,7 @@ Before setting up NexDefend, ensure the following are installed on your system:
     ./nexdefend_setup.sh start
     ```
 
-    ```bash
-    ./nexdefend_setup.sh stop
-    ```
+2. Optional, run `nexdefend_setup.sh docker` script:
 
     ```bash
     ./nexdefend_setup.sh docker
