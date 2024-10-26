@@ -15,7 +15,7 @@ const Login: React.FC = () => {
         setIsLoading(true); // Start loading
 
         try {
-            const response = await fetch(`${API_URL}/api/v1/login`, { // Use the API URL here
+            const response = await fetch(`${API_URL}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
