@@ -9,9 +9,9 @@ $env:BACKEND_PORT = "5000"
 
 # Paths
 $SQL_SCRIPT = "database/sql-scripts/init.sql"
-$GO_APP_DIR = "backend/go/nexdefend-api"
-$PYTHON_APP_DIR = "backend/python/nexdefend-ai"
-$FRONTEND_DIR = "frontend/nexdefend-frontend"
+$GO_APP_DIR = "nexdefend-api"
+$PYTHON_APP_DIR = "nexdefend-ai"
+$FRONTEND_DIR = "nexdefend-frontend"
 $DOCKER_COMPOSE_FILE = "docker-compose.yml"
 
 # Capture the original directory
