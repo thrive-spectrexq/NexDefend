@@ -1,9 +1,9 @@
 -- Initialize the database schema for NexDefend
 
 -- Drop tables if they already exist
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS threats CASCADE;
 DROP TABLE IF EXISTS alerts CASCADE;
+DROP TABLE IF EXISTS threats CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
 -- Create 'users' table to store user information
 CREATE TABLE users (
@@ -27,13 +27,13 @@ CREATE TABLE threats (
 -- Create 'alerts' table to store alert data
 CREATE TABLE alerts (
     id SERIAL PRIMARY KEY,
-    threat_id INT REFERENCES threats(id) ON DELETE CASCADE,
+    threat_id INT REFERENCES threats(id) ON DELETE CASCADE, -- Link to threats table
     alert_message TEXT NOT NULL,
     alert_level VARCHAR(10) NOT NULL, -- e.g., "low", "medium", "high"
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add any indexes for faster lookups
+-- Add indexes for faster lookups
 CREATE INDEX idx_users_username ON users (username);
 CREATE INDEX idx_threats_detected_at ON threats (detected_at);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);

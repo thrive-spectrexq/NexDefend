@@ -20,8 +20,7 @@ func InitDB() {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-	err = db.Ping()
-	if err != nil {
+	if err = db.Ping(); err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}
 
@@ -37,12 +36,12 @@ func InitDB() {
 func executeSQLScript(filepath string) error {
 	sqlBytes, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("unable to read SQL file: %v", err)
+		return fmt.Errorf("unable to read SQL file %s: %w", filepath, err)
 	}
 
 	_, err = db.Exec(string(sqlBytes))
 	if err != nil {
-		return fmt.Errorf("error executing SQL script: %v", err)
+		return fmt.Errorf("error executing SQL script %s: %w", filepath, err)
 	}
 
 	fmt.Println("Database schema initialized successfully!")
