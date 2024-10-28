@@ -10,7 +10,7 @@ export POSTGRES_DB="nexdefend_db"
 export POSTGRES_PORT="5432"
 export GO_ENV="development"
 export FRONTEND_PORT="3000"
-export BACKEND_PORT="5000"
+export BACKEND_PORT="8080"
 
 # Paths
 SQL_SCRIPT="database/init.sql"
@@ -103,7 +103,8 @@ install_dependencies() {
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
     cd "$GO_APP_DIR"
-    go run main.go & BACKEND_PID=$!
+    go run main.go &
+    BACKEND_PID=$!
     sleep 5  # Wait for the backend to start
 
     # Check if backend is running on the specified port

@@ -5,7 +5,7 @@ $env:POSTGRES_DB = "nexdefend_db"
 $env:POSTGRES_PORT = "5432"
 $env:GO_ENV = "development"
 $env:FRONTEND_PORT = "3000"
-$env:BACKEND_PORT = "5000"
+$env:BACKEND_PORT = "8080"
 
 # Paths
 $SQL_SCRIPT = "database/init.sql"
