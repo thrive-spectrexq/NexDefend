@@ -13,7 +13,7 @@ export FRONTEND_PORT="3000"
 export BACKEND_PORT="5000"
 
 # Paths
-SQL_SCRIPT="database/sql-scripts/init.sql"
+SQL_SCRIPT="database/init.sql"
 GO_APP_DIR="nexdefend-api"
 PYTHON_APP_DIR="nexdefend-ai"
 FRONTEND_DIR="nexdefend-frontend"
