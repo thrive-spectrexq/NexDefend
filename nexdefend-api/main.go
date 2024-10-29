@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/hillu/go-yara"
+	"github.com/osquery/osquery-go"
 	"github.com/rs/cors"
 )
 
@@ -42,6 +44,8 @@ func main() {
 	router.HandleFunc("/api/v1/upload", upload.UploadFileHandler).Methods("POST")
 	router.HandleFunc("/register", auth.RegisterHandler).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
+	router.HandleFunc("/api/v1/ioc-scan", IOCScanHandler).Methods("GET")    // New IOC Scan endpoint
+	router.HandleFunc("/api/v1/yara-scan", YaraScanHandler).Methods("POST") // New YARA Scan endpoint
 
 	// Configure CORS
 	corsOptions := cors.New(cors.Options{
@@ -76,14 +80,68 @@ func main() {
 	log.Println("Server exiting")
 }
 
+// IOCScanHandler scans for IOCs using osquery
+func IOCScanHandler(w http.ResponseWriter, r *http.Request) {
+	client, err := osquery.NewClient("localhost:9000", 5*time.Second)
+	if err != nil {
+		http.Error(w, "Failed to connect to osquery", http.StatusInternalServerError)
+		return
+	}
+	defer client.Close()
+
+	// Example: Detect suspicious processes
+	resp, err := client.Query("SELECT name, pid, path FROM processes WHERE name = 'suspicious_process_name'")
+	if err != nil {
+		http.Error(w, "Query failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Use resp.Response to get the rows
+	json.NewEncoder(w).Encode(resp.Response)
+}
+
+// YaraScanHandler performs a file scan using YARA
+func YaraScanHandler(w http.ResponseWriter, r *http.Request) {
+	compiler, err := yara.NewCompiler()
+	if err != nil {
+		http.Error(w, "Failed to create YARA compiler", http.StatusInternalServerError)
+		return
+	}
+
+	// Example rule to detect a pattern in files
+	err = compiler.AddString(`rule MaliciousPattern { strings: $a = "malicious_code" condition: $a }`, "")
+	if err != nil {
+		http.Error(w, "Failed to add YARA rule", http.StatusInternalServerError)
+		return
+	}
+
+	rules, err := compiler.GetRules()
+	if err != nil {
+		http.Error(w, "Failed to compile YARA rules", http.StatusInternalServerError)
+		return
+	}
+
+	// Set file path from request query or default path
+	filePath := "path/to/file"
+	if fp := r.URL.Query().Get("file"); fp != "" {
+		filePath = fp
+	}
+
+	// Scan the specified file for matches
+	matches, err := rules.ScanFile(filePath, 0, 5)
+	if err != nil {
+		http.Error(w, "Failed to scan file", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(matches)
+}
+
 // AlertsHandler handles alert requests
 func AlertsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	// Simulate sending a simple alert message as JSON response
 	response := map[string]string{"alert": "Sample alert from NexDefend"}
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // HomeHandler handles the home route
