@@ -78,6 +78,7 @@ Before setting up NexDefend, ensure the following are installed on your system:
     ```
 
 ### In Development
+
 NexDefend aims to simplify and enhance cybersecurity operations through advanced automation and AI, making it easier for organizations to stay ahead of cyber threats.
 
 ---
