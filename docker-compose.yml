@@ -2,6 +2,7 @@ version: "3.8"
 services:
   api:
     build:
+      context: nexdefend-api
       dockerfile: nexdefend-api/Dockerfile
     ports:
       - "8080:8080"
@@ -17,6 +18,7 @@ services:
 
   ai:
     build:
+      context: nexdefend-ai
       dockerfile: nexdefend-ai/Dockerfile
     ports:
       - "5000:5000"
@@ -25,12 +27,13 @@ services:
 
   frontend:
     build:
+      context: nexdefend-fronted
       dockerfile: nexdefend-frontend/Dockerfile
     ports:
       - "3000:3000"
     depends_on:
-      - nexdefend-api/Dockerfile
-      - nexdefend-ai/Dockerfile
+      - nexdefend-api
+      - nexdefend-ai
     networks:
       - nexdefend-net
 
