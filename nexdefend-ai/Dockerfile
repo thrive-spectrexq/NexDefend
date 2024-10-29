@@ -5,13 +5,13 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copy only the requirements.txt first to leverage Docker caching
-COPY nexdefend-ai/requirements.txt ./
+COPY ./requirements.txt ./
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application files
-COPY nexdefend-ai/ ./
+COPY ./ ./
 
 # Command to run the application
 CMD ["python", "app.py"]
