@@ -1,8 +1,9 @@
-## Next Generation Threats Detection Platform
+# Next Generation Threats Detection Platform
 
 **NexDefend** is a cutting-edge cybersecurity platform designed to provide real-time monitoring, AI-powered threat detection, and automated incident response. With a focus on protecting systems from emerging cyber threats, NexDefend offers robust security features and comprehensive insights for proactive defense.
 
-### Key Features
+## Key Features
+
 - AI-driven threat detection and analysis
 - Real-time system monitoring and alerts
 - Automated vulnerability assessments
@@ -18,7 +19,7 @@ Before setting up NexDefend, ensure the following are installed on your system:
 - **Node.js** (20+)
 - **npm** (10+)
 - **PostgreSQL** (16+)
-- **Docker** (for Docker setup)
+- **Docker**
 
 ### Setup Instructions
 
@@ -51,10 +52,6 @@ Before setting up NexDefend, ensure the following are installed on your system:
     ```
 
     ```powershell
-    .\nexdefend_setup.ps1 initdb
-    ```
-
-    ```powershell
     .\nexdefend_setup.ps1 start
     ```
 
@@ -64,11 +61,10 @@ Before setting up NexDefend, ensure the following are installed on your system:
 
     ```bash
     chmod +x nexdefend_setup.sh
-    ./nexdefend_setup.sh
     ```
 
     ```bash
-    ./nexdefend_setup.sh initdb
+    ./nexdefend_setup.sh
     ```
 
     ```bash
