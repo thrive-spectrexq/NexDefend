@@ -1,5 +1,5 @@
-// src/components/Dashboard.tsx
 import React, { useEffect, useState } from 'react';
+import styles from './Dashboard.module.css';
 
 const API_URL = "http://localhost:8080";
 
@@ -69,7 +69,6 @@ const Dashboard: React.FC = () => {
       .catch(err => console.error("Error fetching audits:", err));
   }, []);
 
-  // Count alerts by level
   const alertCounts = alerts.reduce(
     (counts, alert) => {
       if (alert.level === 'Critical') counts.critical += 1;
@@ -81,54 +80,63 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div>
+    <div className={styles.dashboardContainer}>
       <h2>System Overview</h2>
-      <section>
+
+      <section className={styles.section}>
         <h3>Threat Detection</h3>
         <p>Total threats: {threats.length}</p>
-        <ul>
-          {threats.slice(0, 5).map(threat => (
-            <li key={threat.id}>
-              {threat.description} - Severity: {threat.severity} - {new Date(threat.timestamp).toLocaleString()}
-            </li>
-          ))}
-        </ul>
+        <div className={styles.sectionContent}>
+          <ul>
+            {threats.map(threat => (
+              <li key={threat.id}>
+                {threat.description} - Severity: {threat.severity} - {new Date(threat.timestamp).toLocaleString()}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
-      <section>
+      <section className={styles.section}>
         <h3>Alerts</h3>
-        <p>Critical: {alertCounts.critical} | Medium: {alertCounts.medium} | Low: {alertCounts.low}</p>
-        <ul>
-          {alerts.slice(0, 5).map(alert => (
-            <li key={alert.id}>
-              {alert.message} - Level: {alert.level}
-            </li>
-          ))}
-        </ul>
+        <p className={styles.alertStats}>Critical: {alertCounts.critical} | Medium: {alertCounts.medium} | Low: {alertCounts.low}</p>
+        <div className={styles.sectionContent}>
+          <ul>
+            {alerts.map(alert => (
+              <li key={alert.id}>
+                {alert.message} - Level: {alert.level}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
-      <section>
+      <section className={styles.section}>
         <h3>Recent Uploads</h3>
         <p>Total uploads: {uploads.length}</p>
-        <ul>
-          {uploads.slice(0, 5).map(upload => (
-            <li key={upload.id}>
-              {upload.filename} - Uploaded on: {new Date(upload.timestamp).toLocaleString()}
-            </li>
-          ))}
-        </ul>
+        <div className={styles.sectionContent}>
+          <ul>
+            {uploads.map(upload => (
+              <li key={upload.id}>
+                {upload.filename} - Uploaded on: {new Date(upload.timestamp).toLocaleString()}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
-      <section>
+      <section className={styles.section}>
         <h3>Compliance Audits</h3>
         <p>Pending actions: {audits.filter(audit => audit.status === "Pending").length}</p>
-        <ul>
-          {audits.slice(0, 5).map(audit => (
-            <li key={audit.id}>
-              Findings: {audit.findings} - Status: {audit.status} - Date: {new Date(audit.date).toLocaleString()}
-            </li>
-          ))}
-        </ul>
+        <div className={styles.sectionContent}>
+          <ul>
+            {audits.map(audit => (
+              <li key={audit.id}>
+                Findings: {audit.findings} - Status: {audit.status} - Date: {new Date(audit.date).toLocaleString()}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
     </div>
   );

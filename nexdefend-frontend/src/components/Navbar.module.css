@@ -1,0 +1,39 @@
+.navbar {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #282c34;
+    color: white;
+}
+
+.link {
+    margin-right: 15px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.link:hover {
+    color: #61dafb;
+}
+
+.user-info {
+    margin-left: auto;
+    margin-right: 15px;
+    font-style: italic;
+}
+
+.logout-button {
+    padding: 5px 10px;
+    background-color: #61dafb;
+    border: none;
+    color: #282c34;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+    background-color: #21a1f1;
+}

@@ -1,5 +1,5 @@
-// src/components/Alerts.tsx
 import React, { useEffect, useState } from 'react';
+import styles from './Alerts.module.css';
 
 const API_URL = "http://localhost:8080";
 
@@ -22,7 +22,7 @@ const Alerts: React.FC = () => {
       setError('');
       try {
         const res = await fetch(`${API_URL}/api/v1/alerts?level=${level}&page=${page}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         });
         if (!res.ok) throw new Error('Failed to fetch alerts');
         const data = await res.json();
@@ -37,11 +37,17 @@ const Alerts: React.FC = () => {
   }, [level, page]);
 
   return (
-    <div>
-      <h2>Alerts</h2>
-      <div>
-        <label>Filter by level:</label>
-        <select value={level} onChange={(e) => setLevel(e.target.value)}>
+    <div className={styles.alertsContainer}>
+      <h2 className={styles.header}>Alerts</h2>
+
+      <div className={styles.filterContainer}>
+        <label htmlFor="levelFilter">Filter by level:</label>
+        <select
+          id="levelFilter"
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+          className={styles.select}
+        >
           <option value="all">All</option>
           <option value="critical">Critical</option>
           <option value="medium">Medium</option>
@@ -50,30 +56,43 @@ const Alerts: React.FC = () => {
       </div>
 
       {loading ? (
-        <p>Loading alerts...</p>
+        <p className={styles.loading}>Loading alerts...</p>
       ) : error ? (
-        <p>{error}</p>
+        <p className={styles.error}>{error}</p>
+      ) : alerts.length === 0 ? (
+        <p className={styles.noAlerts}>No alerts to display</p>
       ) : (
-        <ul>
+        <ul className={styles.alertList}>
           {alerts.map((alert) => (
-            <li key={alert.id}>
-              {alert.alert_message} - Level: {alert.alert_level}
+            <li
+              key={alert.id}
+              className={`${styles.alertItem} ${
+                alert.alert_level === 'critical'
+                  ? styles.critical
+                  : alert.alert_level === 'medium'
+                  ? styles.medium
+                  : styles.low
+              }`}
+            >
+              {alert.alert_message} - <strong>Level:</strong> {alert.alert_level}
             </li>
           ))}
         </ul>
       )}
 
-      <div>
+      <div className={styles.pagination}>
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
           disabled={page === 1}
+          className={styles.pageButton}
         >
           Previous
         </button>
-        <span>Page {page}</span>
+        <span className={styles.pageInfo}>Page {page}</span>
         <button
           onClick={() => setPage((prev) => prev + 1)}
-          disabled={alerts.length === 0} // Disable if no more alerts to show
+          disabled={alerts.length === 0}
+          className={styles.pageButton}
         >
           Next
         </button>
