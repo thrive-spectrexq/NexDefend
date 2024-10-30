@@ -1,74 +1,43 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// src/components/Login.tsx
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = "http://localhost:8080";
 
 const Login: React.FC = () => {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const navigate = useNavigate(); // Use navigate for redirection
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true); // Start loading
+  const handleLogin = async () => {
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token);
+        navigate('/dashboard');
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch {
+      setError('An error occurred');
+    }
+  };
 
-        try {
-            const response = await fetch(`${API_URL}/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ username, password }),
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    setError("Invalid credentials. Please try again.");
-                } else {
-                    setError("An error occurred. Please try again later.");
-                }
-                setIsLoading(false);
-                return;
-            }
-
-            const data = await response.json();
-            localStorage.setItem("token", data.token); // Store token
-            setError(null);
-            setIsLoading(false);
-            navigate("/dashboard"); // Redirect to dashboard
-        } catch (error) {
-            setError("An unexpected error occurred. Please try again later.");
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div>
-            <h2>Login</h2>
-            <form onSubmit={handleLogin}>
-                <input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    disabled={isLoading}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                />
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? "Logging in..." : "Login"}
-                </button>
-            </form>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-        </div>
-    );
+  return (
+    <div>
+      <h2>Login</h2>
+      <input placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+      <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button onClick={handleLogin}>Login</button>
+      {error && <p>{error}</p>}
+    </div>
+  );
 };
 
 export default Login;

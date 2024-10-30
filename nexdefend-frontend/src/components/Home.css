@@ -1,0 +1,58 @@
+/* src/components/Home.css */
+.home-container {
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(to right, #0072ff, #00c6ff);
+    color: white;
+    min-height: 100vh;
+  }
+  
+  .hero-section {
+    margin-bottom: 40px;
+  }
+  
+  h1 {
+    font-size: 3em;
+    margin: 0;
+  }
+  
+  h2 {
+    margin-top: 40px;
+  }
+  
+  p {
+    font-size: 1.2em;
+  }
+  
+  .login-button {
+    display: inline-block;
+    padding: 15px 30px;
+    margin-top: 20px;
+    background-color: #fff;
+    color: #0072ff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  
+  .login-button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .features-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  li {
+    font-size: 1.1em;
+    margin: 10px 0;
+  }
+  
