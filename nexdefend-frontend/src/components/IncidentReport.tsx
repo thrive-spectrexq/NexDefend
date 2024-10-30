@@ -1,5 +1,5 @@
-// src/components/IncidentReport.tsx
 import React, { useEffect, useState } from 'react';
+import styles from './IncidentReport.module.css';
 
 const API_URL = "http://localhost:8080";
 
@@ -18,10 +18,10 @@ const IncidentReport: React.FC = () => {
 
   useEffect(() => {
     fetch(`${API_URL}/api/v1/incident-report`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-      .then(res => res.json())
-      .then(data => setReports(data))
+      .then((res) => res.json())
+      .then((data) => setReports(data))
       .catch(() => setError('Failed to fetch reports.'));
   }, []);
 
@@ -31,7 +31,7 @@ const IncidentReport: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ comment: newComment }),
       });
@@ -39,7 +39,7 @@ const IncidentReport: React.FC = () => {
       if (!res.ok) throw new Error('Failed to add comment.');
       const updatedReport = await res.json();
       setReports((prevReports) =>
-        prevReports.map(report => report.id === reportId ? updatedReport : report)
+        prevReports.map((report) => (report.id === reportId ? updatedReport : report))
       );
       setNewComment('');
     } catch {
@@ -52,13 +52,13 @@ const IncidentReport: React.FC = () => {
       const res = await fetch(`${API_URL}/api/v1/incident-report/${reportId}/resolve`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
       if (!res.ok) throw new Error('Failed to resolve report.');
       setReports((prevReports) =>
-        prevReports.map(report =>
+        prevReports.map((report) =>
           report.id === reportId ? { ...report, status: 'Resolved' } : report
         )
       );
@@ -68,30 +68,33 @@ const IncidentReport: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Incident Reports</h2>
-      {error && <p>{error}</p>}
-      <ul>
-        {reports.map(report => (
-          <li key={report.id}>
+    <div className={styles.reportContainer}>
+      <h2 className={styles.header}>Incident Reports</h2>
+      {error && <p className={styles.error}>{error}</p>}
+      <ul className={styles.reportList}>
+        {reports.map((report) => (
+          <li key={report.id} className={`${styles.reportItem} ${styles[report.status.toLowerCase()]}`}>
             <p><strong>Description:</strong> {report.description}</p>
             <p><strong>Date:</strong> {report.date}</p>
             <p><strong>Status:</strong> {report.status}</p>
-            <ul>
+            <div className={styles.commentSection}>
               <strong>Comments:</strong>
-              {report.comments.map((comment, index) => (
-                <li key={index}>{comment}</li>
-              ))}
-            </ul>
+              <ul>
+                {report.comments.map((comment, index) => (
+                  <li key={index} className={styles.comment}>{comment}</li>
+                ))}
+              </ul>
+            </div>
             <input
               type="text"
               placeholder="Add a comment"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
+              className={styles.input}
             />
-            <button onClick={() => handleAddComment(report.id)}>Add Comment</button>
+            <button onClick={() => handleAddComment(report.id)} className={styles.button}>Add Comment</button>
             {report.status !== 'Resolved' && (
-              <button onClick={() => handleResolveReport(report.id)}>Mark as Resolved</button>
+              <button onClick={() => handleResolveReport(report.id)} className={`${styles.button} ${styles.resolveButton}`}>Mark as Resolved</button>
             )}
           </li>
         ))}

@@ -1,5 +1,5 @@
-// src/components/Upload.tsx
 import React, { useState } from 'react';
+import styles from './Upload.module.css';
 
 const API_URL = "http://localhost:8080";
 
@@ -14,43 +14,49 @@ const Upload: React.FC = () => {
   const [error, setError] = useState('');
 
   const handleUpload = async (file: File) => {
+    if (!file) {
+      setError("No file selected. Please choose a file to upload.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
     try {
+      setError('');
       const res = await fetch(`${API_URL}/api/v1/upload`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         body: formData,
       });
 
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
-      setUploads([...uploads, data]);
+      setUploads((prevUploads) => [...prevUploads, data]);
       setProgress(100);
     } catch (err) {
       setError('Failed to upload file. Please try again.');
     } finally {
-      setProgress(0);
+      setTimeout(() => setProgress(0), 500);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setProgress(0);
+      setProgress(10); // Start with a small value to indicate progress has begun
       handleUpload(e.target.files[0]);
     }
   };
 
   return (
-    <div>
-      <h2>Upload Files</h2>
-      <input type="file" onChange={handleFileChange} />
-      <progress value={progress} max="100">{progress}%</progress>
-      {error && <p>{error}</p>}
-      <ul>
+    <div className={styles.container}>
+      <h2 className={styles.header}>Upload Files</h2>
+      <input type="file" onChange={handleFileChange} className={styles.fileInput} />
+      <progress value={progress} max="100" className={styles.progress}>{progress}%</progress>
+      {error && <p className={styles.error}>{error}</p>}
+      <ul className={styles.uploadList}>
         {uploads.map((upload) => (
-          <li key={upload.id}>{upload.filename}</li>
+          <li key={upload.id} className={styles.uploadItem}>{upload.filename}</li>
         ))}
       </ul>
     </div>

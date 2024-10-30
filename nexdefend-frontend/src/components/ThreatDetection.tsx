@@ -1,5 +1,5 @@
-// src/components/ThreatDetection.tsx
 import React, { useState } from 'react';
+import styles from './ThreatDetection.module.css';
 
 const API_URL = "http://localhost:8080";
 
@@ -21,7 +21,7 @@ const ThreatDetection: React.FC = () => {
     try {
       const res = await fetch(`${API_URL}/api/v1/threats`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (!res.ok) throw new Error('Failed to run threat detection');
       const data = await res.json();
@@ -34,14 +34,14 @@ const ThreatDetection: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Threat Detection</h2>
-      <button onClick={handleDetection} disabled={loading}>
+    <div className={styles.container}>
+      <h2 className={styles.header}>Threat Detection</h2>
+      <button onClick={handleDetection} disabled={loading} className={styles.detectButton}>
         {loading ? 'Running...' : 'Run Threat Detection'}
       </button>
-      {error && <p>{error}</p>}
+      {error && <p className={styles.error}>{error}</p>}
 
-      <table>
+      <table className={styles.table}>
         <thead>
           <tr>
             <th>Threat Type</th>
@@ -59,7 +59,8 @@ const ThreatDetection: React.FC = () => {
           ))}
         </tbody>
       </table>
-      {results.length === 0 && !loading && !error && <p>No threats detected.</p>}
+
+      {results.length === 0 && !loading && !error && <p className={styles.noResults}>No threats detected.</p>}
     </div>
   );
 };

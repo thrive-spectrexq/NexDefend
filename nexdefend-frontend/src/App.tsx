@@ -24,7 +24,7 @@ const App: React.FC = () => {
           <Route path="/threat-detection" element={<ProtectedRoute element={ThreatDetection} />} />
           <Route path="/alerts" element={<ProtectedRoute element={Alerts} />} />
           <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
-          <Route path="/incidentreport" element={<ProtectedRoute element={IncidentReport} />} />
+          <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
         </Routes>
       </main>
       <Footer />

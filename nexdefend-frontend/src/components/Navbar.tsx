@@ -4,8 +4,10 @@ import styles from './Navbar.module.css';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{}'); // Fetch user from local storage
   const token = localStorage.getItem('token'); // Check if the token is present
+
+  // Check if `user` exists in `localStorage` and parse only if it does
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string) : null;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -23,8 +25,10 @@ const Navbar: React.FC = () => {
       <Link to="/threat-detection" className={styles.link}>Threat Detection</Link>
       <Link to="/alerts" className={styles.link}>Alerts</Link>
       <Link to="/upload" className={styles.link}>Upload</Link>
-      <Link to="/incidentreport" className={styles.link}>Incident Report</Link>
-      <span className={styles.userInfo}>{user?.name ? `${user.name} (${user.role})` : "Guest"}</span>
+      <Link to="/incident-report" className={styles.link}>Incident Report</Link>
+      <span className={styles.userInfo}>
+        {user?.name ? `${user.name} (${user.role})` : "Guest"}
+      </span>
       {token ? (
         <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
       ) : (
