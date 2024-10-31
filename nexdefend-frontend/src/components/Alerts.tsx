@@ -25,9 +25,18 @@ const Alerts: React.FC = () => {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         });
         if (!res.ok) throw new Error('Failed to fetch alerts');
+        
         const data = await res.json();
-        setAlerts(data);
+        
+        // Ensure data is an array
+        if (Array.isArray(data)) {
+          setAlerts(data);
+        } else {
+          console.error("Unexpected alerts data format:", data);
+          setAlerts([]); // Reset to empty array if data is not an array
+        }
       } catch (err) {
+        console.error(err); // Log the error for debugging
         setError('Error fetching alerts. Please try again.');
       } finally {
         setLoading(false);

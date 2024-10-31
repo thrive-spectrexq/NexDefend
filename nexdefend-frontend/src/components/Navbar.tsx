@@ -7,7 +7,17 @@ const Navbar: React.FC = () => {
   const token = localStorage.getItem('token'); // Check if the token is present
 
   // Check if `user` exists in `localStorage` and parse only if it does
-  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string) : null;
+  let user = null;
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    try {
+      user = JSON.parse(userData);
+    } catch (error) {
+      console.error("Failed to parse user data:", error);
+      // Optionally clear the invalid data
+      localStorage.removeItem('user');
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('token');

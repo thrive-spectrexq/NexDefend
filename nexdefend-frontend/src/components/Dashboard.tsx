@@ -36,37 +36,47 @@ const Dashboard: React.FC = () => {
   const [audits, setAudits] = useState<Audit[]>([]);
 
   useEffect(() => {
-    // Fetch threats
-    fetch(`${API_URL}/api/v1/threats`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(res => res.json())
-      .then(data => setThreats(data))
-      .catch(err => console.error("Error fetching threats:", err));
+    const fetchData = async () => {
+      try {
+        // Fetch threats
+        const threatsResponse = await fetch(`${API_URL}/api/v1/threats`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const threatsData = await threatsResponse.json();
+        setThreats(threatsData);
 
-    // Fetch alerts
-    fetch(`${API_URL}/api/v1/alerts`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(res => res.json())
-      .then(data => setAlerts(data))
-      .catch(err => console.error("Error fetching alerts:", err));
+        // Fetch alerts
+        const alertsResponse = await fetch(`${API_URL}/api/v1/alerts`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const alertsData = await alertsResponse.json();
+        // Ensure alertsData is an array
+        if (Array.isArray(alertsData)) {
+          setAlerts(alertsData);
+        } else {
+          console.error("Unexpected alerts data format:", alertsData);
+          setAlerts([]); // Reset to empty array if data is not an array
+        }
 
-    // Fetch uploads
-    fetch(`${API_URL}/api/v1/upload`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(res => res.json())
-      .then(data => setUploads(data))
-      .catch(err => console.error("Error fetching uploads:", err));
+        // Fetch uploads
+        const uploadsResponse = await fetch(`${API_URL}/api/v1/upload`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const uploadsData = await uploadsResponse.json();
+        setUploads(uploadsData);
 
-    // Fetch audits
-    fetch(`${API_URL}/api/v1/audit`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(res => res.json())
-      .then(data => setAudits(data))
-      .catch(err => console.error("Error fetching audits:", err));
+        // Fetch audits
+        const auditsResponse = await fetch(`${API_URL}/api/v1/audit`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const auditsData = await auditsResponse.json();
+        setAudits(auditsData);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const alertCounts = alerts.reduce(
@@ -99,7 +109,9 @@ const Dashboard: React.FC = () => {
 
       <section className={styles.section}>
         <h3>Alerts</h3>
-        <p className={styles.alertStats}>Critical: {alertCounts.critical} | Medium: {alertCounts.medium} | Low: {alertCounts.low}</p>
+        <p className={styles.alertStats}>
+          Critical: {alertCounts.critical} | Medium: {alertCounts.medium} | Low: {alertCounts.low}
+        </p>
         <div className={styles.sectionContent}>
           <ul>
             {alerts.map(alert => (
