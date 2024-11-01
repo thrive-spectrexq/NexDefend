@@ -1,0 +1,46 @@
+/* src/components/IOCScan.module.css */
+
+.container {
+    padding: 16px;
+    text-align: center;
+  }
+  
+  .input {
+    margin: 8px;
+    padding: 8px;
+    font-size: 1rem;
+  }
+  
+  .button {
+    margin: 8px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .error {
+    color: red;
+    margin: 8px 0;
+  }
+  
+  .table {
+    margin-top: 16px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .table th, .table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  

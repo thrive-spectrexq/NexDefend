@@ -1,3 +1,4 @@
+// src/components/Navbar.tsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Navbar.module.css';
@@ -14,8 +15,7 @@ const Navbar: React.FC = () => {
       user = JSON.parse(userData);
     } catch (error) {
       console.error("Failed to parse user data:", error);
-      // Optionally clear the invalid data
-      localStorage.removeItem('user');
+      localStorage.removeItem('user'); // Optionally clear the invalid data
     }
   }
 
@@ -36,6 +36,7 @@ const Navbar: React.FC = () => {
       <Link to="/alerts" className={styles.link}>Alerts</Link>
       <Link to="/upload" className={styles.link}>Upload</Link>
       <Link to="/incident-report" className={styles.link}>Incident Report</Link>
+      <Link to="/ioc-scan" className={styles.link}>IOC Scan</Link>
       <span className={styles.userInfo}>
         {user?.name ? `${user.name} (${user.role})` : "Guest"}
       </span>

@@ -6,6 +6,7 @@ import Dashboard from "./components/Dashboard";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
 import IncidentReport from "./components/IncidentReport";
+import IOCScan from "./components/IOCScan";
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -25,6 +26,7 @@ const App: React.FC = () => {
           <Route path="/alerts" element={<ProtectedRoute element={Alerts} />} />
           <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
           <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
+          <Route path="/ioc-scan" element={<ProtectedRoute element={IOCScan} />} />
         </Routes>
       </main>
       <Footer />

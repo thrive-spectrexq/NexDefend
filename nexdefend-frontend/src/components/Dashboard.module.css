@@ -5,39 +5,79 @@
     max-height: 100vh;
     overflow-y: auto;
     background-color: #f4f6f8;
+    font-family: Arial, sans-serif;
+    color: #333;
 }
 
 .section {
     margin-bottom: 20px;
-    padding: 15px;
+    padding: 20px;
     border: 1px solid #ddd;
-    border-radius: 8px;
+    border-radius: 10px;
     background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
 }
 
 .section h3 {
     margin-top: 0;
-    font-size: 1.2em;
+    font-size: 1.4em;
+    color: #0073e6;
+    border-bottom: 2px solid #e6e6e6;
+    padding-bottom: 8px;
 }
 
 .sectionContent {
-    max-height: 150px;
+    max-height: 200px;
     overflow-y: auto;
     padding-right: 10px;
+    margin-top: 15px;
 }
 
 .sectionContent ul {
     padding-left: 20px;
+    list-style: disc;
 }
 
 .sectionContent li {
-    margin-bottom: 8px;
-    font-size: 0.9em;
-    line-height: 1.4;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #555;
 }
 
 .alertStats {
     font-weight: bold;
     margin: 10px 0;
-    font-size: 0.95em;
+    font-size: 1em;
+    color: #ff4d4d;
+}
+
+.chartContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.chart {
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .chart {
+        max-width: 100%;
+    }
+
+    .sectionContent {
+        max-height: 150px;
+    }
 }
