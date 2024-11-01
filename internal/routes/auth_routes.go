@@ -3,8 +3,8 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
-	"nexdefend-api/internal/auth"
-	"nexdefend-api/internal/models"
+	"NexDefend/internal/auth"
+	"NexDefend/internal/models"
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
