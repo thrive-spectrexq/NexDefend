@@ -1,48 +1,57 @@
 .homeContainer {
   text-align: center;
   padding: 40px;
-  background: linear-gradient(to right, #0072ff, #00c6ff);
+  background: linear-gradient(to right, #0072ff, #00c6ff); /* Retained your gradient background */
   color: white;
   min-height: 100vh;
+  font-family: 'Arial', sans-serif; /* Consistent font for better readability */
 }
 
 .heroSection {
   margin-bottom: 40px;
+  padding: 2rem; /* Added padding for better spacing */
+  border-radius: 8px; /* Rounded corners for a modern look */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
 }
 
 h1 {
   font-size: 3em;
   margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Text shadow for better contrast */
 }
 
 h2 {
   margin-top: 40px;
+  font-size: 2em; /* Slightly larger for emphasis */
 }
 
 p {
   font-size: 1.2em;
+  margin-bottom: 20px; /* Added margin for spacing */
 }
 
 .loginButton {
   display: inline-block;
   padding: 15px 30px;
   margin-top: 20px;
-  background-color: #fff;
-  color: #0072ff;
+  background-color: #fff; /* White button */
+  color: #0072ff; /* Button text color */
   text-decoration: none;
   border-radius: 5px;
   font-weight: bold;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.2s; /* Added transform transition */
 }
 
 .loginButton:hover {
-  background-color: #e0e0e0;
+  background-color: #e0e0e0; /* Light gray on hover */
+  transform: scale(1.05); /* Slightly enlarge on hover for effect */
 }
 
 .featuresSection {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent background */
   padding: 20px;
   border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Added shadow for depth */
 }
 
 ul {
@@ -53,4 +62,7 @@ ul {
 li {
   font-size: 1.1em;
   margin: 10px 0;
+  background-color: rgba(255, 255, 255, 0.2); /* Light background for list items */
+  padding: 10px;
+  border-radius: 5px; /* Rounded corners for list items */
 }

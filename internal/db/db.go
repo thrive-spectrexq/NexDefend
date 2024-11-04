@@ -2,15 +2,18 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"time"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
+	"github.com/osquery/osquery-go"
 )
 
 var db *sql.DB
+var osqueryAddress = "localhost:9000" // Update with your actual osquery server address
 
 // InitDB initializes the database connection and runs the init.sql script
 func InitDB() {
@@ -61,97 +64,49 @@ func GetDB() *sql.DB {
 	return db
 }
 
-// CreateUser inserts a new user into the database
-func CreateUser(username, password, role string) error {
-	_, err := db.Exec(`INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`, username, password, role)
+// RunOsquery executes an osquery query and stores results in the database
+func RunOsquery(query string) ([]map[string]interface{}, error) {
+	client, err := osquery.NewClient(osqueryAddress, 5*time.Second)
 	if err != nil {
-		return fmt.Errorf("error creating user: %v", err)
+		return nil, fmt.Errorf("error connecting to osquery: %v", err)
+	}
+	defer client.Close()
+
+	// Run the query
+	resp, err := client.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error executing osquery: %v", err)
+	}
+
+	// Prepare to store results in the database
+	results := make([]map[string]interface{}, len(resp.Response))
+	for i, row := range resp.Response {
+		// Convert the ExtensionPluginResponse to a map
+		resultMap := make(map[string]interface{})
+		for key, value := range row {
+			resultMap[key] = value
+		}
+		results[i] = resultMap
+
+		if err := storeOsqueryResult(query, row); err != nil {
+			log.Printf("error storing osquery result: %v", err)
+		}
+	}
+
+	return results, nil
+}
+
+// storeOsqueryResult stores a single osquery result in the database
+func storeOsqueryResult(query string, row map[string]string) error {
+	// Convert map to JSON for storage
+	rowJSON, err := json.Marshal(row)
+	if err != nil {
+		return fmt.Errorf("error marshaling row to JSON: %v", err)
+	}
+
+	_, err = db.Exec(`INSERT INTO osquery_results (query, result, executed_at) VALUES ($1, $2, $3)`, query, string(rowJSON), time.Now())
+	if err != nil {
+		return fmt.Errorf("error inserting osquery result: %v", err)
 	}
 	return nil
-}
-
-// GetUser retrieves a user by username
-func GetUser(username string) (int, string, error) {
-	var id int
-	var role string
-	err := db.QueryRow(`SELECT id, role FROM users WHERE username = $1`, username).Scan(&id, &role)
-	if err != nil {
-		return 0, "", fmt.Errorf("error retrieving user: %v", err)
-	}
-	return id, role, nil
-}
-
-// CreateThreat inserts a new threat into the threats table
-func CreateThreat(threatType, description string, detectedAt time.Time) (int, error) {
-	var id int
-	err := db.QueryRow(`INSERT INTO threats (threat_type, description, detected_at) VALUES ($1, $2, $3) RETURNING id`,
-		threatType, description, detectedAt).Scan(&id)
-	if err != nil {
-		return 0, fmt.Errorf("error creating threat: %v", err)
-	}
-	return id, nil
-}
-
-// GetThreats retrieves all unresolved threats
-func GetThreats() ([]map[string]interface{}, error) {
-	rows, err := db.Query(`SELECT id, threat_type, description, detected_at FROM threats WHERE resolved = FALSE`)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving threats: %v", err)
-	}
-	defer rows.Close()
-
-	var threats []map[string]interface{}
-	for rows.Next() {
-		var id int
-		var threatType, description string
-		var detectedAt time.Time
-		if err := rows.Scan(&id, &threatType, &description, &detectedAt); err != nil {
-			return nil, fmt.Errorf("error scanning threat: %v", err)
-		}
-		threat := map[string]interface{}{
-			"id":          id,
-			"threat_type": threatType,
-			"description": description,
-			"detected_at": detectedAt,
-		}
-		threats = append(threats, threat)
-	}
-	return threats, nil
-}
-
-// CreateAlert adds a new alert linked to a specific threat
-func CreateAlert(threatID int, message, level string) error {
-	_, err := db.Exec(`INSERT INTO alerts (threat_id, alert_message, alert_level) VALUES ($1, $2, $3)`, threatID, message, level)
-	if err != nil {
-		return fmt.Errorf("error creating alert: %v", err)
-	}
-	return nil
-}
-
-// GetAlerts retrieves all alerts with optional filters
-func GetAlerts() ([]map[string]interface{}, error) {
-	rows, err := db.Query(`SELECT id, threat_id, alert_message, alert_level, created_at FROM alerts`)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving alerts: %v", err)
-	}
-	defer rows.Close()
-
-	var alerts []map[string]interface{}
-	for rows.Next() {
-		var id, threatID int
-		var message, level string
-		var createdAt time.Time
-		if err := rows.Scan(&id, &threatID, &message, &level, &createdAt); err != nil {
-			return nil, fmt.Errorf("error scanning alert: %v", err)
-		}
-		alert := map[string]interface{}{
-			"id":            id,
-			"threat_id":     threatID,
-			"alert_message": message,
-			"alert_level":   level,
-			"created_at":    createdAt,
-		}
-		alerts = append(alerts, alert)
-	}
-	return alerts, nil
 }
