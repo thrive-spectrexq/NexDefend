@@ -35,9 +35,7 @@ Before setting up NexDefend, ensure the following are installed on your system:
     cd NexDefend
     ```
 
-2. Ensure Docker and Docker Compose are installed.
-
-3. Run the following command to build and start the services:
+2. Run the following command to build and start the services:
 
     ```bash
     docker-compose up --build
@@ -82,7 +80,7 @@ Before setting up NexDefend, ensure the following are installed on your system:
 1. Download the Go module dependencies:
 
     ```bash
-    go mod download
+    go mod tidy
     ```
 
 2. Run the application:
