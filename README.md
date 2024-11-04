@@ -77,6 +77,38 @@ Before setting up NexDefend, ensure the following are installed on your system:
     ./nexdefend_setup.sh docker
     ```
 
+### Option 4: Running Manually
+
+1. Download the Go module dependencies:
+
+    ```bash
+    go mod download
+    ```
+
+2. Run the Go application:
+
+    ```bash
+    go run main.go
+    ```
+
+3. Open a new terminal and navigate to the frontend directory:
+
+    ```bash
+    cd nexdefend-frontend
+    ```
+
+4. Install the frontend dependencies:
+
+    ```bash
+    npm install
+    ```
+
+5. Start the frontend application:
+
+    ```bash
+    npm start
+    ```
+
 ### In Development
 
 NexDefend aims to simplify and enhance cybersecurity operations through advanced automation and AI, making it easier for organizations to stay ahead of cyber threats.
