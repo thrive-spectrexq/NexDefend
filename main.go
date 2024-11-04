@@ -130,11 +130,18 @@ func isValidIOCName(name string) bool {
 func IOCScanHandler(w http.ResponseWriter, r *http.Request) {
 	client, err := osquery.NewClient(osqueryAddress, 5*time.Second)
 	if err != nil {
-		log.Println("Error connecting to osquery:", err)
+		log.Println("Error creating osquery client:", err)
 		jsonErrorResponse(w, "Failed to connect to osquery", http.StatusInternalServerError)
 		return
 	}
 	defer client.Close()
+
+	// Test connection by pinging
+	if _, pingErr := client.Ping(); pingErr != nil {
+		log.Println("Error pinging osquery:", pingErr)
+		jsonErrorResponse(w, "Failed to connect to osquery", http.StatusInternalServerError)
+		return
+	}
 
 	// Retrieve IOC name from query parameters, default to a common IOC
 	iocName := r.URL.Query().Get("name")

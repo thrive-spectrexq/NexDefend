@@ -16,7 +16,7 @@ const Home: React.FC = () => {
   return (
     <div className={styles.homeContainer}>
       <section className={styles.heroSection}>
-        <h3>Your Trusted Platform for Threat Detection and Incident Response Management</h3>
+        <h2>Your Trusted Platform for Threat Detection and Incident Response Management</h2>
         <p>NexDefend is a cutting-edge cybersecurity platform designed to provide real-time monitoring, 
           AI-powered threat detection, and automated incident response. With a focus on protecting 
           systems from emerging cyber threats, NexDefend offers robust security features and 
@@ -25,7 +25,7 @@ const Home: React.FC = () => {
       </section>
       
       <section className={styles.featuresSection}>
-        <h2>Key Features</h2>
+        <h3>Key Features</h3>
         <ul>
           {features.map((feature, index) => (
             <li key={index}>{feature}</li>

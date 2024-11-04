@@ -1,4 +1,3 @@
-// src/components/Dashboard.tsx
 import {
   ArcElement,
   BarElement,
@@ -61,6 +60,11 @@ const Dashboard: React.FC = () => {
           const response = await fetch(`${API_URL}${endpoint}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           });
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
+          }
+
           return response.json();
         };
 
@@ -71,10 +75,10 @@ const Dashboard: React.FC = () => {
           fetchWithAuth("/api/v1/audit"),
         ]);
 
-        setThreats(threatsData);
+        setThreats(threatsData || []);
         setAlerts(Array.isArray(alertsData) ? alertsData : []);
-        setUploads(uploadsData);
-        setAudits(auditsData);
+        setUploads(uploadsData || []);
+        setAudits(auditsData || []);
       } catch (err) {
         setError("Failed to fetch dashboard data.");
         console.error("Error fetching data:", err);
@@ -86,6 +90,7 @@ const Dashboard: React.FC = () => {
     fetchData();
   }, []);
 
+  // Charts with fallback data
   const alertPieData = useMemo(() => {
     const alertCounts = alerts.reduce(
       (counts, alert) => {
