@@ -85,7 +85,7 @@ Before setting up NexDefend, ensure the following are installed on your system:
     go mod download
     ```
 
-2. Run the Go application:
+2. Run the application:
 
     ```bash
     go run main.go
