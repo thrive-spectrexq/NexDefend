@@ -1,4 +1,4 @@
-# Next Generation Threats Detection Platform
+# NexDefend
 
 **NexDefend** is a cutting-edge cybersecurity platform designed to provide real-time monitoring, AI-powered threat detection, and automated incident response. With a focus on protecting systems from emerging cyber threats, NexDefend offers robust security features and comprehensive insights for proactive defense.
 

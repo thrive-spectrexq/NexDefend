@@ -16,8 +16,11 @@ const Home: React.FC = () => {
   return (
     <div className={styles.homeContainer}>
       <section className={styles.heroSection}>
-        <h1>Welcome to NexDefend</h1>
-        <p>Your trusted platform for threat detection and incident management.</p>
+        <h3>Your Trusted Platform for Threat Detection and Incident Response Management</h3>
+        <p>NexDefend is a cutting-edge cybersecurity platform designed to provide real-time monitoring, 
+          AI-powered threat detection, and automated incident response. With a focus on protecting 
+          systems from emerging cyber threats, NexDefend offers robust security features and 
+          comprehensive insights for proactive defense.</p>
         <button onClick={() => navigate('/login')} className={styles.loginButton}>Log in to continue</button>
       </section>
       
