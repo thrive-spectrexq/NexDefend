@@ -56,9 +56,12 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error("Authentication token not found");
+
         const fetchWithAuth = async (endpoint: string) => {
           const response = await fetch(`${API_URL}${endpoint}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            headers: { 'Authorization': `Bearer ${token}` },
           });
 
           if (!response.ok) {
@@ -79,8 +82,8 @@ const Dashboard: React.FC = () => {
         setAlerts(Array.isArray(alertsData) ? alertsData : []);
         setUploads(uploadsData || []);
         setAudits(auditsData || []);
-      } catch (err) {
-        setError("Failed to fetch dashboard data.");
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch dashboard data.");
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);

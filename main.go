@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"time"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/rs/cors"
 )
 
-// Configurable variables (move to environment variables if needed)
 var (
 	osqueryAddress = "localhost:9000"
 )
@@ -33,6 +33,16 @@ func main() {
 	logging.InitLogging()
 	db.InitDB()
 	defer db.CloseDB()
+
+	// Verify osqueryi installation
+	if err := verifyOsqueryInstallation(); err != nil {
+		log.Fatalf("osquery verification failed: %v", err)
+	}
+
+	// Start osquery daemon if not already running
+	if err := startOsqueryDaemon(); err != nil {
+		log.Fatalf("failed to start osquery daemon: %v", err)
+	}
 
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)
@@ -44,7 +54,7 @@ func main() {
 
 	// === API Version 1 Routes ===
 	api := router.PathPrefix("/api/v1").Subrouter()
-	api.Use(auth.JWTMiddleware) // Applying JWT middleware to all /api/v1 routes
+	api.Use(auth.JWTMiddleware)
 
 	// Threat Detection & Incident Management
 	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("POST")
@@ -77,7 +87,6 @@ func main() {
 		Handler: corsOptions.Handler(router),
 	}
 
-	// Start server
 	go func() {
 		fmt.Println("Starting NexDefend API server on port 8080...")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -85,9 +94,27 @@ func main() {
 		}
 	}()
 
-	// Graceful shutdown handling
 	gracefulShutdown(srv)
 	log.Println("Server exited gracefully")
+}
+
+func verifyOsqueryInstallation() error {
+	cmd := exec.Command("osqueryi", "--json", "SELECT name, pid FROM processes LIMIT 1;")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		log.Printf("osquery installation verification failed: %s", output)
+		return fmt.Errorf("osquery not found or not functioning: %v", err)
+	}
+	log.Println("osquery installation verified successfully")
+	return nil
+}
+
+func startOsqueryDaemon() error {
+	cmd := exec.Command("osqueryd", "--disable_events=false", "--disable_logging=false", "--extensions_socket=/var/osquery/osquery.em")
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start osquery daemon: %v", err)
+	}
+	log.Println("osquery daemon started successfully")
+	return nil
 }
 
 func gracefulShutdown(srv *http.Server) {
@@ -103,7 +130,6 @@ func gracefulShutdown(srv *http.Server) {
 	}
 }
 
-// jsonErrorResponse sends a formatted JSON error response
 func jsonErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
