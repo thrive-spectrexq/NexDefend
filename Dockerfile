@@ -4,13 +4,13 @@ FROM golang:1.23.2-alpine3.19@sha256:f6392ffebb028fed5ffe743ddb9716e38402c978779
 WORKDIR /app
 
 # Copy the Go module files
-COPY ./go.mod ./go.sum ./
+COPY .go.mod .go.sum ./
 
 # Download dependencies
 RUN go mod download
 
 # Copy the entire application to the working directory
-COPY ./ ./
+COPY . .
 
 # Build the Go application
 RUN go build -o NexDefend .
