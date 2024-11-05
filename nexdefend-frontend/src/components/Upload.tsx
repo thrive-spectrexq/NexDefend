@@ -20,10 +20,11 @@ const Upload: React.FC = () => {
     }
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('uploadFile', file); // Updated to match backend
 
     try {
       setError('');
+      setProgress(10); // Start with a small value to indicate progress has begun
       const res = await fetch(`${API_URL}/api/v1/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -32,10 +33,17 @@ const Upload: React.FC = () => {
 
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
+
+      // Check response structure
+      if (!data.id || !data.filename) {
+        throw new Error('Unexpected response format');
+      }
+
       setUploads((prevUploads) => [...prevUploads, data]);
       setProgress(100);
     } catch (err) {
       setError('Failed to upload file. Please try again.');
+      console.error("Error uploading file:", err);
     } finally {
       setTimeout(() => setProgress(0), 500);
     }
@@ -43,7 +51,6 @@ const Upload: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setProgress(10); // Start with a small value to indicate progress has begun
       handleUpload(e.target.files[0]);
     }
   };

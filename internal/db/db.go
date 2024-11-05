@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -13,26 +14,31 @@ import (
 )
 
 var db *sql.DB
-var osqueryAddress = "localhost:9000" // Update with your actual osquery server address
+var osqueryAddress = "/var/osquery/shell.em" // Updated for Unix socket
 
-// InitDB initializes the database connection and runs the init.sql script
+// InitDB initializes the database connection and runs the init.sql script if tables are missing
 func InitDB() {
 	var err error
 	connStr := "user=nexdefend password=password dbname=nexdefend_db sslmode=disable"
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		fmt.Fprintf(os.Stderr, "Failed to connect to the database: %v\n", err)
+		os.Exit(1)
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Fatalf("Database connection failed: %v", err)
+		fmt.Fprintf(os.Stderr, "Database connection failed: %v\n", err)
+		os.Exit(1)
 	}
 
 	fmt.Println("Database connection successful!")
 
-	// Execute the init.sql script to create tables
-	if err := executeSQLScript("database/init.sql"); err != nil {
-		log.Fatalf("Failed to initialize the database schema: %v", err)
+	// Check if tables already exist to avoid re-initializing the schema
+	if !tablesExist() {
+		if err := executeSQLScript("database/init.sql"); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to initialize the database schema: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
 
@@ -52,10 +58,25 @@ func executeSQLScript(filepath string) error {
 	return nil
 }
 
+// tablesExist checks for existing tables to avoid re-running the init.sql script
+func tablesExist() bool {
+	var exists bool
+	query := `SELECT EXISTS (
+		SELECT FROM information_schema.tables 
+		WHERE table_schema = 'public' 
+		AND table_name = 'users'
+	);`
+	err := db.QueryRow(query).Scan(&exists)
+	if err != nil {
+		log.Fatalf("Error checking for existing tables: %v", err)
+	}
+	return exists
+}
+
 // CloseDB closes the database connection
 func CloseDB() {
 	if err := db.Close(); err != nil {
-		log.Fatalf("Error closing the database: %v", err)
+		fmt.Fprintf(os.Stderr, "Error closing the database: %v\n", err)
 	}
 }
 

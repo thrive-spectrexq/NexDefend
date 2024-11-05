@@ -1,6 +1,7 @@
 package upload
 
 import (
+	"NexDefend/internal/db"
 	"fmt"
 	"io"
 	"log"
@@ -9,10 +10,9 @@ import (
 	"path/filepath"
 )
 
-// MaxUploadSize defines the max file size allowed for upload (e.g., 10 MB)
 const MaxUploadSize = 10 * 1024 * 1024 // 10MB
 
-// UploadFileHandler handles the file upload process
+// UploadFileHandler handles file uploads, analysis, and database storage.
 func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	// Limit request body size
 	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadSize)
@@ -41,7 +41,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create destination file
+	// Save the uploaded file to the server
 	dstPath := filepath.Join(uploadDir, handler.Filename)
 	dst, err := os.Create(dstPath)
 	if err != nil {
@@ -51,15 +51,42 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dst.Close()
 
-	// Copy the uploaded file data to the destination file
+	// Copy file data to destination
 	if _, err := io.Copy(dst, file); err != nil {
 		http.Error(w, "Failed to save the file!", http.StatusInternalServerError)
 		log.Printf("Failed to save file: %v", err)
 		return
 	}
 
-	// Respond with success message
+	// File analysis (basic example: checking file size)
+	fileSize := handler.Size
+	alert := false
+	analysisResult := "File appears clean"
+	if fileSize > MaxUploadSize {
+		alert = true
+		analysisResult = "File exceeds safe size limit"
+	}
+
+	// Save details to database
+	if err := saveFileDetails(handler.Filename, dstPath, fileSize, analysisResult, alert); err != nil {
+		http.Error(w, "Failed to record file details!", http.StatusInternalServerError)
+		log.Printf("Database error: %v", err)
+		return
+	}
+
+	// Response
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "File uploaded successfully: %s", handler.Filename)
-	log.Printf("File uploaded successfully: %s", handler.Filename)
+	fmt.Fprintf(w, "File uploaded and analyzed: %s", handler.Filename)
+	log.Printf("File uploaded and analyzed: %s", handler.Filename)
+}
+
+// saveFileDetails saves file information and analysis results in the database.
+func saveFileDetails(filename, filePath string, fileSize int64, analysisResult string, alert bool) error {
+	query := `
+        INSERT INTO uploaded_files (filename, file_path, file_size, analysis_result, alert)
+        VALUES ($1, $2, $3, $4, $5)
+    `
+	// Use db.GetDB() to get the database instance
+	_, err := db.GetDB().Exec(query, filename, filePath, fileSize, analysisResult, alert)
+	return err
 }

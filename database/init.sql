@@ -4,6 +4,7 @@
 DROP TABLE IF EXISTS osquery_results CASCADE;
 DROP TABLE IF EXISTS alerts CASCADE;
 DROP TABLE IF EXISTS threats CASCADE;
+DROP TABLE IF EXISTS uploaded_files CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- Create 'users' table to store user information
@@ -11,7 +12,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(100) NOT NULL,
-    role VARCHAR(20) NOT NULL, -- 'admin' or 'user'
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'user')), -- 'admin' or 'user'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -30,8 +31,19 @@ CREATE TABLE alerts (
     id SERIAL PRIMARY KEY,
     threat_id INT REFERENCES threats(id) ON DELETE CASCADE, -- Link to threats table
     alert_message TEXT NOT NULL,
-    alert_level VARCHAR(10) NOT NULL, -- e.g., "low", "medium", "high"
+    alert_level VARCHAR(10) NOT NULL CHECK (alert_level IN ('low', 'medium', 'high')), -- e.g., "low", "medium", "high"
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create 'uploaded_files' table to store uploaded file information
+CREATE TABLE uploaded_files (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    file_size INT,
+    analysis_result TEXT,
+    alert BOOLEAN DEFAULT FALSE
 );
 
 -- Create 'osquery_results' table to store osquery query results
@@ -46,4 +58,5 @@ CREATE TABLE osquery_results (
 CREATE INDEX idx_users_username ON users (username);
 CREATE INDEX idx_threats_detected_at ON threats (detected_at);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);
+CREATE INDEX idx_uploaded_files_filename ON uploaded_files (filename);
 CREATE INDEX idx_osquery_results_executed_at ON osquery_results (executed_at);

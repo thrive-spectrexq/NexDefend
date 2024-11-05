@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	osqueryAddress = "localhost:9000"
+	osqueryAddress = "/var/osquery/shell.em" // Updated for Unix socket
 )
 
 func main() {
@@ -43,6 +43,9 @@ func main() {
 	if err := startOsqueryDaemon(); err != nil {
 		log.Fatalf("failed to start osquery daemon: %v", err)
 	}
+
+	// Add a delay to ensure osqueryd is fully up before attempting connection
+	time.Sleep(2 * time.Second)
 
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)

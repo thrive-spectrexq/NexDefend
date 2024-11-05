@@ -83,7 +83,11 @@ const Dashboard: React.FC = () => {
         setUploads(uploadsData || []);
         setAudits(auditsData || []);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch dashboard data.");
+        setError("Failed to fetch dashboard data.");
+        setThreats([]);
+        setAlerts([]);
+        setUploads([]);
+        setAudits([]);
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
@@ -153,11 +157,11 @@ const Dashboard: React.FC = () => {
     }, {} as Record<string, number>);
 
     return {
-      labels: Object.keys(uploadCounts),
+      labels: Object.keys(uploadCounts).length ? Object.keys(uploadCounts) : ['No Data'],
       datasets: [
         {
           label: 'Uploads Over Time',
-          data: Object.values(uploadCounts),
+          data: Object.keys(uploadCounts).length ? Object.values(uploadCounts) : [0],
           fill: false,
           borderColor: '#36A2EB',
         },
@@ -167,7 +171,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboardContainer}>
-      <h2>Detailed System Overview</h2>
+      <h2>System Overview</h2>
 
       {loading ? (
         <p>Loading data...</p>
