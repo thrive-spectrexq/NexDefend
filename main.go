@@ -109,7 +109,7 @@ func verifyOsqueryInstallation() error {
 }
 
 func startOsqueryDaemon() error {
-	cmd := exec.Command("osqueryd", "--disable_events=false", "--disable_logging=false", "--extensions_socket=/var/osquery/osquery.em")
+	cmd := exec.Command("osqueryd", "--disable_events=false", "--disable_logging=false", "--extensions_socket=/var/osquery/shell.em")
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start osquery daemon: %v", err)
 	}
