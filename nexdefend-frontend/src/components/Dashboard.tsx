@@ -167,7 +167,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboardContainer}>
-      <h2>System Overview</h2>
+      <h2>Detailed System Overview</h2>
 
       {loading ? (
         <p>Loading data...</p>
