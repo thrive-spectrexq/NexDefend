@@ -27,26 +27,25 @@ import (
 
 var (
 	osqueryAddress = "/var/osquery/shell.em" // Updated for Unix socket
+	API_PREFIX     = "/api/v1"               // Prefix for API versioning
 )
 
 func main() {
+	// Initialize logging and database
 	logging.InitLogging()
 	db.InitDB()
 	defer db.CloseDB()
 
-	// Verify osqueryi installation
+	// Verify osqueryi installation and start daemon if not running
 	if err := verifyOsqueryInstallation(); err != nil {
 		log.Fatalf("osquery verification failed: %v", err)
 	}
-
-	// Start osquery daemon if not already running
 	if err := startOsqueryDaemon(); err != nil {
 		log.Fatalf("failed to start osquery daemon: %v", err)
 	}
+	time.Sleep(2 * time.Second) // Delay to ensure osqueryd is fully up
 
-	// Add a delay to ensure osqueryd is fully up before attempting connection
-	time.Sleep(2 * time.Second)
-
+	// Configure router with logging and error-handling middleware
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)
 	router.Use(middleware.ErrorHandler)
@@ -56,8 +55,8 @@ func main() {
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
 
 	// === API Version 1 Routes ===
-	api := router.PathPrefix("/api/v1").Subrouter()
-	api.Use(auth.JWTMiddleware)
+	api := router.PathPrefix(API_PREFIX).Subrouter()
+	api.Use(auth.JWTMiddleware) // JWT authentication for all API v1 routes
 
 	// Threat Detection & Incident Management
 	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("POST")
@@ -77,7 +76,7 @@ func main() {
 	// === Home Endpoint ===
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 
-	// Configure CORS
+	// Configure CORS to allow requests from the frontend
 	corsOptions := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
@@ -85,6 +84,7 @@ func main() {
 		AllowCredentials: true,
 	})
 
+	// Start the server with graceful shutdown
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: corsOptions.Handler(router),

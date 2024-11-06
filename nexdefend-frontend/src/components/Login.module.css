@@ -1,52 +1,77 @@
 .loginContainer {
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(145deg, #fdfbfb, #ebedee);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  color: #333;
+  font-family: Arial, sans-serif;
+}
+
+.inputContainer {
+  margin-bottom: 20px;
+}
+
+.inputField {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  font-size: 1em;
+  background-color: #f0faff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.inputField:focus {
+  border-color: #66b3ff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+  outline: none;
+}
+
+.loginButton {
+  width: 100%;
+  padding: 12px;
+  font-size: 1em;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #34ace0, #007bff);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.loginButton:disabled {
+  background: linear-gradient(135deg, #a9a9a9, #6c757d);
+  cursor: not-allowed;
+}
+
+.loginButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  transform: scale(1.02);
+}
+
+.errorMessage {
+  color: #e74c3c;
+  font-size: 0.9em;
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid #e74c3c;
+  background-color: #fdecea;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .loginContainer {
+      padding: 15px;
   }
-  
-  .inputContainer {
-    margin-bottom: 15px;
+
+  .inputField, .loginButton {
+      padding: 10px;
+      font-size: 0.95em;
   }
-  
-  .inputField {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-  }
-  
-  .loginButton {
-    width: 100%;
-    padding: 12px;
-    font-size: 1em;
-    font-weight: bold;
-    color: white;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .loginButton:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-  }
-  
-  .loginButton:hover:not(:disabled) {
-    background-color: #0056b3;
-  }
-  
-  .errorMessage {
-    color: #e74c3c;
-    font-size: 0.9em;
-    margin-top: 10px;
-  }
-  
+}

@@ -1,15 +1,16 @@
 .footer {
-  background-color: #1a1a1a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  background: linear-gradient(90deg, #0f2027, #203a43, #2c5364); /* Dark gradient background */
   color: #f1f1f1;
-  text-align: center;
-  padding: 20px;
   font-size: 0.9em;
-  position: relative;
-  width: 98%;
-  box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
   opacity: 0;
-  transform: translateY(100%);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .footer.visible {
@@ -19,4 +20,10 @@
 
 .footer p {
   margin: 0;
+  color: #cce7ff; /* Soft light blue for readability */
+}
+
+.footer p:hover {
+  color: #ffe135; /* Soft yellow for interactivity */
+  transition: color 0.3s ease;
 }

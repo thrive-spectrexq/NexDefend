@@ -16,7 +16,7 @@
     border-radius: 10px;
     background-color: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .section:hover {
@@ -37,6 +37,19 @@
     overflow-y: auto;
     padding-right: 10px;
     margin-top: 15px;
+}
+
+.sectionContent::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sectionContent::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 4px;
+}
+
+.sectionContent::-webkit-scrollbar-thumb:hover {
+    background-color: #ccc;
 }
 
 .sectionContent ul {
@@ -79,5 +92,13 @@
 
     .sectionContent {
         max-height: 150px;
+    }
+
+    .section h3 {
+        font-size: 1.2em;
+    }
+
+    .sectionContent li {
+        font-size: 0.9em;
     }
 }

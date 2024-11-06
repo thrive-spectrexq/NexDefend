@@ -8,9 +8,9 @@ import {
   LineElement,
   PointElement,
   Title,
-  Tooltip
+  Tooltip,
 } from 'chart.js';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import styles from './Dashboard.module.css';
 import IOCScan from './IOCScan';
@@ -53,51 +53,50 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error("Authentication token not found");
+  const fetchData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error("Authentication token not found");
 
-        const fetchWithAuth = async (endpoint: string) => {
-          const response = await fetch(`${API_URL}${endpoint}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
+      const fetchWithAuth = async (endpoint: string) => {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
 
-          if (!response.ok) {
-            throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
-          }
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
+        }
 
-          return response.json();
-        };
+        return response.json();
+      };
 
-        const [threatsData, alertsData, uploadsData, auditsData] = await Promise.all([
-          fetchWithAuth("/api/v1/threats"),
-          fetchWithAuth("/api/v1/alerts"),
-          fetchWithAuth("/api/v1/upload"),
-          fetchWithAuth("/api/v1/audit"),
-        ]);
+      const [threatsData, alertsData, uploadsData, auditsData] = await Promise.all([
+        fetchWithAuth("/api/v1/threats"),
+        fetchWithAuth("/api/v1/alerts"),
+        fetchWithAuth("/api/v1/upload"),
+        fetchWithAuth("/api/v1/audit"),
+      ]);
 
-        setThreats(threatsData || []);
-        setAlerts(Array.isArray(alertsData) ? alertsData : []);
-        setUploads(uploadsData || []);
-        setAudits(auditsData || []);
-      } catch (err: any) {
-        setError("Failed to fetch dashboard data.");
-        setThreats([]);
-        setAlerts([]);
-        setUploads([]);
-        setAudits([]);
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      setThreats(threatsData || []);
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
+      setUploads(uploadsData || []);
+      setAudits(auditsData || []);
+    } catch (err: any) {
+      setError("Failed to fetch dashboard data.");
+      setThreats([]);
+      setAlerts([]);
+      setUploads([]);
+      setAudits([]);
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Charts with fallback data
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const alertPieData = useMemo(() => {
     const alertCounts = alerts.reduce(
       (counts, alert) => {
