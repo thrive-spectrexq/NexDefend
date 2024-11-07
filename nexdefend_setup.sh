@@ -68,9 +68,21 @@ install_dependencies() {
     fi
 
     # Python Dependencies
-    echo -e "${GREEN}Installing Python dependencies...${NC}"
+    echo -e "${GREEN}Setting up Python environment...${NC}"
     if [ -d "$PYTHON_APP_DIR" ]; then
         cd "$PYTHON_APP_DIR"
+
+        # Create a virtual environment if it doesn't exist
+        if [ ! -d "venv" ]; then
+            echo -e "${GREEN}Creating Python virtual environment...${NC}"
+            python3 -m venv venv || { echo -e "${RED}Failed to create virtual environment.${NC}"; exit 1; }
+        fi
+
+        # Activate the virtual environment
+        source venv/bin/activate || { echo -e "${RED}Failed to activate virtual environment.${NC}"; exit 1; }
+
+        # Install Python dependencies
+        echo -e "${GREEN}Installing Python dependencies...${NC}"
         while IFS= read -r pkg; do
             if ! pip show "$pkg" &> /dev/null; then
                 echo -e "${GREEN}Installing missing Python packages...${NC}"
@@ -78,7 +90,11 @@ install_dependencies() {
                 break
             fi
         done < <(awk '{print $1}' requirements.txt)
-        echo -e "${GREEN}Python dependencies already installed. Skipping...${NC}"
+        echo -e "${GREEN}Python dependencies are up to date. Skipping...${NC}"
+
+        # Deactivate the virtual environment
+        deactivate
+
         cd "$OriginalDir"
     else
         echo -e "${RED}Python directory path does not exist.${NC}"
@@ -119,9 +135,14 @@ start_backend() {
 
 # Start Frontend (React)
 start_frontend() {
-    echo -e "${GREEN}Starting the React frontend...${NC}"
+    echo -e "${GREEN}Starting the React frontend in a new terminal...${NC}"
+    
+    # Open a new terminal window and run the frontend service
     cd "$FRONTEND_DIR"
-    npm start & FRONTEND_PID=$!
+    
+    gnome-terminal -- bash -c "npm start; exec bash" &  # For GNOME Terminal
+    FRONTEND_PID=$!
+    
     sleep 5  # Wait for the frontend to start
 
     # Check if frontend is running on the specified port
