@@ -5,7 +5,7 @@ import styles from './Navbar.module.css';
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  
+
   // Parse user data if it exists and handle parsing errors
   let user = null;
   const userData = localStorage.getItem('user');
@@ -30,7 +30,6 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className={styles.navbar} aria-label="Main Navigation">
-      <Link to="/" className={styles.brand}>NexDefend</Link>
       <div role="navigation" aria-label="Main Links" className={styles.navLinks}>
         {token ? (
           <>
@@ -42,13 +41,15 @@ const Navbar: React.FC = () => {
             <Link to="/ioc-scan" className={styles.link}>IOC Scan</Link>
           </>
         ) : (
-          <Link to="/" className={styles.link}>Home</Link>
+          <Link to="/" className={styles.link}>NexDefend</Link>
         )}
       </div>
       <div className={styles.userActions}>
-        <span className={styles.userInfo}>
-          {user?.name ? `${user.name} (${user.role})` : "Guest"}
-        </span>
+        {user?.name && (
+          <span className={styles.userInfo}>
+            {user.name} ({user.role})
+          </span>
+        )}
         {token ? (
           <button onClick={handleLogout} className={styles.logoutButton} aria-label="Logout">
             Logout

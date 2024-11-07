@@ -16,16 +16,16 @@ const Home: React.FC = () => {
   return (
     <div className={styles.homeContainer}>
       <section className={styles.heroSection}>
-        <h2>Your Trusted Platform for Threat Detection and Incident Response Management</h2>
+        <h1>NexDefend Threat Detection and Incident Response Management</h1>
         <p>NexDefend is a cutting-edge cybersecurity platform designed to provide real-time monitoring, 
           AI-powered threat detection, and automated incident response. With a focus on protecting 
           systems from emerging cyber threats, NexDefend offers robust security features and 
           comprehensive insights for proactive defense.</p>
-        <button onClick={() => navigate('/login')} className={styles.loginButton}>Log in to continue</button>
+        <button onClick={() => navigate('/login')} className={styles.loginButton}>Continue to Dashboard</button>
       </section>
       
       <section className={styles.featuresSection}>
-        <h3>Key Features</h3>
+        <h2>Key Features</h2>
         <ul>
           {features.map((feature, index) => (
             <li key={index}>{feature}</li>

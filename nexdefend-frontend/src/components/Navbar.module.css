@@ -8,13 +8,19 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Ensures links stay on the left side */
+.navLinks {
+    flex-grow: 1;
+    display: flex;
+    gap: 15px;
+}
+
 .link {
-    margin-right: 20px;
-    color: #f1f1f1;
+    color: white;
     text-decoration: none;
     font-weight: bold;
-    transition: color 0.3s ease, transform 0.2s ease;
     position: relative;
+    transition: color 0.3s ease;
 }
 
 .link:hover {
@@ -38,14 +44,22 @@
     transform: scaleX(1);
 }
 
-.user-info {
-    margin-left: auto;
+/* User information */
+.userInfo {
     margin-right: 20px;
     font-style: italic;
     color: #d1e0f0;
 }
 
-.logout-button {
+/* Container for user information and buttons, aligned to the right */
+.userActions {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+/* Styling for login/logout button */
+.logoutButton, .loginButton {
     padding: 8px 15px;
     background: linear-gradient(135deg, #ff416c, #ff4b2b);
     border: none;
@@ -55,9 +69,10 @@
     font-weight: bold;
     transition: background-color 0.3s ease, transform 0.2s ease;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    margin-left: 10px;
 }
 
-.logout-button:hover {
+.logoutButton:hover, .loginButton:hover {
     background: linear-gradient(135deg, #ff2b69, #ff6347);
     transform: translateY(-1px);
 }

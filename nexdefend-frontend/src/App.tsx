@@ -1,6 +1,7 @@
 // src/App.tsx
 import React from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import "./App.css";
 import Alerts from "./components/Alerts";
 import Dashboard from "./components/Dashboard";
 import Footer from "./components/Footer";
@@ -16,20 +17,22 @@ import Upload from "./components/Upload";
 const App: React.FC = () => {
   return (
     <Router>
-      <Navbar />
-      <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
-          <Route path="/threat-detection" element={<ProtectedRoute element={ThreatDetection} />} />
-          <Route path="/alerts" element={<ProtectedRoute element={Alerts} />} />
-          <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
-          <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
-          <Route path="/ioc-scan" element={<ProtectedRoute element={IOCScan} />} />
-        </Routes>
-      </main>
-      <Footer />
+      <div className="App">
+        <Navbar />
+        <main className="App-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
+            <Route path="/threat-detection" element={<ProtectedRoute element={ThreatDetection} />} />
+            <Route path="/alerts" element={<ProtectedRoute element={Alerts} />} />
+            <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
+            <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
+            <Route path="/ioc-scan" element={<ProtectedRoute element={IOCScan} />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </Router>
   );
 };

@@ -45,7 +45,7 @@ const Login: React.FC = () => {
 
   return (
     <div className={styles.loginContainer}>
-      <h2>Login to Your Account</h2>
+      <h2>Login into Dashboard</h2>
       <div className={styles.inputContainer}>
         <input
           className={styles.inputField}

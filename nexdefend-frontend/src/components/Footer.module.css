@@ -8,14 +8,8 @@
   font-size: 0.9em;
   font-family: Arial, sans-serif;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.footer.visible {
-  opacity: 1;
-  transform: translateY(0);
+  width: 100%;
+  position: relative; /* This allows it to adjust based on content */
 }
 
 .footer p {
