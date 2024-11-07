@@ -32,7 +32,7 @@ var (
 
 func main() {
 	logging.InitLogging()
-	db.InitDB()
+	database := db.InitDB()
 	defer db.CloseDB()
 
 	if err := startOsqueryDaemon(); err != nil {
@@ -40,8 +40,8 @@ func main() {
 	}
 	time.Sleep(2 * time.Second)
 
-	// Start Suricata threat detection
-	go threat.StartThreatDetection()
+	// Start Suricata threat detection with the database as EventStore
+	go threat.StartThreatDetection(database)
 
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)
@@ -56,12 +56,15 @@ func main() {
 	api.Use(auth.JWTMiddleware)
 
 	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("POST")
+	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("GET")
 	api.HandleFunc("/incident-report", incident.ReportHandler).Methods("POST")
+	api.HandleFunc("/incident-report", incident.ReportHandler).Methods("GET")
 	api.HandleFunc("/vulnerability-scan", vulnerability.ScanHandler).Methods("POST")
 	api.HandleFunc("/ioc-scan", osquery.IOCScanHandler).Methods("GET")
 	api.HandleFunc("/audit", compliance.AuditHandler).Methods("GET")
 	api.HandleFunc("/alerts", AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
+	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("GET")
 
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")

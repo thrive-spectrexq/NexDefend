@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS alerts CASCADE;
 DROP TABLE IF EXISTS threats CASCADE;
 DROP TABLE IF EXISTS uploaded_files CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS suricata_events CASCADE;
 
 -- Create 'users' table to store user information
 CREATE TABLE users (
@@ -14,6 +15,17 @@ CREATE TABLE users (
     password VARCHAR(100) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'user')), -- 'admin' or 'user'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create 'suricata_events' table to store for threat detection
+CREATE TABLE suricata_events (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP,
+    event_type VARCHAR(50),
+    http JSONB,
+    tls JSONB,
+    dns JSONB,
+    alert JSONB
 );
 
 -- Create 'threats' table to store detected threats
@@ -60,3 +72,4 @@ CREATE INDEX idx_threats_detected_at ON threats (detected_at);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);
 CREATE INDEX idx_uploaded_files_filename ON uploaded_files (filename);
 CREATE INDEX idx_osquery_results_executed_at ON osquery_results (executed_at);
+CREATE INDEX idx_suricata_events_event_type ON suricata_events (event_type);
