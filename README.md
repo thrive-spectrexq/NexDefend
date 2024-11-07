@@ -2,26 +2,7 @@
 
 **NexDefend** is a cutting-edge cybersecurity platform designed to provide real-time monitoring, AI-powered threat detection, and automated incident response. With a focus on protecting systems from emerging cyber threats, NexDefend offers robust security features and comprehensive insights for proactive defense.
 
-## Key Features
-
-- AI-driven threat detection and analysis
-- Real-time system monitoring and alerts
-- Automated vulnerability assessments
-- Incident management and response
-- Compliance and security auditing
-
-### Prerequisites
-
-Before setting up NexDefend, ensure the following are installed on your system:
-
-- **Go** (1.22+)
-- **Python** (3.11+)
-- **Node.js** (20+)
-- **npm** (10+)
-- **PostgreSQL** (16+)
-- **Docker**
-
-### Setup Instructions
+## Setup Instructions
 
 ### Option 1: Running with Docker Compose
 
