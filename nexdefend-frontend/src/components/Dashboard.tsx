@@ -10,10 +10,9 @@ import {
   Title,
   Tooltip,
 } from 'chart.js';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bar, Line, Pie } from 'react-chartjs-2';
+import React, { useEffect, useState } from 'react';
+import { Bar, Pie } from 'react-chartjs-2';
 import styles from './Dashboard.module.css';
-import IOCScan from './IOCScan';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 
@@ -32,185 +31,127 @@ interface Alert {
   level: string;
 }
 
-interface Upload {
-  id: string;
-  filename: string;
-  timestamp: string;
-}
-
-interface Audit {
-  id: string;
-  status: string;
-  findings: string;
-  date: string;
-}
-
 const Dashboard: React.FC = () => {
-  const [threats, setThreats] = useState<Threat[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [uploads, setUploads] = useState<Upload[]>([]);
-  const [audits, setAudits] = useState<Audit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [threatData, setThreatData] = useState<Threat[]>([]);
+  const [alertData, setAlertData] = useState<Alert[]>([]);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error("Authentication token not found");
+  // Fetch latest data from backend periodically
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [threatRes, alertRes] = await Promise.all([
+          fetch(`${API_URL}/threats`),
+          fetch(`${API_URL}/alerts`),
+        ]);
+        const threats = await threatRes.json();
+        const alerts = await alertRes.json();
 
-      const fetchWithAuth = async (endpoint: string) => {
-        const response = await fetch(`${API_URL}${endpoint}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
+        setThreatData(threats);
+        setAlertData(alerts);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
-        }
+    fetchData();
+    const intervalId = setInterval(fetchData, 5000); // Fetch every 5 seconds
 
-        return response.json();
-      };
-
-      const [threatsData, alertsData, uploadsData, auditsData] = await Promise.all([
-        fetchWithAuth("/api/v1/threats"),
-        fetchWithAuth("/api/v1/alerts"),
-        fetchWithAuth("/api/v1/upload"),
-        fetchWithAuth("/api/v1/audit"),
-      ]);
-
-      setThreats(threatsData || []);
-      setAlerts(Array.isArray(alertsData) ? alertsData : []);
-      setUploads(uploadsData || []);
-      setAudits(auditsData || []);
-    } catch (err: any) {
-      setError("Failed to fetch dashboard data.");
-      setThreats([]);
-      setAlerts([]);
-      setUploads([]);
-      setAudits([]);
-      console.error("Error fetching data:", err);
-    } finally {
-      setLoading(false);
-    }
+    return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // Data processing for charts
+  const severityCounts = threatData.reduce((acc: Record<string, number>, threat) => {
+    acc[threat.severity] = (acc[threat.severity] || 0) + 1;
+    return acc;
+  }, {});
 
-  const alertPieData = useMemo(() => {
-    const alertCounts = alerts.reduce(
-      (counts, alert) => {
-        if (alert.level === 'Critical') counts.critical += 1;
-        else if (alert.level === 'Medium') counts.medium += 1;
-        else if (alert.level === 'Low') counts.low += 1;
-        return counts;
-      },
-      { critical: 0, medium: 0, low: 0 }
-    );
+  const alertCounts = alertData.reduce((acc: Record<string, number>, alert) => {
+    acc[alert.level] = (acc[alert.level] || 0) + 1;
+    return acc;
+  }, {});
 
-    return {
-      labels: ['Critical', 'Medium', 'Low'],
-      datasets: [
-        {
-          data: [alertCounts.critical, alertCounts.medium, alertCounts.low],
-          backgroundColor: ['#FF6384', '#FFCE56', '#36A2EB'],
-        },
-      ],
-    };
-  }, [alerts]);
+  // Chart configurations
+  const threatChartData = {
+    labels: Object.keys(severityCounts),
+    datasets: [{
+      label: 'Threat Severity Levels',
+      data: Object.values(severityCounts),
+      backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+    }],
+  };
 
-  const threatBarData = useMemo(() => {
-    const threatSeverityCounts = threats.reduce(
-      (counts, threat) => {
-        if (threat.severity === 'Critical') counts.critical += 1;
-        else if (threat.severity === 'High') counts.high += 1;
-        else if (threat.severity === 'Medium') counts.medium += 1;
-        else counts.low += 1;
-        return counts;
-      },
-      { critical: 0, high: 0, medium: 0, low: 0 }
-    );
+  const alertChartData = {
+    labels: Object.keys(alertCounts),
+    datasets: [{
+      label: 'Alert Levels',
+      data: Object.values(alertCounts),
+      backgroundColor: ['#4BC0C0', '#FF9F40', '#FF6384'],
+    }],
+  };
 
-    return {
-      labels: ['Critical', 'High', 'Medium', 'Low'],
-      datasets: [
-        {
-          label: 'Threat Severity',
-          data: [
-            threatSeverityCounts.critical,
-            threatSeverityCounts.high,
-            threatSeverityCounts.medium,
-            threatSeverityCounts.low,
-          ],
-          backgroundColor: ['#FF6384', '#FF9F40', '#FFCE56', '#36A2EB'],
-        },
-      ],
-    };
-  }, [threats]);
-
-  const uploadLineData = useMemo(() => {
-    const uploadDates = uploads.map(upload => new Date(upload.timestamp).toLocaleDateString());
-    const uploadCounts = uploadDates.reduce((acc, date) => {
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return {
-      labels: Object.keys(uploadCounts).length ? Object.keys(uploadCounts) : ['No Data'],
-      datasets: [
-        {
-          label: 'Uploads Over Time',
-          data: Object.keys(uploadCounts).length ? Object.values(uploadCounts) : [0],
-          fill: false,
-          borderColor: '#36A2EB',
-        },
-      ],
-    };
-  }, [uploads]);
+  // Fallback data for charts if no data is fetched
+  const fallbackChartData = {
+    labels: ['No Data'],
+    datasets: [{
+      label: 'No Data Available',
+      data: [1],
+      backgroundColor: ['#e0e0e0'],
+    }],
+  };
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.dashboard}>
       <h2>System Overview</h2>
+      
+      <div className={styles.chartContainer}>
+        <div className={styles.chart}>
+          <h3>Threat Severity Distribution</h3>
+          {threatData.length > 0 ? (
+            <Pie data={threatChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          ) : (
+            <Pie data={fallbackChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          )}
+        </div>
+        
+        <div className={styles.chart}>
+          <h3>Alert Level Distribution</h3>
+          {alertData.length > 0 ? (
+            <Bar data={alertChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          ) : (
+            <Bar data={fallbackChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          )}
+        </div>
+      </div>
 
-      {loading ? (
-        <p>Loading data...</p>
-      ) : error ? (
-        <p className={styles.error}>{error}</p>
-      ) : (
-        <>
-          <section className={styles.section}>
-            <h3>Alerts Overview</h3>
-            <Pie data={alertPieData} />
-          </section>
+      <div className={styles.eventList}>
+        <h3>Recent Threats</h3>
+        {threatData.length > 0 ? (
+          <ul>
+            {threatData.slice(0, 5).map(threat => (
+              <li key={threat.id}>
+                <strong>{threat.severity}</strong> - {threat.description} at {new Date(threat.timestamp).toLocaleString()}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No threats available.</p>
+        )}
+      </div>
 
-          <section className={styles.section}>
-            <h3>Threats by Severity</h3>
-            <Bar data={threatBarData} />
-          </section>
-
-          <section className={styles.section}>
-            <h3>Uploads Over Time</h3>
-            <Line data={uploadLineData} />
-          </section>
-
-          <section className={styles.section}>
-            <h3>Compliance Audits</h3>
-            <p>Pending actions: {audits.filter(audit => audit.status === "Pending").length}</p>
-            <ul>
-              {audits.map(audit => (
-                <li key={audit.id}>
-                  Findings: {audit.findings} - Status: {audit.status} - Date: {new Date(audit.date).toLocaleString()}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className={styles.section}>
-            <h3>IOC Scan</h3>
-            <IOCScan />
-          </section>
-        </>
-      )}
+      <div className={styles.eventList}>
+        <h3>Recent Alerts</h3>
+        {alertData.length > 0 ? (
+          <ul>
+            {alertData.slice(0, 5).map(alert => (
+              <li key={alert.id}>
+                <strong>{alert.level}</strong> - {alert.message}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No alerts available.</p>
+        )}
+      </div>
     </div>
   );
 };
