@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-const suricataLogPath = "/var/log/suricata/eve.json"
+const (
+	defaultLogPath       = "/var/log/suricata/eve.json"
+	sourceInstallLogPath = "/usr/local/var/log/suricata/eve.json"
+)
 
 // SuricataEvent represents a structure for parsed Suricata JSON logs
 type SuricataEvent struct {
@@ -30,14 +33,68 @@ type SuricataEvent struct {
 		NotValidAfter  string `json:"tls.notvalidafter"`
 	} `json:"tls"`
 	DNS struct {
-		Query  string `json:"query"`
-		Answer string `json:"answer"`
+		Query  interface{} `json:"query"` // Now an interface to handle both string and array
+		Answer string      `json:"answer"`
 	} `json:"dns"`
 	Alert struct {
 		SignatureID int    `json:"signature_id"`
 		Signature   string `json:"signature"`
 		Category    string `json:"category"`
 	} `json:"alert"`
+}
+
+// GetSuricataLogPath returns the appropriate Suricata log path based on availability
+func GetSuricataLogPath() (string, error) {
+	if _, err := os.Stat(defaultLogPath); err == nil {
+		return defaultLogPath, nil
+	} else if _, err := os.Stat(sourceInstallLogPath); err == nil {
+		return sourceInstallLogPath, nil
+	}
+	return "", fmt.Errorf("no Suricata log file found at %s or %s", defaultLogPath, sourceInstallLogPath)
+}
+
+// GetSuricataCommand returns the appropriate Suricata binary and config path
+func GetSuricataCommand() (*exec.Cmd, error) {
+	var suricataPath, configPath, iface string
+
+	// Determine binary and config paths
+	suricataPath, configPath, iface, err := findSuricataPaths()
+	if err != nil {
+		return nil, err
+	}
+
+	return exec.Command(suricataPath, "-c", configPath, "-i", iface), nil
+}
+
+// findSuricataPaths checks standard paths for Suricata binary, config, and network interface
+func findSuricataPaths() (string, string, string, error) {
+	var suricataPath, configPath, iface string
+
+	if _, err := os.Stat("/usr/bin/suricata"); err == nil {
+		suricataPath = "/usr/bin/suricata"
+	} else if _, err := os.Stat("/usr/local/bin/suricata"); err == nil {
+		suricataPath = "/usr/local/bin/suricata"
+	} else {
+		return "", "", "", fmt.Errorf("suricata binary not found in standard paths")
+	}
+
+	if _, err := os.Stat("/etc/suricata/suricata.yaml"); err == nil {
+		configPath = "/etc/suricata/suricata.yaml"
+	} else if _, err := os.Stat("/usr/local/etc/suricata/suricata.yaml"); err == nil {
+		configPath = "/usr/local/etc/suricata/suricata.yaml"
+	} else {
+		return "", "", "", fmt.Errorf("suricata config file not found in standard paths")
+	}
+
+	if _, err := os.Stat("/sys/class/net/eth0"); err == nil {
+		iface = "eth0"
+	} else if _, err := os.Stat("/sys/class/net/wlan0"); err == nil {
+		iface = "wlan0"
+	} else {
+		return "", "", "", fmt.Errorf("no suitable network interface found")
+	}
+
+	return suricataPath, configPath, iface, nil
 }
 
 // StartThreatDetection initializes and monitors Suricata events with a provided EventStore
@@ -48,7 +105,10 @@ func StartThreatDetection(store EventStore) {
 
 // startSuricataDaemon launches the Suricata process
 func startSuricataDaemon() {
-	cmd := exec.Command("suricata", "-c", "/etc/suricata/suricata.yaml", "-i", "eth0")
+	cmd, err := GetSuricataCommand()
+	if err != nil {
+		log.Fatalf("Failed to configure Suricata: %v", err)
+	}
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("Failed to start Suricata: %v", err)
 	}
@@ -63,12 +123,17 @@ func startSuricataDaemon() {
 
 // monitorSuricataEvents reads and processes Suricata’s JSON logs in real-time
 func monitorSuricataEvents(store EventStore) {
+	suricataLogPath, err := GetSuricataLogPath()
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+		return
+	}
+
 	for {
 		file, err := os.Open(suricataLogPath)
 		if err != nil {
 			log.Fatalf("Failed to open Suricata log file: %v", err)
 		}
-		defer file.Close()
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
@@ -80,7 +145,8 @@ func monitorSuricataEvents(store EventStore) {
 				continue
 			}
 
-			// Store the event using the provided store instance
+			// Process and store the event
+			processEvent(event)
 			if err := store.StoreSuricataEvent(event); err != nil {
 				log.Printf("Failed to store Suricata event: %v", err)
 			}
@@ -90,6 +156,7 @@ func monitorSuricataEvents(store EventStore) {
 			log.Printf("Error reading log file: %v", err)
 		}
 
+		file.Close()
 		time.Sleep(2 * time.Second) // Avoid high CPU usage
 	}
 }
@@ -124,7 +191,16 @@ func logTLSEvent(event SuricataEvent) {
 
 // logDNSEvent processes DNS events from Suricata
 func logDNSEvent(event SuricataEvent) {
-	log.Printf("DNS Event - Query: %s, Answer: %s", event.DNS.Query, event.DNS.Answer)
+	switch query := event.DNS.Query.(type) {
+	case string:
+		log.Printf("DNS Event - Query: %s, Answer: %s", query, event.DNS.Answer)
+	case []interface{}:
+		for _, q := range query {
+			log.Printf("DNS Event - Query: %v, Answer: %s", q, event.DNS.Answer)
+		}
+	default:
+		log.Printf("DNS Event - Unexpected Query type: %v, Answer: %s", query, event.DNS.Answer)
+	}
 }
 
 // logAlertEvent processes IDS/IPS alert events

@@ -1,6 +1,16 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"os/signal"
+	"time"
+
 	"github.com/thrive-spectrexq/NexDefend/internal/ai"
 	"github.com/thrive-spectrexq/NexDefend/internal/auth"
 	"github.com/thrive-spectrexq/NexDefend/internal/compliance"
@@ -12,15 +22,6 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 	"github.com/thrive-spectrexq/NexDefend/internal/vulnerability"
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"os/exec"
-	"os/signal"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -56,15 +57,12 @@ func main() {
 	api.Use(auth.JWTMiddleware)
 
 	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("POST")
-	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("GET")
 	api.HandleFunc("/incident-report", incident.ReportHandler).Methods("POST")
-	api.HandleFunc("/incident-report", incident.ReportHandler).Methods("GET")
 	api.HandleFunc("/vulnerability-scan", vulnerability.ScanHandler).Methods("POST")
 	api.HandleFunc("/ioc-scan", osquery.IOCScanHandler).Methods("GET")
 	api.HandleFunc("/audit", compliance.AuditHandler).Methods("GET")
 	api.HandleFunc("/alerts", AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
-	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("GET")
 
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")
