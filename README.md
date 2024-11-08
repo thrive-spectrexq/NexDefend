@@ -1,6 +1,6 @@
 # NexDefend
 
-**NexDefend** is a cutting-edge cybersecurity platform designed to provide real-time monitoring, AI-powered threat detection, and automated incident response. With a focus on protecting systems from emerging cyber threats, NexDefend offers robust security features and comprehensive insights for proactive defense.
+**NexDefend** is designed to provide real-time system and monitoring, logs, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata, stores and displays the results with dashboards.
 
 ## Prerequisites
 
@@ -98,7 +98,7 @@
 
 ### In Development
 
-NexDefend aims to simplify and enhance cybersecurity operations through advanced automation and AI, making it easier for organizations to stay ahead of cyber threats.
+- NexDefend Real-Time System Monitoring and Threat Detection
 
 ---
 

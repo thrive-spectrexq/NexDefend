@@ -8,7 +8,6 @@ const Home: React.FC = () => {
   const features = [
     "Comprehensive Threat Detection",
     "Real-Time Alerts and Monitoring",
-    "Incident Management Tools",
     "Compliance Audits and Reports",
     "User-Friendly Dashboard"
   ];
@@ -16,11 +15,10 @@ const Home: React.FC = () => {
   return (
     <div className={styles.homeContainer}>
       <section className={styles.heroSection}>
-        <h1>NexDefend Threat Detection and Incident Response Management</h1>
-        <p>NexDefend is a cutting-edge cybersecurity platform designed to provide real-time monitoring, 
-          AI-powered threat detection, and automated incident response. With a focus on protecting 
-          systems from emerging cyber threats, NexDefend offers robust security features and 
-          comprehensive insights for proactive defense.</p>
+        <h1>NexDefend Real-Time System Monitoring and Threat Detection</h1>
+        <p>NexDefend is designed to provide real-time system and monitoring, 
+          logs, AI-powered threat detection, alerts and automated incident response management 
+          that traces from Osquery and Suricata, stores and displays the results with dashboards.</p>
         <button onClick={() => navigate('/login')} className={styles.loginButton}>Continue to Dashboard</button>
       </section>
       
