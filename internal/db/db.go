@@ -1,7 +1,7 @@
 package db
 
 import (
-	"NexDefend/internal/threat"
+	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 	"database/sql"
 	"encoding/json"
 	"fmt"

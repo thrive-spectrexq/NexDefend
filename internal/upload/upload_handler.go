@@ -1,7 +1,7 @@
 package upload
 
 import (
-	"NexDefend/internal/db"
+	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"fmt"
 	"io"
 	"log"

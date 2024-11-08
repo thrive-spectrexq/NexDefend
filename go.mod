@@ -1,4 +1,4 @@
-module NexDefend
+module github.com/thrive-spectrexq/NexDefend
 
 go 1.22.5
 

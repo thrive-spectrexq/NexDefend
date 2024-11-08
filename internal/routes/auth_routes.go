@@ -3,8 +3,8 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
-	"NexDefend/internal/auth"
-	"NexDefend/internal/models"
+	"github.com/thrive-spectrexq/NexDefend/internal/auth"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
