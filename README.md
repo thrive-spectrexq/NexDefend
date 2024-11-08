@@ -101,4 +101,7 @@
 NexDefend aims to simplify and enhance cybersecurity operations through advanced automation and AI, making it easier for organizations to stay ahead of cyber threats.
 
 ---
-Stay tuned for more updates!
+
+### LICENSE
+
+- This project is licensed under the [GPL-3.0 license](LICENSE)
