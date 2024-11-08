@@ -2,6 +2,14 @@
 
 **NexDefend** is a cutting-edge cybersecurity platform designed to provide real-time monitoring, AI-powered threat detection, and automated incident response. With a focus on protecting systems from emerging cyber threats, NexDefend offers robust security features and comprehensive insights for proactive defense.
 
+## Prerequisites
+
+- Before setting up NexDefend, ensure the following are installed on your system:
+
+- [Osquery](https://osquery.io/downloads/official/5.14.1)
+- [Suricata](https://suricata.io/download/)
+- [PostgreSQL](https://www.postgresql.org/download/)
+
 ## Setup Instructions
 
 ### Option 1: Running with Docker Compose
