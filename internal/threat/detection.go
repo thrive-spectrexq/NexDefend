@@ -33,7 +33,7 @@ type SuricataEvent struct {
 		NotValidAfter  string `json:"tls.notvalidafter"`
 	} `json:"tls"`
 	DNS struct {
-		Query  interface{} `json:"query"` // Now an interface to handle both string and array
+		Query  interface{} `json:"query"`
 		Answer string      `json:"answer"`
 	} `json:"dns"`
 	Alert struct {
@@ -57,7 +57,6 @@ func GetSuricataLogPath() (string, error) {
 func GetSuricataCommand() (*exec.Cmd, error) {
 	var suricataPath, configPath, iface string
 
-	// Determine binary and config paths
 	suricataPath, configPath, iface, err := findSuricataPaths()
 	if err != nil {
 		return nil, err
@@ -121,6 +120,28 @@ func startSuricataDaemon() {
 	}()
 }
 
+// ConvertMapToSuricataEvent converts a map to a SuricataEvent struct, parsing timestamps.
+func ConvertMapToSuricataEvent(event map[string]interface{}) (SuricataEvent, error) {
+	var suricataEvent SuricataEvent
+	eventData, err := json.Marshal(event)
+	if err != nil {
+		return suricataEvent, fmt.Errorf("failed to marshal map to JSON: %v", err)
+	}
+
+	if err := json.Unmarshal(eventData, &suricataEvent); err != nil {
+		return suricataEvent, fmt.Errorf("failed to unmarshal JSON to SuricataEvent: %v", err)
+	}
+
+	// Parse and validate the timestamp
+	if parsedTime, err := parseTimestamp(suricataEvent.Timestamp); err == nil {
+		suricataEvent.Timestamp = parsedTime.Format(time.RFC3339)
+	} else {
+		log.Printf("Warning: Invalid timestamp format: %v", err)
+	}
+
+	return suricataEvent, nil
+}
+
 // monitorSuricataEvents reads and processes Suricata’s JSON logs in real-time
 func monitorSuricataEvents(store EventStore) {
 	suricataLogPath, err := GetSuricataLogPath()
@@ -137,7 +158,7 @@ func monitorSuricataEvents(store EventStore) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			var event SuricataEvent
+			var event map[string]interface{}
 			line := scanner.Text()
 
 			if err := json.Unmarshal([]byte(line), &event); err != nil {
@@ -145,9 +166,16 @@ func monitorSuricataEvents(store EventStore) {
 				continue
 			}
 
-			// Process and store the event
-			processEvent(event)
-			if err := store.StoreSuricataEvent(event); err != nil {
+			handleSuricataEvent(event)
+
+			// Convert the map to a SuricataEvent struct before storing
+			suricataEvent, err := ConvertMapToSuricataEvent(event)
+			if err != nil {
+				log.Printf("Failed to convert map to SuricataEvent: %v", err)
+				continue
+			}
+
+			if err := store.StoreSuricataEvent(suricataEvent); err != nil {
 				log.Printf("Failed to store Suricata event: %v", err)
 			}
 		}
@@ -157,56 +185,46 @@ func monitorSuricataEvents(store EventStore) {
 		}
 
 		file.Close()
-		time.Sleep(2 * time.Second) // Avoid high CPU usage
+		time.Sleep(2 * time.Second)
 	}
 }
 
-// processEvent handles each parsed event from Suricata
-func processEvent(event SuricataEvent) {
-	switch event.EventType {
-	case "http":
-		logHTTPEvent(event)
-	case "tls":
-		logTLSEvent(event)
-	case "dns":
-		logDNSEvent(event)
+// handleSuricataEvent processes Suricata events based on their type
+func handleSuricataEvent(event map[string]interface{}) {
+	eventType, ok := event["event_type"].(string)
+	if !ok {
+		log.Println("Unknown event type")
+		return
+	}
+
+	switch eventType {
 	case "alert":
-		logAlertEvent(event)
-	default:
-		log.Printf("Unhandled event type: %s", event.EventType)
-	}
-}
-
-// logHTTPEvent processes HTTP events from Suricata
-func logHTTPEvent(event SuricataEvent) {
-	log.Printf("HTTP Event - Hostname: %s, URL: %s, Method: %s",
-		event.HTTP.Hostname, event.HTTP.URL, event.HTTP.Method)
-}
-
-// logTLSEvent processes TLS/SSL events from Suricata
-func logTLSEvent(event SuricataEvent) {
-	log.Printf("TLS Event - SNI: %s, Cipher: %s, Subject: %s, IssuerDN: %s",
-		event.TLS.SNI, event.TLS.Cipher, event.TLS.Subject, event.TLS.IssuerDN)
-}
-
-// logDNSEvent processes DNS events from Suricata
-func logDNSEvent(event SuricataEvent) {
-	switch query := event.DNS.Query.(type) {
-	case string:
-		log.Printf("DNS Event - Query: %s, Answer: %s", query, event.DNS.Answer)
-	case []interface{}:
-		for _, q := range query {
-			log.Printf("DNS Event - Query: %v, Answer: %s", q, event.DNS.Answer)
+		// Handle alert events
+	case "dns":
+		queryType, _ := event["dns"].(map[string]interface{})["query_type"].(string)
+		answer, _ := event["dns"].(map[string]interface{})["answer"].(string)
+		if queryType != "" && answer != "" {
+			log.Printf("DNS Event - Query type: %s, Answer: %s", queryType, answer)
+		} else {
+			log.Println("DNS Event - Incomplete data")
 		}
+	case "tls":
+		sni, _ := event["tls"].(map[string]interface{})["sni"].(string)
+		cipher, _ := event["tls"].(map[string]interface{})["cipher"].(string)
+		subject, _ := event["tls"].(map[string]interface{})["subject"].(string)
+		issuerDN, _ := event["tls"].(map[string]interface{})["issuerdn"].(string)
+		if sni != "" || cipher != "" || subject != "" || issuerDN != "" {
+			log.Printf("TLS Event - SNI: %s, Cipher: %s, Subject: %s, IssuerDN: %s", sni, cipher, subject, issuerDN)
+		} else {
+			log.Println("TLS Event - Incomplete data")
+		}
+	case "flow":
+		// Optionally handle flow events or ignore them
+	case "quic":
+		// Optionally handle quic events or ignore them
 	default:
-		log.Printf("DNS Event - Unexpected Query type: %v, Answer: %s", query, event.DNS.Answer)
+		log.Printf("Unhandled event type: %s", eventType)
 	}
-}
-
-// logAlertEvent processes IDS/IPS alert events
-func logAlertEvent(event SuricataEvent) {
-	log.Printf("Alert - Signature ID: %d, Signature: %s, Category: %s",
-		event.Alert.SignatureID, event.Alert.Signature, event.Alert.Category)
 }
 
 // parseTimestamp converts a timestamp string to time.Time for consistent storage

@@ -17,7 +17,7 @@ const Home: React.FC = () => {
       <section className={styles.heroSection}>
         <h1>NexDefend Real-Time System Monitoring and Threat Detection</h1>
         <p>NexDefend is designed to provide real-time system and monitoring, 
-          logs, AI-powered threat detection, alerts and automated incident response management 
+          AI-powered threat detection, alerts and automated incident response management 
           that traces from Osquery and Suricata, stores and displays the results with dashboards.</p>
         <button onClick={() => navigate('/login')} className={styles.loginButton}>Continue to Dashboard</button>
       </section>

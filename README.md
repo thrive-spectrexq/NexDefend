@@ -1,6 +1,6 @@
 # NexDefend
 
-**NexDefend** is designed to provide real-time system and monitoring, logs, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata, stores and displays the results with dashboards.
+**NexDefend** is designed to provide real-time system and monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata, stores and displays the results with dashboards.
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@
 1. Run the `nexdefend_setup.ps1` script:
 
     ```powershell
-    .\nexdefend_setup.ps1
+    .\nexdefend_setup.ps1 initdb
     ```
 
     ```powershell
@@ -51,7 +51,7 @@
     ```
 
     ```bash
-    ./nexdefend_setup.sh
+    ./nexdefend_setup.sh initdb
     ```
 
     ```bash

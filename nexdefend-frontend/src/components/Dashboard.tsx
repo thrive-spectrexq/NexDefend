@@ -34,6 +34,7 @@ interface Alert {
 const Dashboard: React.FC = () => {
   const [threatData, setThreatData] = useState<Threat[]>([]);
   const [alertData, setAlertData] = useState<Alert[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Fetch latest data from backend periodically
   useEffect(() => {
@@ -43,13 +44,20 @@ const Dashboard: React.FC = () => {
           fetch(`${API_URL}/threats`),
           fetch(`${API_URL}/alerts`),
         ]);
+
+        if (!threatRes.ok || !alertRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
         const threats = await threatRes.json();
         const alerts = await alertRes.json();
 
         setThreatData(threats);
         setAlertData(alerts);
+        setFetchError(null); // Reset error on successful fetch
       } catch (error) {
         console.error("Error fetching data:", error);
+        setFetchError("Error fetching data. Please try again later.");
       }
     };
 
@@ -89,36 +97,24 @@ const Dashboard: React.FC = () => {
     }],
   };
 
-  // Fallback data for charts if no data is fetched
-  const fallbackChartData = {
-    labels: ['No Data'],
-    datasets: [{
-      label: 'No Data Available',
-      data: [1],
-      backgroundColor: ['#e0e0e0'],
-    }],
-  };
-
   return (
     <div className={styles.dashboard}>
       <h2>System Overview</h2>
       
+      {fetchError && <p className={styles.error}>{fetchError}</p>}
+
       <div className={styles.chartContainer}>
         <div className={styles.chart}>
           <h3>Threat Severity Distribution</h3>
-          {threatData.length > 0 ? (
+          {threatData.length > 0 && (
             <Pie data={threatChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-          ) : (
-            <Pie data={fallbackChartData} options={{ responsive: true, maintainAspectRatio: false }} />
           )}
         </div>
         
         <div className={styles.chart}>
           <h3>Alert Level Distribution</h3>
-          {alertData.length > 0 ? (
+          {alertData.length > 0 && (
             <Bar data={alertChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-          ) : (
-            <Bar data={fallbackChartData} options={{ responsive: true, maintainAspectRatio: false }} />
           )}
         </div>
       </div>

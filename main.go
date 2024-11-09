@@ -61,7 +61,8 @@ func main() {
 	api.HandleFunc("/vulnerability-scan", vulnerability.ScanHandler).Methods("POST")
 	api.HandleFunc("/ioc-scan", osquery.IOCScanHandler).Methods("GET")
 	api.HandleFunc("/audit", compliance.AuditHandler).Methods("GET")
-	api.HandleFunc("/alerts", AlertsHandler).Methods("GET")
+	api.HandleFunc("/threats", threat.ThreatsHandler).Methods("GET")
+	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
 
 	// Home Endpoint
