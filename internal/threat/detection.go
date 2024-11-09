@@ -123,23 +123,37 @@ func startSuricataDaemon() {
 // ConvertMapToSuricataEvent converts a map to a SuricataEvent struct, parsing timestamps.
 func ConvertMapToSuricataEvent(event map[string]interface{}) (SuricataEvent, error) {
 	var suricataEvent SuricataEvent
+
+	// Parse and validate the timestamp from the map
+	if timestamp, ok := event["timestamp"].(string); ok {
+		if parsedTime, err := parseTimestamp(timestamp); err == nil {
+			suricataEvent.Timestamp = parsedTime.Format(time.RFC3339)
+		} else {
+			log.Printf("Warning: Invalid timestamp format: %v", err)
+		}
+	} else {
+		return suricataEvent, fmt.Errorf("missing or invalid timestamp field")
+	}
+
+	// Convert other fields by unmarshalling directly from the event map to avoid double parsing
 	eventData, err := json.Marshal(event)
 	if err != nil {
 		return suricataEvent, fmt.Errorf("failed to marshal map to JSON: %v", err)
 	}
-
 	if err := json.Unmarshal(eventData, &suricataEvent); err != nil {
 		return suricataEvent, fmt.Errorf("failed to unmarshal JSON to SuricataEvent: %v", err)
 	}
 
-	// Parse and validate the timestamp
-	if parsedTime, err := parseTimestamp(suricataEvent.Timestamp); err == nil {
-		suricataEvent.Timestamp = parsedTime.Format(time.RFC3339)
-	} else {
-		log.Printf("Warning: Invalid timestamp format: %v", err)
-	}
-
 	return suricataEvent, nil
+}
+
+// parseTimestamp converts a timestamp string to time.Time for consistent storage
+func parseTimestamp(timestamp string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339, timestamp)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid timestamp format: %v", err)
+	}
+	return t, nil
 }
 
 // monitorSuricataEvents reads and processes Suricata’s JSON logs in real-time
@@ -222,16 +236,9 @@ func handleSuricataEvent(event map[string]interface{}) {
 		// Optionally handle flow events or ignore them
 	case "quic":
 		// Optionally handle quic events or ignore them
+	case "stats":
+		// Optionally handle stats events or ignore them
 	default:
 		log.Printf("Unhandled event type: %s", eventType)
 	}
-}
-
-// parseTimestamp converts a timestamp string to time.Time for consistent storage
-func parseTimestamp(timestamp string) (time.Time, error) {
-	t, err := time.Parse(time.RFC3339, timestamp)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("invalid timestamp format: %v", err)
-	}
-	return t, nil
 }

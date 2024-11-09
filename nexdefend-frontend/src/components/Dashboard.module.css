@@ -1,131 +1,113 @@
 .dashboard {
-    padding: 20px;
-    background-color: #f4f6f9;
-    min-height: 100vh;
-    display: flex;
+  padding: 20px;
+  background-color: #f4f6f9;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.chartContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.chart {
+  flex: 1;
+  min-width: 300px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.chart:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.eventList {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.eventList h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.eventList ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.eventList ul li {
+  padding: 10px;
+  margin-bottom: 5px;
+  background-color: #f4f6f9;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.eventList ul li:hover {
+  background-color: #e2e6ec;
+}
+
+.error {
+  color: #ff4c4c;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .chartContainer {
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
   }
-  
-  /* Styling for each chart container */
-  .chartContainer {
-    display: flex;
-    justify-content: space-between;
-    gap: 30px;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
-    width: 100%;
-  }
-  
-  /* Styling for individual chart boxes */
-  .chart {
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    width: 45%;
-    min-width: 300px;
-    max-width: 600px;
-    text-align: center;
-  }
-  
-  /* Title for charts */
-  .chart h3 {
-    color: #333;
-    font-size: 1.4rem;
-    margin-bottom: 15px;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  
-  /* Event list container */
-  .eventList {
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    width: 80%;
-    margin: 20px 0;
-    max-width: 800px;
-    text-align: left;
-  }
-  
-  .eventList h3 {
-    color: #333;
-    font-size: 1.4rem;
-    margin-bottom: 15px;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  
-  /* List styling */
-  .eventList ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .eventList li {
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-    font-size: 1rem;
-    color: #333;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease;
-  }
-  
-  /* Hover effect for list items */
-  .eventList li:hover {
-    background-color: #e3f2fd;
-    cursor: pointer;
-  }
-  
-  .eventList li strong {
-    color: #1976d2;
-    font-weight: bold;
-  }
-  
-  /* Responsive design for smaller screens */
-  @media (max-width: 768px) {
-    .chartContainer {
-      flex-direction: column;
-      align-items: center;
-    }
-  
-    .chart {
-      width: 90%;
-      margin-bottom: 20px;
-    }
-  
-    .eventList {
-      width: 90%;
-    }
-  }
-  
-  /* Color Palette */
-  .pieChart {
-    background-color: #f44336; /* Red */
-    color: #fff;
-  }
-  
-  .barChart {
-    background-color: #2196f3; /* Blue */
-    color: #fff;
-  }
-  
-  .lineChart {
-    background-color: #4caf50; /* Green */
-    color: #fff;
-  }
-  
-  .dashboard h2 {
-    font-size: 2rem;
-    color: #1976d2;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-bottom: 30px;
-    text-align: center;
-  }
-  
+}
+
+/* Colors for Pie and Bar charts */
+.pieChart {
+  background-color: rgba(255, 99, 132, 0.2);
+  border: 1px solid rgba(255, 99, 132, 0.5);
+}
+
+.barChart {
+  background-color: rgba(75, 192, 192, 0.2);
+  border: 1px solid rgba(75, 192, 192, 0.5);
+}
+
+/* Loading and Placeholder Styles */
+.loading {
+  font-size: 1rem;
+  color: #666;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.noData {
+  font-size: 1rem;
+  color: #999;
+  text-align: center;
+  margin-top: 10px;
+}
