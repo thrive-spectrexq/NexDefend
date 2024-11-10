@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 
 const API_URL = "http://localhost:8080";
@@ -70,6 +70,9 @@ const Login: React.FC = () => {
         {loading ? 'Logging in...' : 'Login'}
       </button>
       {error && <p className={styles.errorMessage}>{error}</p>}
+      <div className={styles.registerPrompt}>
+        <p>Don't have an account? <Link to="/register" className={styles.registerLink}>Register</Link></p>
+      </div>
     </div>
   );
 };

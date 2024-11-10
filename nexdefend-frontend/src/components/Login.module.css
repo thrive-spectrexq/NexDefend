@@ -2,13 +2,18 @@
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px;
   background: linear-gradient(145deg, #fdfbfb, #ebedee);
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
   text-align: center;
   color: #333;
   font-family: Arial, sans-serif;
+  transition: transform 0.3s ease;
+}
+
+.loginContainer:hover {
+  transform: translateY(-5px); /* Subtle lift on hover */
 }
 
 .inputContainer {
@@ -20,9 +25,10 @@
   padding: 12px;
   margin: 8px 0;
   border: 1px solid #007bff;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1em;
   background-color: #f0faff;
+  color: #333;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -30,29 +36,33 @@
   border-color: #66b3ff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
   outline: none;
+  background-color: #e8f7ff; /* Light blue tint on focus */
 }
 
 .loginButton {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   font-size: 1em;
   font-weight: bold;
   color: white;
   background: linear-gradient(135deg, #34ace0, #007bff);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .loginButton:disabled {
   background: linear-gradient(135deg, #a9a9a9, #6c757d);
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .loginButton:hover:not(:disabled) {
   background: linear-gradient(135deg, #007bff, #0056b3);
-  transform: scale(1.02);
+  transform: scale(1.03);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .errorMessage {
@@ -63,15 +73,42 @@
   border: 1px solid #e74c3c;
   background-color: #fdecea;
   border-radius: 5px;
+  animation: shake 0.3s ease-in-out; /* Animation for error appearance */
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.registerPrompt {
+  margin-top: 20px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.registerLink {
+  color: #007bff;
+  text-decoration: underline;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease, text-decoration 0.3s ease;
+}
+
+.registerLink:hover {
+  color: #0056b3;
+  text-decoration: none;
+  transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
 @media (max-width: 768px) {
   .loginContainer {
-      padding: 15px;
+    padding: 20px;
   }
 
   .inputField, .loginButton {
-      padding: 10px;
-      font-size: 0.95em;
+    padding: 10px;
+    font-size: 0.95em;
   }
 }

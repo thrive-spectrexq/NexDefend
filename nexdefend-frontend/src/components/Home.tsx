@@ -7,7 +7,7 @@ const Home: React.FC = () => {
 
   const features = [
     "Comprehensive Threat Detection",
-    "Real-Time Alerts and Monitoring",
+    "Real-Time Monitoring and Alerts",
     "Compliance Audits and Reports",
     "User-Friendly Dashboard"
   ];

@@ -11,6 +11,7 @@ import IOCScan from "./components/IOCScan";
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Register from "./components/Register";
 import ThreatDetection from "./components/ThreatDetection";
 import Upload from "./components/Upload";
 
@@ -23,6 +24,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
             <Route path="/threat-detection" element={<ProtectedRoute element={ThreatDetection} />} />
             <Route path="/alerts" element={<ProtectedRoute element={Alerts} />} />

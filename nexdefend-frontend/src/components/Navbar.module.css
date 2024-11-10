@@ -59,7 +59,10 @@
 }
 
 /* Styling for login/logout button */
-.logoutButton, .loginButton {
+.logoutButton, .loginButton, .registerLink {
+    display: inline-flex; /* Ensures consistent inline size for buttons and links */
+    justify-content: center;
+    align-items: center;
     padding: 8px 15px;
     background: linear-gradient(135deg, #ff416c, #ff4b2b);
     border: none;
@@ -67,12 +70,14 @@
     cursor: pointer;
     border-radius: 20px;
     font-weight: bold;
+    font-size: 14px; /* Ensures font size is consistent */
     transition: background-color 0.3s ease, transform 0.2s ease;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
     margin-left: 10px;
+    text-decoration: none; /* Ensures Register link appears as a button */
 }
 
-.logoutButton:hover, .loginButton:hover {
+.logoutButton:hover, .loginButton:hover, .registerLink:hover {
     background: linear-gradient(135deg, #ff2b69, #ff6347);
     transform: translateY(-1px);
 }

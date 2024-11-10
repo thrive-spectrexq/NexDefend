@@ -55,9 +55,14 @@ const Navbar: React.FC = () => {
             Logout
           </button>
         ) : (
-          <button onClick={handleLogin} className={styles.loginButton} aria-label="Login">
-            Login
-          </button>
+          <>
+            <button onClick={handleLogin} className={styles.loginButton} aria-label="Login">
+              Login
+            </button>
+            <Link to="/register" className={styles.registerLink} aria-label="Register">
+              Register
+            </Link>
+          </>
         )}
       </div>
     </nav>

@@ -8,8 +8,9 @@ import (
 var users = map[string]struct {
 	ID       int
 	Password string
+	Email    string
 }{
-	"admin": {ID: 1, Password: "password123"}, // Example hardcoded user with an ID
+	"admin": {ID: 1, Password: "password123", Email: "admin@example.com"}, // Example hardcoded user with an ID and email
 }
 
 // RegisterHandler handles new user registrations
@@ -22,9 +23,18 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Simple user creation (in memory)
+	// Retrieve user information from creds
 	username := creds["username"]
 	password := creds["password"]
+	email := creds["email"]
+
+	// Validate that all required fields are present
+	if username == "" || password == "" || email == "" {
+		http.Error(w, "Username, password, and email are required", http.StatusBadRequest)
+		return
+	}
+
+	// Check if user already exists
 	if _, exists := users[username]; exists {
 		http.Error(w, "User already exists", http.StatusConflict)
 		return
@@ -35,7 +45,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	users[username] = struct {
 		ID       int
 		Password string
-	}{ID: newID, Password: password}
+		Email    string
+	}{ID: newID, Password: password, Email: email}
 
 	w.WriteHeader(http.StatusCreated)
 }
