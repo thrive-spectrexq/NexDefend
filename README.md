@@ -1,6 +1,6 @@
 # NexDefend
 
-**NexDefend** is designed to provide real-time system and monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata, stores and displays the results with dashboards.
+**NexDefend** is designed to provide real-time system and monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata logs, stores and displays the results with dashboards.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@
 
 ## Setup Instructions
 
-### Option 1: Running with Docker Compose
+### To install
 
 1. Clone the repository:
 
@@ -24,13 +24,7 @@
     cd NexDefend
     ```
 
-2. Run the following command to build and start the services:
-
-    ```bash
-    docker-compose up --build
-    ```
-
-### Option 2: Running on Windows (via PowerShell)
+### Option 1: Running on Windows (via PowerShell)
 
 1. Run the `nexdefend_setup.ps1` script:
 
@@ -42,7 +36,7 @@
     .\nexdefend_setup.ps1 start
     ```
 
-### Option 3: Running on Linux/macOS
+### Option 2: Running on Linux/macOS
 
 1. Run the `nexdefend_setup.sh` script:
 
@@ -64,7 +58,7 @@
     ./nexdefend_setup.sh docker
     ```
 
-### Option 4: Running Manually
+### Option 3: Running Manually
 
 1. Download the Go module dependencies:
 
