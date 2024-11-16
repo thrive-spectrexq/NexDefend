@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/osquery/osquery-go v0.0.0-20240910233439-561a72587be6
 	github.com/rs/cors v1.11.1
 )
