@@ -8,12 +8,15 @@ interface Incident {
   description: string;
   date: string;
   status: string;
+  severity: string;
+  assignedTo?: string;
   comments: string[];
 }
 
 const IncidentReport: React.FC = () => {
   const [reports, setReports] = useState<Incident[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [assignee, setAssignee] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -67,6 +70,28 @@ const IncidentReport: React.FC = () => {
     }
   };
 
+  const handleAssignIncident = async (reportId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/incident-report/${reportId}/assign`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ assignedTo: assignee }),
+      });
+
+      if (!res.ok) throw new Error('Failed to assign incident.');
+      const updatedReport = await res.json();
+      setReports((prevReports) =>
+        prevReports.map((report) => (report.id === reportId ? updatedReport : report))
+      );
+      setAssignee('');
+    } catch {
+      setError('Failed to assign incident.');
+    }
+  };
+
   return (
     <div className={styles.reportContainer}>
       <h2 className={styles.header}>Incident Reports</h2>
@@ -76,7 +101,9 @@ const IncidentReport: React.FC = () => {
           <li key={report.id} className={`${styles.reportItem} ${styles[report.status.toLowerCase()]}`}>
             <p><strong>Description:</strong> {report.description}</p>
             <p><strong>Date:</strong> {report.date}</p>
+            <p><strong>Severity:</strong> {report.severity}</p>
             <p><strong>Status:</strong> {report.status}</p>
+            <p><strong>Assigned To:</strong> {report.assignedTo || 'Unassigned'}</p>
             <div className={styles.commentSection}>
               <strong>Comments:</strong>
               <ul>
@@ -93,6 +120,14 @@ const IncidentReport: React.FC = () => {
               className={styles.input}
             />
             <button onClick={() => handleAddComment(report.id)} className={styles.button}>Add Comment</button>
+            <input
+              type="text"
+              placeholder="Assign to"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              className={styles.input}
+            />
+            <button onClick={() => handleAssignIncident(report.id)} className={styles.button}>Assign</button>
             {report.status !== 'Resolved' && (
               <button onClick={() => handleResolveReport(report.id)} className={`${styles.button} ${styles.resolveButton}`}>Mark as Resolved</button>
             )}

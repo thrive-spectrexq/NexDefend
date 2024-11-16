@@ -1,7 +1,7 @@
 .dashboard {
   padding: 20px;
-  background-color: #f4f6f9;
-  font-family: Arial, sans-serif;
+  background-color: #f8fafc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
   display: flex;
   flex-direction: column;
@@ -10,7 +10,7 @@
 
 h2 {
   text-align: center;
-  color: #2c3e50;
+  color: #1e293b;
   font-size: 2.5rem;
   margin-bottom: 20px;
   font-weight: bold;
@@ -19,7 +19,7 @@ h2 {
 .chartContainer {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-around;
+  justify-content: center;
   gap: 30px;
   margin-top: 20px;
 }
@@ -28,7 +28,7 @@ h2 {
   flex: 1;
   min-width: 320px;
   max-width: 500px;
-  background-color: #fff;
+  background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   padding: 25px;
@@ -38,7 +38,7 @@ h2 {
 
 .chart h3 {
   font-size: 1.4rem;
-  color: #34495e;
+  color: #475569;
   margin-bottom: 15px;
   font-weight: bold;
 }
@@ -51,7 +51,7 @@ h2 {
 .eventList {
   margin-top: 30px;
   padding: 20px;
-  background-color: #fff;
+  background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -60,7 +60,7 @@ h2 {
 
 .eventList h3 {
   font-size: 1.3rem;
-  color: #34495e;
+  color: #475569;
   margin-bottom: 12px;
   font-weight: bold;
 }
@@ -73,18 +73,19 @@ h2 {
 .eventList ul li {
   padding: 12px;
   margin-bottom: 8px;
-  background-color: #ecf0f1;
+  background-color: #f1f5f9;
   border-radius: 8px;
+  border-left: 4px solid #94a3b8;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .eventList ul li:hover {
-  background-color: #bdc3c7;
-  transform: translateX(5px);
+  background-color: #e2e8f0;
+  transform: translateX(8px);
 }
 
 .error {
-  color: #e74c3c;
+  color: #ef4444;
   font-weight: bold;
   text-align: center;
   margin-bottom: 15px;
@@ -93,14 +94,14 @@ h2 {
 
 .loading {
   font-size: 1.1rem;
-  color: #7f8c8d;
+  color: #6b7280;
   text-align: center;
   margin-top: 20px;
 }
 
 .noData {
   font-size: 1.1rem;
-  color: #95a5a6;
+  color: #9ca3af;
   text-align: center;
   margin-top: 15px;
 }

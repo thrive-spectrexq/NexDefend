@@ -25,6 +25,7 @@ const (
 	StatusOpen       Status = "Open"
 	StatusInProgress Status = "In Progress"
 	StatusResolved   Status = "Resolved"
+	StatusEscalated  Status = "Escalated"
 )
 
 // Incident represents a security incident with details and tracking info.
@@ -33,6 +34,8 @@ type Incident struct {
 	Description string    `json:"description"`
 	Severity    Severity  `json:"severity"`
 	Status      Status    `json:"status"`
+	AssignedTo  string    `json:"assigned_to,omitempty"`
+	Notes       []string  `json:"notes,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -105,6 +108,76 @@ func (m *IncidentManager) UpdateIncidentStatus(id int, status Status) error {
 	incident.UpdatedAt = time.Now()
 
 	log.Printf("Incident status updated: %+v", incident)
+	return nil
+}
+
+// AssignIncident assigns an incident to a specific responder.
+func (m *IncidentManager) AssignIncident(id int, responder string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	incident, exists := m.incidents[id]
+	if !exists {
+		return fmt.Errorf("incident with ID %d not found", id)
+	}
+
+	incident.AssignedTo = responder
+	incident.UpdatedAt = time.Now()
+
+	log.Printf("Incident assigned to %s: %+v", responder, incident)
+	return nil
+}
+
+// AddNote adds a note to an incident.
+func (m *IncidentManager) AddNote(id int, note string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	incident, exists := m.incidents[id]
+	if !exists {
+		return fmt.Errorf("incident with ID %d not found", id)
+	}
+
+	incident.Notes = append(incident.Notes, note)
+	incident.UpdatedAt = time.Now()
+
+	log.Printf("Note added to incident %d: %s", id, note)
+	return nil
+}
+
+// EscalateIncident escalates an incident to a higher severity or status.
+func (m *IncidentManager) EscalateIncident(id int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	incident, exists := m.incidents[id]
+	if !exists {
+		return fmt.Errorf("incident with ID %d not found", id)
+	}
+
+	if incident.Severity == SeverityCritical {
+		return fmt.Errorf("incident with ID %d is already at the highest severity", id)
+	}
+
+	incident.Status = StatusEscalated
+	incident.UpdatedAt = time.Now()
+
+	log.Printf("Incident escalated: %+v", incident)
+	return nil
+}
+
+// DeleteIncident removes an incident from the manager.
+func (m *IncidentManager) DeleteIncident(id int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	_, exists := m.incidents[id]
+	if !exists {
+		return fmt.Errorf("incident with ID %d not found", id)
+	}
+
+	delete(m.incidents, id)
+	log.Printf("Incident with ID %d deleted", id)
 	return nil
 }
 

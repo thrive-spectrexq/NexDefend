@@ -43,18 +43,6 @@ interface Alert {
   timestamp: string;
 }
 
-const DUMP_THREAT_DATA: Threat[] = [
-  { id: "1", description: "Example Threat 1", severity: "High", timestamp: "2024-11-09T12:34:56Z" },
-  { id: "2", description: "Example Threat 2", severity: "Medium", timestamp: "2024-11-09T12:34:56Z" },
-  // More dummy data...
-];
-
-const DUMP_ALERT_DATA: Alert[] = [
-  { id: "1", message: "Example Alert 1", level: "Critical", source: "System", timestamp: "2024-11-09T12:34:56Z" },
-  { id: "2", message: "Example Alert 2", level: "Warning", source: "Network", timestamp: "2024-11-09T12:34:56Z" },
-  // More dummy data...
-];
-
 const Dashboard: React.FC = () => {
   const [threatData, setThreatData] = useState<Threat[]>([]);
   const [alertData, setAlertData] = useState<Alert[]>([]);
@@ -75,9 +63,7 @@ const Dashboard: React.FC = () => {
         setFetchError(null);
       } catch (error) {
         console.error("Error fetching data:", error);
-        setFetchError("Failed to fetch data. Using fallback data.");
-        setThreatData(DUMP_THREAT_DATA);
-        setAlertData(DUMP_ALERT_DATA);
+        setFetchError("Failed to fetch data. Please try again later.");
       }
     };
 
