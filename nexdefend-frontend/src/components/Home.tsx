@@ -7,8 +7,8 @@ const Home: React.FC = () => {
 
   const features = [
     "Comprehensive Threat Detection",
-    "Real-Time Monitoring and Alerts",
-    "Compliance Audits and Reports",
+    "Real-Time System Monitoring and Alerts",
+    "Incident Response and Reports",
     "User-Friendly Dashboard"
   ];
 
@@ -16,9 +16,9 @@ const Home: React.FC = () => {
     <div className={styles.homeContainer}>
       <section className={styles.heroSection}>
         <h1>NexDefend Real-Time System Monitoring and Threat Detection</h1>
-        <p>NexDefend is designed to provide real-time system and monitoring, 
+        <p>NexDefend is designed to provide real-time system monitoring, 
           AI-powered threat detection, alerts and automated incident response management 
-          that traces from Osquery and Suricata, stores and displays the results with dashboards.</p>
+          that traces from Osquery and Suricata logs, stores and displays the results with dashboards.</p>
         <button onClick={() => navigate('/login')} className={styles.loginButton}>Continue to Dashboard</button>
       </section>
       
