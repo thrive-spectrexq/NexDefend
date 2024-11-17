@@ -20,6 +20,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/osquery"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
+	"github.com/thrive-spectrexq/NexDefend/internal/trivy"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 	"github.com/thrive-spectrexq/NexDefend/internal/vulnerability"
 
@@ -64,6 +65,7 @@ func main() {
 	api.HandleFunc("/threats", threat.ThreatsHandler).Methods("GET")
 	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
+	api.HandleFunc("/trivy-scan", TrivyScanHandler).Methods("POST")
 
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")
@@ -89,6 +91,24 @@ func main() {
 
 	gracefulShutdown(srv)
 	log.Println("Server exited gracefully")
+}
+
+// TrivyScanHandler handles requests for Trivy scans
+func TrivyScanHandler(w http.ResponseWriter, r *http.Request) {
+	var req trivy.ScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	result, err := trivy.RunScan(req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Trivy scan failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 func startOsqueryDaemon() error {

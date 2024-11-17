@@ -1,0 +1,111 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f4f6f8;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .header {
+    font-size: 1.8em;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .error {
+    color: #d9534f;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+  }
+  
+  .select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+  }
+  
+  .button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+  
+  .button:hover:enabled {
+    background-color: #0056b3;
+  }
+  
+  .results {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .vulnerabilityList {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .vulnerabilityItem {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 5px solid #007bff;
+  }
+  
+  .vulnerabilityItem p {
+    margin: 5px 0;
+  }
+  
+  .severity {
+    font-weight: bold;
+  }
+  
+  .severity.low {
+    color: #28a745;
+  }
+  
+  .severity.medium {
+    color: #ffc107;
+  }
+  
+  .severity.high {
+    color: #dc3545;
+  }
+  
+  .rawOutput {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: monospace;
+  }
+  
