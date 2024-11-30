@@ -13,6 +13,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./components/Register";
 import ThreatDetection from "./components/ThreatDetection";
+import TrivyScan from "./components/TrivyScan";
 import Upload from "./components/Upload";
 
 const App: React.FC = () => {
@@ -31,6 +32,7 @@ const App: React.FC = () => {
             <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
             <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
             <Route path="/ioc-scan" element={<ProtectedRoute element={IOCScan} />} />
+            <Route path="/trivy-scan" element={<ProtectedRoute element={TrivyScan} />} />
           </Routes>
         </main>
         <Footer />

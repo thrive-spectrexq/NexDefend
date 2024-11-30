@@ -39,6 +39,7 @@ const Navbar: React.FC = () => {
             <Link to="/upload" className={styles.link}>Upload</Link>
             <Link to="/incident-report" className={styles.link}>Incident Report</Link>
             <Link to="/ioc-scan" className={styles.link}>IOC Scan</Link>
+            <Link to="/trivy-scan" className={styles.link}>Trivy Scan</Link>
           </>
         ) : (
           <Link to="/" className={styles.link}>NexDefend</Link>
