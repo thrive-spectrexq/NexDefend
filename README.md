@@ -4,8 +4,7 @@
 
 ## Architecture
 
-NexDefend Architecture
-
+```mermaid
 +----------------+    +-----------------+    +----------------+
 | Suricata IDS/IPS| -> | Go Data Ingestion | -> | Python Analysis |
 +----------------+    +-----------------+    +----------------+
@@ -27,7 +26,7 @@ NexDefend Architecture
                                         | - Threat Reports   |
                                         | - Notifications    |
                                         +--------------------+
-
+```
 
 ## Prerequisites
 
