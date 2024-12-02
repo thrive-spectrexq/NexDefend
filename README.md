@@ -2,6 +2,33 @@
 
 **NexDefend** is designed to provide real-time system and monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata logs, stores and displays the results with dashboards.
 
+## Architecture
+
+NexDefend Architecture
+
++----------------+    +-----------------+    +----------------+
+| Suricata IDS/IPS| -> | Go Data Ingestion | -> | Python Analysis |
++----------------+    +-----------------+    +----------------+
+| Real-time      |    | High-performance|    | Machine Learning|
+| Traffic        |    | Data Pipelines  |    | & Anomaly Detection|
++----------------+    +-----------------+    +----------------+
+        |                        |                         |
+        v                        v                         v
++----------------+    +------------------+    +-----------------+
+| PostgreSQL     |    | Python Automation|    | Dashboards &    |
+| Data Storage   |    | & Integration    |    | Visualization   |
++----------------+    +------------------+    +-----------------+
+                                                 |
+                                                 v
+                                        +--------------------+
+                                        | Alerts & Threats   |
+                                        +--------------------+
+                                        | - Real-time Alerts |
+                                        | - Threat Reports   |
+                                        | - Notifications    |
+                                        +--------------------+
+
+
 ## Prerequisites
 
 - Before setting up NexDefend, ensure the following are installed on your system:
