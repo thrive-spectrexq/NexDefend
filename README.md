@@ -5,27 +5,21 @@
 ## Architecture
 
 ```mermaid
-+----------------+    +-----------------+    +----------------+
-| Suricata IDS/IPS| -> | Go Data Ingestion | -> | Python Analysis |
-+----------------+    +-----------------+    +----------------+
-| Real-time      |    | High-performance|    | Machine Learning|
-| Traffic        |    | Data Pipelines  |    | & Anomaly Detection|
-+----------------+    +-----------------+    +----------------+
-        |                        |                         |
-        v                        v                         v
-+----------------+    +------------------+    +-----------------+
-| PostgreSQL     |    | Python Automation|    | Dashboards &    |
-| Data Storage   |    | & Integration    |    | Visualization   |
-+----------------+    +------------------+    +-----------------+
-                                                 |
-                                                 v
-                                        +--------------------+
-                                        | Alerts & Threats   |
-                                        +--------------------+
-                                        | - Real-time Alerts |
-                                        | - Threat Reports   |
-                                        | - Notifications    |
-                                        +--------------------+
+graph TD;
+    A[Suricata IDS/IPS] --> B[Go Data Ingestion];
+    B --> C[Python Analysis];
+    C --> D[Machine Learning & Anomaly Detection];
+    A -->|Real-time Traffic| B;
+    B -->|High-performance Data Pipelines| C;
+    C -->|Analyzes Data| D;
+    E[PostgreSQL Data Storage] --> F[Python Automation & Integration];
+    F --> G[Dashboards & Visualization];
+    G --> H[Alerts & Threats];
+    H --> I[Real-time Alerts];
+    H --> J[Threat Reports];
+    H --> K[Notifications];
+    D -->|Stores Data| E;
+    F -->|Integrates Data| G;
 ```
 
 ## Prerequisites
