@@ -1,6 +1,6 @@
 # NexDefend
 
-**NexDefend** is designed to provide real-time system and monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata logs, stores and displays the results with dashboards.
+**NexDefend** is designed to provide real-time system monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Osquery and Suricata logs, stores and displays the results with dashboards.
 
 ## Architecture
 
@@ -17,6 +17,7 @@ graph TD;
     G --> H[Alerts & Threats];
     H --> I[Real-time Alerts];
     H --> J[Threat Reports];
+    H --> L[Incident Response];
     H --> K[Notifications];
     D -->|Stores Data| E;
     F -->|Integrates Data| G;
