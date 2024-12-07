@@ -23,7 +23,7 @@ $NEXDEFEND_ART = @"
  | \ | | _____  _|  _ \  ___ / _| ___ _ __   __| |
  |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \ '_ \ / _` |
  | |\  |  __/>  <| |_| |  __/  _|  __/ | | | (_| |
- |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_|
+ |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_| 
 "@
 
 Write-Host "Starting NexDefend Setup..."
@@ -84,6 +84,15 @@ function Install-Dependencies {
     }
 }
 
+# Start Python Server
+function Start-PythonServer {
+    Write-Host "Starting the Python server..."
+    Set-Location $PYTHON_APP_DIR
+    Start-Process python -ArgumentList "api.py"
+    Write-Host "Python server running on port 5000"
+    Set-Location $OriginalDir  # Return to the original directory
+}
+
 # Build and Start Backend (Go)
 function Start-Backend {
     Write-Host "Starting the Go backend..."
@@ -123,6 +132,7 @@ function Cleanup {
     Write-Host "Stopping backend and frontend services..." -ForegroundColor Red
     Stop-Process -Name "go" -Force
     Stop-Process -Name "npm" -Force
+    Stop-Process -Name "python" -Force
     Write-Host "Services stopped."
 }
 
@@ -132,6 +142,7 @@ if ($args[0] -eq "initdb") {
 }
 elseif ($args[0] -eq "start") {
     Install-Dependencies
+    Start-PythonServer   # Start Python server before the Go backend
     Start-Backend
     Start-Frontend
 }

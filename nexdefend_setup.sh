@@ -115,11 +115,29 @@ install_dependencies() {
     fi
 }
 
-# Build and Start Backend (Go)
+# Start Python API
+start_python_api() {
+    echo -e "${GREEN}Starting the Python API server...${NC}"
+    cd "$PYTHON_APP_DIR"
+    python3 api.py &  # Start Python server in the background
+    PYTHON_API_PID=$!
+    sleep 5  # Wait for the Python API to start
+
+    # Check if Python API is running
+    if lsof -i :5000 > /dev/null; then
+        echo -e "${GREEN}Python API server is running on port 5000 (PID: $PYTHON_API_PID)${NC}"
+    else
+        echo -e "${RED}Failed to start the Python API server.${NC}"
+        exit 1
+    fi
+    cd "$OriginalDir"
+}
+
+# Start Backend (Go)
 start_backend() {
     echo -e "${GREEN}Starting the Go backend...${NC}"
     cd "$GO_APP_DIR"
-    go run main.go &
+    go run main.go &  # Start Go backend in the background
     BACKEND_PID=$!
     sleep 5  # Wait for the backend to start
 
@@ -167,8 +185,8 @@ use_docker() {
 
 # Clean up (stopping services)
 cleanup() {
-    echo -e "${RED}Stopping backend and frontend services...${NC}"
-    kill $BACKEND_PID $FRONTEND_PID
+    echo -e "${RED}Stopping backend, frontend, and Python API services...${NC}"
+    kill $BACKEND_PID $FRONTEND_PID $PYTHON_API_PID
     echo -e "${GREEN}Services stopped.${NC}"
 }
 
@@ -177,6 +195,7 @@ if [ "$1" == "initdb" ]; then
     init_database
 elif [ "$1" == "start" ]; then
     install_dependencies
+    start_python_api
     start_backend
     start_frontend
 elif [ "$1" == "docker" ]; then

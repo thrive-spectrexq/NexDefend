@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +26,12 @@ import (
 )
 
 var (
-	API_PREFIX = "/api/v1" // Prefix for API versioning
+	API_PREFIX   = "/api/v1" // Prefix for API versioning
+	PYTHON_API   = "http://localhost:5000" // Python API Base URL
+	PYTHON_ROUTES = map[string]string{
+		"analysis": "/analysis",
+		"anomalies": "/anomalies",
+	}
 )
 
 func main() {
@@ -55,6 +61,10 @@ func main() {
 	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
 
+	// Add handlers to query Python API
+	api.HandleFunc("/python-analysis", PythonAnalysisHandler).Methods("GET")
+	api.HandleFunc("/python-anomalies", PythonAnomaliesHandler).Methods("GET")
+
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 
@@ -79,6 +89,52 @@ func main() {
 
 	gracefulShutdown(srv)
 	log.Println("Server exited gracefully")
+}
+
+// PythonAnalysisHandler fetches analysis results from the Python API
+func PythonAnalysisHandler(w http.ResponseWriter, r *http.Request) {
+	results := fetchPythonResults(PYTHON_ROUTES["analysis"])
+	if results == nil {
+		http.Error(w, "Failed to fetch analysis results", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+// PythonAnomaliesHandler fetches anomaly results from the Python API
+func PythonAnomaliesHandler(w http.ResponseWriter, r *http.Request) {
+	results := fetchPythonResults(PYTHON_ROUTES["anomalies"])
+	if results == nil {
+		http.Error(w, "Failed to fetch anomaly results", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+// fetchPythonResults queries the Python API for specific endpoint results
+func fetchPythonResults(endpoint string) map[string]interface{} {
+	resp, err := http.Get(PYTHON_API + endpoint)
+	if err != nil {
+		log.Printf("Error fetching Python API results (%s): %v", endpoint, err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading Python API response (%s): %v", endpoint, err)
+		return nil
+	}
+
+	var results map[string]interface{}
+	if err := json.Unmarshal(body, &results); err != nil {
+		log.Printf("Error unmarshaling Python API response (%s): %v", endpoint, err)
+		return nil
+	}
+
+	return results
 }
 
 // gracefulShutdown handles graceful server shutdown on interrupt signals

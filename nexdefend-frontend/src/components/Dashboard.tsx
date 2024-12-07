@@ -43,23 +43,41 @@ interface Alert {
   timestamp: string;
 }
 
+interface AnalysisResult {
+  type: string;
+  value: number;
+}
+
+interface Anomaly {
+  id: string;
+  description: string;
+  timestamp: string;
+}
+
 const Dashboard: React.FC = () => {
   const [threatData, setThreatData] = useState<Threat[]>([]);
   const [alertData, setAlertData] = useState<Alert[]>([]);
+  const [analysisData, setAnalysisData] = useState<AnalysisResult[]>([]);
+  const [anomalyData, setAnomalyData] = useState<Anomaly[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [threatRes, alertRes] = await Promise.all([
+        const [threatRes, alertRes, analysisRes, anomalyRes] = await Promise.all([
           fetch(`${API_URL}/threats`),
           fetch(`${API_URL}/alerts`),
+          fetch(`${API_URL}/python-analysis`),
+          fetch(`${API_URL}/python-anomalies`),
         ]);
 
-        if (!threatRes.ok || !alertRes.ok) throw new Error("Failed to fetch data");
+        if (!threatRes.ok || !alertRes.ok || !analysisRes.ok || !anomalyRes.ok)
+          throw new Error("Failed to fetch data");
 
         setThreatData(await threatRes.json());
         setAlertData(await alertRes.json());
+        setAnalysisData(await analysisRes.json());
+        setAnomalyData(await anomalyRes.json());
         setFetchError(null);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -83,46 +101,27 @@ const Dashboard: React.FC = () => {
     return acc;
   }, {});
 
-  const threatOverTime = threatData.reduce((acc: Record<string, number>, threat) => {
-    const date = new Date(threat.timestamp).toLocaleDateString();
-    acc[date] = (acc[date] || 0) + 1;
-    return acc;
-  }, {});
-
-  const alertOverTime = alertData.reduce((acc: Record<string, number>, alert) => {
-    const date = new Date(alert.timestamp).toLocaleDateString();
-    acc[date] = (acc[date] || 0) + 1;
-    return acc;
-  }, {});
-
-  const alertSources = alertData.reduce((acc: Record<string, number>, alert) => {
-    acc[alert.source] = (acc[alert.source] || 0) + 1;
-    return acc;
-  }, {});
-
-  const threatChartData = {
-    labels: Object.keys(severityCounts),
-    datasets: [{ label: 'Threat Severity Levels', data: Object.values(severityCounts), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] }],
+  const analysisChartData = {
+    labels: analysisData.map((result) => result.type),
+    datasets: [
+      {
+        label: 'Analysis Results',
+        data: analysisData.map((result) => result.value),
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF9F40'],
+      },
+    ],
   };
 
-  const alertChartData = {
-    labels: Object.keys(alertCounts),
-    datasets: [{ label: 'Alert Levels', data: Object.values(alertCounts), backgroundColor: ['#4BC0C0', '#FF9F40', '#FF6384'] }],
-  };
-
-  const threatOverTimeChartData = {
-    labels: Object.keys(threatOverTime),
-    datasets: [{ label: 'Threats Over Time', data: Object.values(threatOverTime), borderColor: '#FF6384', fill: false }],
-  };
-
-  const alertOverTimeChartData = {
-    labels: Object.keys(alertOverTime),
-    datasets: [{ label: 'Alerts Over Time', data: Object.values(alertOverTime), borderColor: '#36A2EB', fill: false }],
-  };
-
-  const alertSourceChartData = {
-    labels: Object.keys(alertSources),
-    datasets: [{ label: 'Alert Sources', data: Object.values(alertSources), backgroundColor: ['#FFCE56', '#4BC0C0', '#36A2EB'] }],
+  const anomalyChartData = {
+    labels: anomalyData.map((anomaly) => new Date(anomaly.timestamp).toLocaleDateString()),
+    datasets: [
+      {
+        label: 'Anomalies Detected',
+        data: anomalyData.map(() => 1),
+        borderColor: '#FF6384',
+        fill: false,
+      },
+    ],
   };
 
   return (
@@ -133,27 +132,28 @@ const Dashboard: React.FC = () => {
       <div className={styles.chartContainer}>
         <div className={styles.chart}>
           <h3>Threat Severity Distribution</h3>
-          <Pie data={threatChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          <Pie data={{
+            labels: Object.keys(severityCounts),
+            datasets: [{ label: 'Threat Severity Levels', data: Object.values(severityCounts), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] }],
+          }} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
 
         <div className={styles.chart}>
           <h3>Alert Level Distribution</h3>
-          <Bar data={alertChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          <Bar data={{
+            labels: Object.keys(alertCounts),
+            datasets: [{ label: 'Alert Levels', data: Object.values(alertCounts), backgroundColor: ['#4BC0C0', '#FF9F40', '#FF6384'] }],
+          }} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
 
         <div className={styles.chart}>
-          <h3>Threats Over Time</h3>
-          <Line data={threatOverTimeChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          <h3>Analysis Results</h3>
+          <Pie data={analysisChartData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
 
         <div className={styles.chart}>
-          <h3>Alerts Over Time</h3>
-          <Line data={alertOverTimeChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-        </div>
-
-        <div className={styles.chart}>
-          <h3>Alert Source Distribution</h3>
-          <Pie data={alertSourceChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+          <h3>Anomalies Detected</h3>
+          <Line data={anomalyChartData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
       </div>
 
@@ -165,6 +165,11 @@ const Dashboard: React.FC = () => {
       <div className={styles.eventList}>
         <h3>Recent Alerts</h3>
         <ul>{alertData.slice(0, 5).map(alert => <li key={alert.id}><strong>{alert.level}</strong> - {alert.message}</li>)}</ul>
+      </div>
+
+      <div className={styles.eventList}>
+        <h3>Recent Anomalies</h3>
+        <ul>{anomalyData.slice(0, 5).map(anomaly => <li key={anomaly.id}>{anomaly.description}</li>)}</ul>
       </div>
     </div>
   );

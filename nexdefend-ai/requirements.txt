@@ -1,4 +1,5 @@
 Flask
+psycopg2-binary
 numpy
 scikit-learn
 python-nmap

@@ -80,31 +80,43 @@ graph TD;
 
 ### Option 3: Running Manually
 
-1. Download the Go module dependencies:
+1. Install python packages:
 
     ```bash
-    go mod tidy
+    pip install -r requirements.txt
     ```
 
 2. Run the application:
 
     ```bash
+    python nexdefend-ai/api.py
+    ```
+
+3. Open a new terminal and run:
+
+    ```bash
+    go mod tidy
+    ```
+
+4. Run the application:
+
+    ```bash
     go run main.go
     ```
 
-3. Open a new terminal and navigate to the frontend directory:
+5. Open a new terminal and navigate to the frontend directory:
 
     ```bash
     cd nexdefend-frontend
     ```
 
-4. Install the frontend dependencies:
+6. Install the frontend dependencies:
 
     ```bash
     npm install
     ```
 
-5. Start the frontend application:
+7. Start the frontend application:
 
     ```bash
     npm start
