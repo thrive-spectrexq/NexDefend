@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 	"time"
 
@@ -18,11 +17,8 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/incident"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
-	"github.com/thrive-spectrexq/NexDefend/internal/osquery"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
-	"github.com/thrive-spectrexq/NexDefend/internal/trivy"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
-	"github.com/thrive-spectrexq/NexDefend/internal/vulnerability"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -36,11 +32,6 @@ func main() {
 	logging.InitLogging()
 	database := db.InitDB()
 	defer db.CloseDB()
-
-	if err := startOsqueryDaemon(); err != nil {
-		log.Fatalf("failed to start osquery daemon: %v", err)
-	}
-	time.Sleep(2 * time.Second)
 
 	// Start Suricata threat detection with the database as EventStore
 	go threat.StartThreatDetection(database)
@@ -59,13 +50,10 @@ func main() {
 
 	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("POST")
 	api.HandleFunc("/incident-report", incident.ReportHandler).Methods("POST")
-	api.HandleFunc("/vulnerability-scan", vulnerability.ScanHandler).Methods("POST")
-	api.HandleFunc("/ioc-scan", osquery.IOCScanHandler).Methods("GET")
 	api.HandleFunc("/audit", compliance.AuditHandler).Methods("GET")
 	api.HandleFunc("/threats", threat.ThreatsHandler).Methods("GET")
 	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
-	api.HandleFunc("/trivy-scan", TrivyScanHandler).Methods("POST")
 
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")
@@ -93,33 +81,7 @@ func main() {
 	log.Println("Server exited gracefully")
 }
 
-// TrivyScanHandler handles requests for Trivy scans
-func TrivyScanHandler(w http.ResponseWriter, r *http.Request) {
-	var req trivy.ScanRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
-	result, err := trivy.RunScan(req)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Trivy scan failed: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
-
-func startOsqueryDaemon() error {
-	cmd := exec.Command("osqueryd", "--disable_events=false", "--disable_logging=false", "--extensions_socket=/var/osquery/shell.em")
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start osquery daemon: %v", err)
-	}
-	log.Println("osquery daemon started successfully")
-	return nil
-}
-
+// gracefulShutdown handles graceful server shutdown on interrupt signals
 func gracefulShutdown(srv *http.Server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
@@ -131,13 +93,6 @@ func gracefulShutdown(srv *http.Server) {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
-}
-
-// AlertsHandler handles alert requests
-func AlertsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	response := map[string]string{"status": "success", "alert": "Sample alert from NexDefend"}
-	json.NewEncoder(w).Encode(response)
 }
 
 // HomeHandler handles the home route

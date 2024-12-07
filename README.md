@@ -27,9 +27,7 @@ graph TD;
 
 - Before setting up NexDefend, ensure the following are installed on your system:
 
-- [Osquery](https://osquery.io/downloads/official/5.14.1)
 - [Suricata](https://suricata.io/download/)
-- [Trivy](https://github.com/aquasecurity/trivy)
 - [PostgreSQL](https://www.postgresql.org/download/)
 
 ## Setup Instructions

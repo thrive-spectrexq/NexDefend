@@ -7,13 +7,11 @@ import Dashboard from "./components/Dashboard";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
 import IncidentReport from "./components/IncidentReport";
-import IOCScan from "./components/IOCScan";
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./components/Register";
 import ThreatDetection from "./components/ThreatDetection";
-import TrivyScan from "./components/TrivyScan";
 import Upload from "./components/Upload";
 
 const App: React.FC = () => {
@@ -31,8 +29,6 @@ const App: React.FC = () => {
             <Route path="/alerts" element={<ProtectedRoute element={Alerts} />} />
             <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
             <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
-            <Route path="/ioc-scan" element={<ProtectedRoute element={IOCScan} />} />
-            <Route path="/trivy-scan" element={<ProtectedRoute element={TrivyScan} />} />
           </Routes>
         </main>
         <Footer />

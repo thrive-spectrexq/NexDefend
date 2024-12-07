@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
-	"github.com/osquery/osquery-go"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 )
 
@@ -17,10 +15,7 @@ type Database struct {
 	conn *sql.DB
 }
 
-var (
-	db             *Database
-	osqueryAddress = "/var/osquery/shell.em" // Updated for Unix socket
-)
+var db *Database
 
 // InitDB initializes the database connection and runs the init.sql script if tables are missing
 func InitDB() *Database {
@@ -72,7 +67,7 @@ func tablesExist(conn *sql.DB) bool {
 	query := `SELECT EXISTS (
 		SELECT FROM information_schema.tables 
 		WHERE table_schema = 'public' 
-		AND table_name = 'users'
+		AND table_name = 'suricata_events'
 	);`
 	if err := conn.QueryRow(query).Scan(&exists); err != nil {
 		log.Fatalf("Error checking for existing tables: %v", err)
@@ -97,52 +92,6 @@ func GetDB() *sql.DB {
 		log.Fatal("Database has not been initialized. Call InitDB() first.")
 	}
 	return db.conn
-}
-
-// RunOsquery executes an osquery query and stores results in the database
-func RunOsquery(query string) ([]map[string]interface{}, error) {
-	client, err := osquery.NewClient(osqueryAddress, 5*time.Second)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to osquery: %v", err)
-	}
-	defer client.Close()
-
-	resp, err := client.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("error executing osquery: %v", err)
-	}
-
-	results := make([]map[string]interface{}, len(resp.Response))
-	for i, row := range resp.Response {
-		resultMap := make(map[string]interface{})
-		for key, value := range row {
-			resultMap[key] = value
-		}
-		results[i] = resultMap
-
-		if err := storeOsqueryResult(query, row); err != nil {
-			log.Printf("Error storing osquery result: %v", err)
-		}
-	}
-
-	return results, nil
-}
-
-// storeOsqueryResult stores a single osquery result in the database
-func storeOsqueryResult(query string, row map[string]string) error {
-	rowJSON, err := json.Marshal(row)
-	if err != nil {
-		return fmt.Errorf("error marshaling row to JSON: %v", err)
-	}
-
-	_, err = db.conn.Exec(
-		`INSERT INTO osquery_results (query, result, executed_at) VALUES ($1, $2, $3)`,
-		query, string(rowJSON), time.Now(),
-	)
-	if err != nil {
-		return fmt.Errorf("error inserting osquery result: %v", err)
-	}
-	return nil
 }
 
 // StoreSuricataEvent stores Suricata events in the database

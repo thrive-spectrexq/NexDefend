@@ -56,11 +56,11 @@ func StartThreatDetection(store EventStore) {
 	go monitorSuricataEvents(store)
 }
 
-// ConvertMapToSuricataEvent converts a map to a SuricataEvent struct, parsing timestamps.
+// ConvertMapToSuricataEvent converts a map to a SuricataEvent struct, parsing timestamps
 func ConvertMapToSuricataEvent(event map[string]interface{}) (SuricataEvent, error) {
 	var suricataEvent SuricataEvent
 
-	// Convert other fields by unmarshalling directly from the event map to avoid double parsing
+	// Convert other fields by unmarshalling directly from the event map
 	eventData, err := json.Marshal(event)
 	if err != nil {
 		return suricataEvent, fmt.Errorf("failed to marshal map to JSON: %v", err)
@@ -94,14 +94,13 @@ func monitorSuricataEvents(store EventStore) {
 				continue
 			}
 
-			handleSuricataEvent(event)
-
 			// Convert the map to a SuricataEvent struct before storing
 			suricataEvent, err := ConvertMapToSuricataEvent(event)
 			if err != nil {
 				continue
 			}
 
+			// Store the event
 			if err := store.StoreSuricataEvent(suricataEvent); err != nil {
 				continue
 			}
@@ -109,37 +108,5 @@ func monitorSuricataEvents(store EventStore) {
 
 		file.Close()
 		time.Sleep(2 * time.Second)
-	}
-}
-
-// handleSuricataEvent processes Suricata events based on their type
-func handleSuricataEvent(event map[string]interface{}) {
-	// Process event types (alert, dns, tls, etc.) as needed without logging output.
-	eventType, ok := event["event_type"].(string)
-	if !ok {
-		return
-	}
-
-	switch eventType {
-	case "alert":
-		// Handle alert events
-	case "dns":
-		// Handle DNS events
-	case "tls":
-		// Handle TLS events
-	case "flow":
-		// Optionally handle flow events
-	case "quic":
-		// Optionally handle quic events
-	case "stats":
-		// Optionally handle stats events
-	case "fileinfo":
-		// Optionally handle fileinfo events
-	case "http":
-		// Optionally handle http events
-	case "dhcp":
-		// Optionally handle dhcp events
-	default:
-		// Handle unknown event types if needed
 	}
 }

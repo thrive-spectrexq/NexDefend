@@ -1,7 +1,6 @@
 -- Initialize the database schema for NexDefend
 
 -- Drop tables if they already exist
-DROP TABLE IF EXISTS osquery_results CASCADE;
 DROP TABLE IF EXISTS alerts CASCADE;
 DROP TABLE IF EXISTS threats CASCADE;
 DROP TABLE IF EXISTS uploaded_files CASCADE;
@@ -18,7 +17,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create 'suricata_events' table to store for threat detection
+-- Create 'suricata_events' table to store all Suricata logs
 CREATE TABLE suricata_events (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP,
@@ -59,18 +58,9 @@ CREATE TABLE uploaded_files (
     alert BOOLEAN DEFAULT FALSE
 );
 
--- Create 'osquery_results' table to store osquery query results
-CREATE TABLE osquery_results (
-    id SERIAL PRIMARY KEY,
-    query TEXT NOT NULL, -- The osquery query executed
-    result JSON NOT NULL, -- The result of the osquery query in JSON format
-    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Add indexes for faster lookups
 CREATE INDEX idx_users_username ON users (username);
 CREATE INDEX idx_threats_detected_at ON threats (detected_at);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);
 CREATE INDEX idx_uploaded_files_filename ON uploaded_files (filename);
-CREATE INDEX idx_osquery_results_executed_at ON osquery_results (executed_at);
 CREATE INDEX idx_suricata_events_event_type ON suricata_events (event_type);
