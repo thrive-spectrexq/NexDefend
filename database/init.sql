@@ -31,11 +31,12 @@ CREATE TABLE suricata_events (
 -- Create 'threats' table to store detected threats
 CREATE TABLE threats (
     id SERIAL PRIMARY KEY,
-    threat_type VARCHAR(100) NOT NULL, -- e.g., "malware", "phishing"
     description TEXT,
-    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    resolved BOOLEAN DEFAULT FALSE,
-    resolved_at TIMESTAMP
+    severity VARCHAR(20),
+    timestamp TIMESTAMP,
+    source_ip VARCHAR(45),
+    destination TEXT,
+    event_type VARCHAR(50)
 );
 
 -- Create 'alerts' table to store alert data
@@ -60,7 +61,7 @@ CREATE TABLE uploaded_files (
 
 -- Add indexes for faster lookups
 CREATE INDEX idx_users_username ON users (username);
-CREATE INDEX idx_threats_detected_at ON threats (detected_at);
+CREATE INDEX idx_threats_timestamp ON threats (timestamp);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);
 CREATE INDEX idx_uploaded_files_filename ON uploaded_files (filename);
 CREATE INDEX idx_suricata_events_event_type ON suricata_events (event_type);

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/hpcloud/tail" // Tail library for real-time log processing
 )
 
 const (
@@ -53,14 +55,52 @@ func GetSuricataLogPath() (string, error) {
 
 // StartThreatDetection initializes and monitors Suricata events with a provided EventStore
 func StartThreatDetection(store EventStore) {
-	go monitorSuricataEvents(store)
+	go watchSuricataLog(store)
+}
+
+// watchSuricataLog watches the Suricata log file and processes new events in real-time
+func watchSuricataLog(store EventStore) {
+	logPath, err := GetSuricataLogPath()
+	if err != nil {
+		fmt.Printf("Error locating Suricata log: %v\n", err)
+		return
+	}
+
+	t, err := tail.TailFile(logPath, tail.Config{
+		Follow:    true,  // Follow file growth
+		MustExist: true,  // Ensure file exists
+		Poll:      true,  // Use polling for better compatibility
+		ReOpen:    true,  // Reopen file on rotation
+	})
+	if err != nil {
+		fmt.Printf("Error tailing Suricata log: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Monitoring Suricata log: %s\n", logPath)
+	for line := range t.Lines {
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(line.Text), &event); err != nil {
+			fmt.Printf("Failed to parse Suricata log line: %v\n", err)
+			continue
+		}
+
+		suricataEvent, err := ConvertMapToSuricataEvent(event)
+		if err != nil {
+			fmt.Printf("Failed to convert log to SuricataEvent: %v\n", err)
+			continue
+		}
+
+		if err := store.StoreSuricataEvent(suricataEvent); err != nil {
+			fmt.Printf("Error storing Suricata event: %v\n", err)
+		}
+	}
 }
 
 // ConvertMapToSuricataEvent converts a map to a SuricataEvent struct, parsing timestamps
 func ConvertMapToSuricataEvent(event map[string]interface{}) (SuricataEvent, error) {
 	var suricataEvent SuricataEvent
 
-	// Convert other fields by unmarshalling directly from the event map
 	eventData, err := json.Marshal(event)
 	if err != nil {
 		return suricataEvent, fmt.Errorf("failed to marshal map to JSON: %v", err)
@@ -70,43 +110,4 @@ func ConvertMapToSuricataEvent(event map[string]interface{}) (SuricataEvent, err
 	}
 
 	return suricataEvent, nil
-}
-
-// monitorSuricataEvents reads and processes Suricata’s JSON logs in real-time
-func monitorSuricataEvents(store EventStore) {
-	suricataLogPath, err := GetSuricataLogPath()
-	if err != nil {
-		return
-	}
-
-	for {
-		file, err := os.Open(suricataLogPath)
-		if err != nil {
-			continue
-		}
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			var event map[string]interface{}
-			line := scanner.Text()
-
-			if err := json.Unmarshal([]byte(line), &event); err != nil {
-				continue
-			}
-
-			// Convert the map to a SuricataEvent struct before storing
-			suricataEvent, err := ConvertMapToSuricataEvent(event)
-			if err != nil {
-				continue
-			}
-
-			// Store the event
-			if err := store.StoreSuricataEvent(suricataEvent); err != nil {
-				continue
-			}
-		}
-
-		file.Close()
-		time.Sleep(2 * time.Second)
-	}
 }
