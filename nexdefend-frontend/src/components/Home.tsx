@@ -9,7 +9,6 @@ const Home: React.FC = () => {
     "Comprehensive Threat Detection",
     "Real-Time System Monitoring and Alerts",
     "Incident Response and Reports",
-    "User-Friendly Dashboard"
   ];
 
   return (
