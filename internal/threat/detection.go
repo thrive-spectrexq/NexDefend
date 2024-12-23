@@ -1,11 +1,9 @@
 package threat
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/hpcloud/tail" // Tail library for real-time log processing
 )

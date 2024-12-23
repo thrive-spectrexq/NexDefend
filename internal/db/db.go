@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
+
+	"github.com/thrive-spectrexq/NexDefend/internal/threat" // Import the threat package
 
 	_ "github.com/lib/pq" // PostgreSQL driver
-	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 )
 
 type Database struct {
@@ -23,11 +25,15 @@ func InitDB() *Database {
 		return db // Return existing instance if already initialized
 	}
 
-	connStr := "user=nexdefend password=password dbname=nexdefend_db sslmode=disable"
+	connStr := getDBConnectionString()
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
+
+	conn.SetMaxOpenConns(25)                 // Set maximum number of open connections
+	conn.SetMaxIdleConns(25)                 // Set maximum number of idle connections
+	conn.SetConnMaxLifetime(5 * time.Minute) // Limit connection lifetime
 
 	if err = conn.Ping(); err != nil {
 		log.Fatalf("Database connection failed: %v", err)
@@ -44,6 +50,18 @@ func InitDB() *Database {
 
 	db = &Database{conn: conn}
 	return db
+}
+
+// getDBConnectionString constructs the database connection string from environment variables
+func getDBConnectionString() string {
+	user := getEnv("DB_USER", "nexdefend")
+	password := getEnv("DB_PASSWORD", "password")
+	dbName := getEnv("DB_NAME", "nexdefend_db")
+	host := getEnv("DB_HOST", "localhost")
+	port := getEnv("DB_PORT", "5432")
+	sslMode := getEnv("DB_SSLMODE", "disable")
+
+	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s", user, password, dbName, host, port, sslMode)
 }
 
 // executeSQLScript reads and executes a SQL script file
@@ -123,4 +141,13 @@ func jsonValue(data interface{}) interface{} {
 		return nil
 	}
 	return jsonData
+}
+
+// getEnv retrieves environment variables with a fallback value
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
 }

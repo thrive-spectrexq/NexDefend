@@ -22,17 +22,25 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
 var (
-	API_PREFIX   = "/api/v1" // Prefix for API versioning
-	PYTHON_API   = "http://localhost:5000" // Python API Base URL
+	API_PREFIX    = "/api/v1"               // Prefix for API versioning
+	PYTHON_API    = "http://localhost:5000" // Python API Base URL
 	PYTHON_ROUTES = map[string]string{
-		"analysis": "/analysis",
+		"analysis":  "/analysis",
 		"anomalies": "/anomalies",
 	}
 )
+
+func init() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found. Using system environment variables.")
+	}
+}
 
 func main() {
 	logging.InitLogging()
