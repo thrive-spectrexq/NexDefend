@@ -17,6 +17,10 @@ type Database struct {
 	conn *sql.DB
 }
 
+func (db *Database) GetDB() *sql.DB {
+	panic("unimplemented")
+}
+
 var db *Database
 
 // InitDB initializes the database connection and runs the init.sql script if tables are missing
