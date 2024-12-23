@@ -65,7 +65,7 @@ func main() {
 	api.HandleFunc("/threats", ai.ThreatDetectionHandler).Methods("POST")
 	api.HandleFunc("/incident-report", incident.ReportHandler).Methods("POST")
 	api.HandleFunc("/audit", compliance.AuditHandler).Methods("GET")
-	api.HandleFunc("/threats", threat.ThreatsHandler).Methods("GET")
+	api.HandleFunc("/threats", threat.ThreatsHandler(database.GetDB())).Methods("GET")
 	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET")
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
 
