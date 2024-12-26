@@ -12,7 +12,7 @@ import {
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
-import styles from './DashboardGrafana.module.css';
+import styles from './Dashboard.module.css';
 
 ChartJS.register(
   CategoryScale,

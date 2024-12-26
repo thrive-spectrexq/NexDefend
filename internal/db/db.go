@@ -18,7 +18,7 @@ type Database struct {
 }
 
 func (db *Database) GetDB() *sql.DB {
-	panic("unimplemented")
+	return db.conn
 }
 
 var db *Database
