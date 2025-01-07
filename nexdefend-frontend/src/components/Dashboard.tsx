@@ -60,9 +60,11 @@ const Dashboard: React.FC = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisResult[]>([]);
   const [anomalyData, setAnomalyData] = useState<Anomaly[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [threatRes, alertRes, analysisRes, anomalyRes] = await Promise.all([
           fetch(`${API_URL}/threats`),
@@ -82,6 +84,8 @@ const Dashboard: React.FC = () => {
       } catch (error) {
         console.error("Error fetching data:", error);
         setFetchError("Failed to fetch data. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -125,81 +129,58 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={styles.dashboardContainer}>
-      <header className={styles.dashboardHeader}>
-        <h1>System Monitoring Dashboard</h1>
-      </header>
+    <div className={styles.dashboard}>
+      <h2>System Overview</h2>
+      {loading ? (
+        <p>Loading data...</p>
+      ) : fetchError ? (
+        <p className={styles.error}>{fetchError}</p>
+      ) : (
+        <>
+          <div className={styles.chartContainer}>
+            <div className={styles.chart}>
+              <h3>Threat Severity Distribution</h3>
+              <Pie data={{
+                labels: Object.keys(severityCounts),
+                datasets: [{ label: 'Threat Severity Levels', data: Object.values(severityCounts), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] }],
+              }} options={{ responsive: true, maintainAspectRatio: false }} />
+            </div>
 
-      {fetchError && <p className={styles.error}>{fetchError}</p>}
+            <div className={styles.chart}>
+              <h3>Alert Level Distribution</h3>
+              <Bar data={{
+                labels: Object.keys(alertCounts),
+                datasets: [{ label: 'Alert Levels', data: Object.values(alertCounts), backgroundColor: ['#4BC0C0', '#FF9F40', '#FF6384'] }],
+              }} options={{ responsive: true, maintainAspectRatio: false }} />
+            </div>
 
-      <main className={styles.panelsGrid}>
-        <div className={styles.panel}>
-          <h3>Threat Severity Distribution</h3>
-          <Pie 
-            data={{
-              labels: Object.keys(severityCounts),
-              datasets: [
-                {
-                  label: 'Threat Severity Levels',
-                  data: Object.values(severityCounts),
-                  backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                },
-              ],
-            }}
-            options={{ responsive: true, maintainAspectRatio: false }}
-          />
-        </div>
+            <div className={styles.chart}>
+              <h3>Analysis Results</h3>
+              <Pie data={analysisChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+            </div>
 
-        <div className={styles.panel}>
-          <h3>Alert Level Distribution</h3>
-          <Bar 
-            data={{
-              labels: Object.keys(alertCounts),
-              datasets: [
-                {
-                  label: 'Alert Levels',
-                  data: Object.values(alertCounts),
-                  backgroundColor: ['#4BC0C0', '#FF9F40', '#FF6384'],
-                },
-              ],
-            }}
-            options={{ responsive: true, maintainAspectRatio: false }}
-          />
-        </div>
+            <div className={styles.chart}>
+              <h3>Anomalies Detected</h3>
+              <Line data={anomalyChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+            </div>
+          </div>
 
-        <div className={styles.panel}>
-          <h3>Analysis Results</h3>
-          <Pie 
-            data={analysisChartData} 
-            options={{ responsive: true, maintainAspectRatio: false }} 
-          />
-        </div>
+          <div className={styles.eventList}>
+            <h3>Recent Threats</h3>
+            <ul>{threatData.slice(0, 5).map(threat => <li key={threat.id}><strong>{threat.severity}</strong> - {threat.description}</li>)}</ul>
+          </div>
 
-        <div className={styles.panel}>
-          <h3>Anomalies Detected</h3>
-          <Line 
-            data={anomalyChartData} 
-            options={{ responsive: true, maintainAspectRatio: false }} 
-          />
-        </div>
-      </main>
+          <div className={styles.eventList}>
+            <h3>Recent Alerts</h3>
+            <ul>{alertData.slice(0, 5).map(alert => <li key={alert.id}><strong>{alert.level}</strong> - {alert.message}</li>)}</ul>
+          </div>
 
-      <aside className={styles.sidebar}>
-        <div className={styles.eventList}>
-          <h3>Recent Threats</h3>
-          <ul>{threatData.slice(0, 5).map(threat => <li key={threat.id}><strong>{threat.severity}</strong> - {threat.description}</li>)}</ul>
-        </div>
-
-        <div className={styles.eventList}>
-          <h3>Recent Alerts</h3>
-          <ul>{alertData.slice(0, 5).map(alert => <li key={alert.id}><strong>{alert.level}</strong> - {alert.message}</li>)}</ul>
-        </div>
-
-        <div className={styles.eventList}>
-          <h3>Recent Anomalies</h3>
-          <ul>{anomalyData.slice(0, 5).map(anomaly => <li key={anomaly.id}>{anomaly.description}</li>)}</ul>
-        </div>
-      </aside>
+          <div className={styles.eventList}>
+            <h3>Recent Anomalies</h3>
+            <ul>{anomalyData.slice(0, 5).map(anomaly => <li key={anomaly.id}>{anomaly.description}</li>)}</ul>
+          </div>
+        </>
+      )}
     </div>
   );
 };

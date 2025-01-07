@@ -1,148 +1,70 @@
 .dashboard {
   padding: 20px;
-  background-color: #f8fafc;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  font-family: Arial, sans-serif;
 }
 
 h2 {
-  text-align: center;
-  color: #1e293b;
   font-size: 2.5rem;
   margin-bottom: 20px;
-  font-weight: bold;
+  color: #333;
 }
 
 .chartContainer {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 20px;
+  gap: 20px;
 }
 
 .chart {
-  flex: 1;
-  min-width: 320px;
-  max-width: 500px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  flex: 1 1 calc(50% - 20px);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .chart h3 {
-  font-size: 1.4rem;
-  color: #475569;
-  margin-bottom: 15px;
-  font-weight: bold;
-}
-
-.chart:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #555;
 }
 
 .eventList {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 600px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .eventList h3 {
-  font-size: 1.3rem;
-  color: #475569;
-  margin-bottom: 12px;
-  font-weight: bold;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #555;
 }
 
 .eventList ul {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
 }
 
 .eventList ul li {
-  padding: 12px;
-  margin-bottom: 8px;
-  background-color: #f1f5f9;
-  border-radius: 8px;
-  border-left: 4px solid #94a3b8;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.eventList ul li:hover {
-  background-color: #e2e8f0;
-  transform: translateX(8px);
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #666;
 }
 
 .error {
-  color: #ef4444;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 15px;
+  color: red;
   font-size: 1.2rem;
-}
-
-.loading {
-  font-size: 1.1rem;
-  color: #6b7280;
-  text-align: center;
-  margin-top: 20px;
-}
-
-.noData {
-  font-size: 1.1rem;
-  color: #9ca3af;
-  text-align: center;
-  margin-top: 15px;
-}
-
-.pieChart {
-  background-color: rgba(255, 99, 132, 0.1);
-  border: 1px solid rgba(255, 99, 132, 0.3);
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.barChart {
-  background-color: rgba(75, 192, 192, 0.1);
-  border: 1px solid rgba(75, 192, 192, 0.3);
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.lineChart {
-  background-color: rgba(54, 162, 235, 0.1);
-  border: 1px solid rgba(54, 162, 235, 0.3);
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {
-  .chartContainer {
-    flex-direction: column;
-    align-items: center;
-  }
-
   .chart {
-    width: 100%;
-    margin-bottom: 20px;
-  }
-
-  .eventList {
-    width: 100%;
+    flex: 1 1 100%;
   }
 }
 
@@ -151,12 +73,9 @@ h2 {
     font-size: 2rem;
   }
 
-  .chart h3 {
-    font-size: 1.1rem;
-  }
-
+  .chart h3,
   .eventList h3 {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
 
   .eventList ul li {

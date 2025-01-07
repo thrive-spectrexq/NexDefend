@@ -29,184 +29,73 @@ set -e
 
 # ASCII Art for NexDefend
 NEXDEFEND_ART=$(cat << "EOF"
-  _   _           ____        __                _ 
- | \ | | _____  _|  _ \  ___ / _| ___ _ __   __| |
- |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \ '_ \ / _` |
- | |\  |  __/>  <| |_| |  __/  _|  __/ | | | (_| |
- |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_|
+  _   _           ____        __                _
+ | \ | | _____  _|  _ \  ___ / _| ___  ___  ___| |_
+ |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \/ __|/ _ \ __|
+ | |\  |  __/>  <| |_| |  __/  _|  __/ (__|  __/ |_
+ |_| \_|\___/_/\_\____/ \___|_|  \___|\___|\___|\__|
 EOF
 )
 
-echo -e "${GREEN}Starting NexDefend Setup...${NC}"
-
-# Initialize Database
-init_database() {
-    echo -e "${GREEN}Initializing the database...${NC}"
-    psql -U $POSTGRES_USER -d $POSTGRES_DB -f $SQL_SCRIPT
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Database initialized successfully!${NC}"
-    else
-        echo -e "${RED}Failed to initialize the database.${NC}"
-        exit 1
-    fi
+# Function to print messages
+print_message() {
+  echo -e "${GREEN}$1${NC}"
 }
 
-# Install Dependencies (Go, Python, JavaScript)
-install_dependencies() {
-    # Go Dependencies
-    echo -e "${GREEN}Installing Go dependencies...${NC}"
-    if [ -d "$GO_APP_DIR" ]; then
-        cd "$GO_APP_DIR"
-        if [ -f "go.sum" ]; then
-            echo -e "${GREEN}Go dependencies already installed. Skipping...${NC}"
-        else
-            go mod tidy || { echo -e "${RED}Go dependencies installation failed.${NC}"; exit 1; }
-        fi
-        cd "$OriginalDir"
-    else
-        echo -e "${RED}Go directory path does not exist.${NC}"
-    fi
-
-    # Python Dependencies
-    echo -e "${GREEN}Setting up Python environment...${NC}"
-    if [ -d "$PYTHON_APP_DIR" ]; then
-        cd "$PYTHON_APP_DIR"
-
-        # Create a virtual environment if it doesn't exist
-        if [ ! -d "venv" ]; then
-            echo -e "${GREEN}Creating Python virtual environment...${NC}"
-            python3 -m venv venv || { echo -e "${RED}Failed to create virtual environment.${NC}"; exit 1; }
-        fi
-
-        # Activate the virtual environment
-        source venv/bin/activate || { echo -e "${RED}Failed to activate virtual environment.${NC}"; exit 1; }
-
-        # Install Python dependencies
-        echo -e "${GREEN}Installing Python dependencies...${NC}"
-        while IFS= read -r pkg; do
-            if ! pip show "$pkg" &> /dev/null; then
-                echo -e "${GREEN}Installing missing Python packages...${NC}"
-                pip install -r requirements.txt || { echo -e "${RED}Python dependencies installation failed.${NC}"; exit 1; }
-                break
-            fi
-        done < <(awk '{print $1}' requirements.txt)
-        echo -e "${GREEN}Python dependencies are up to date. Skipping...${NC}"
-
-        # Deactivate the virtual environment
-        deactivate
-
-        cd "$OriginalDir"
-    else
-        echo -e "${RED}Python directory path does not exist.${NC}"
-    fi
-
-    # JavaScript Dependencies
-    echo -e "${GREEN}Installing JavaScript dependencies (React frontend)...${NC}"
-    if [ -d "$FRONTEND_DIR" ]; then
-        cd "$FRONTEND_DIR"
-        if [ -d "node_modules" ] && [ "$(ls -A node_modules)" ]; then
-            echo -e "${GREEN}JavaScript dependencies already installed. Skipping...${NC}"
-        else
-            npm install || { echo -e "${RED}JavaScript dependencies installation failed.${NC}"; exit 1; }
-        fi
-        cd "$OriginalDir"
-    else
-        echo -e "${RED}Frontend directory path does not exist.${NC}"
-    fi
+# Function to print error messages
+print_error() {
+  echo -e "${RED}$1${NC}"
 }
 
-# Start Python API
-start_python_api() {
-    echo -e "${GREEN}Starting the Python API server...${NC}"
-    cd "$PYTHON_APP_DIR"
-    python3 api.py &  # Start Python server in the background
-    PYTHON_API_PID=$!
-    sleep 5  # Wait for the Python API to start
-
-    # Check if Python API is running
-    if lsof -i :5000 > /dev/null; then
-        echo -e "${GREEN}Python API server is running on port 5000 (PID: $PYTHON_API_PID)${NC}"
-    else
-        echo -e "${RED}Failed to start the Python API server.${NC}"
-        exit 1
-    fi
-    cd "$OriginalDir"
+# Function to run Docker Compose
+run_docker_compose() {
+  print_message "Starting Docker Compose..."
+  docker-compose -f $DOCKER_COMPOSE_FILE up -d
 }
 
-# Start Backend (Go)
-start_backend() {
-    echo -e "${GREEN}Starting the Go backend...${NC}"
-    cd "$GO_APP_DIR"
-    go run main.go &  # Start Go backend in the background
-    BACKEND_PID=$!
-    sleep 5  # Wait for the backend to start
-
-    # Check if backend is running on the specified port
-    if lsof -i :$BACKEND_PORT > /dev/null; then
-        echo -e "${GREEN}Backend service running on port $BACKEND_PORT (PID: $BACKEND_PID)${NC}"
-    else
-        echo -e "${RED}Failed to start the backend service.${NC}"
-        exit 1
-    fi
-    cd "$OriginalDir"
+# Function to initialize the database
+initialize_database() {
+  print_message "Initializing the database..."
+  docker exec -i $(docker-compose ps -q db) psql -U $POSTGRES_USER -d $POSTGRES_DB < $SQL_SCRIPT
 }
 
-# Start Frontend (React)
-start_frontend() {
-    echo -e "${GREEN}Starting the React frontend in a new terminal...${NC}"
-    
-    # Open a new terminal window and run the frontend service
-    cd "$FRONTEND_DIR"
-    
-    gnome-terminal -- bash -c "npm start; exec bash" &  # For GNOME Terminal
-    FRONTEND_PID=$!
-    
-    sleep 5  # Wait for the frontend to start
-
-    # Check if frontend is running on the specified port
-    if lsof -i :$FRONTEND_PORT > /dev/null; then
-        echo -e "${GREEN}Frontend running on port $FRONTEND_PORT (PID: $FRONTEND_PID)${NC}"
-    else
-        echo -e "${RED}Failed to start the frontend service.${NC}"
-        exit 1
-    fi
-    cd "$OriginalDir"
+# Function to build and run the Go application
+run_go_app() {
+  print_message "Building and running the Go application..."
+  cd $GO_APP_DIR
+  go build -o nexdefend
+  ./nexdefend &
+  cd $OriginalDir
 }
 
-# Option to use Docker
-use_docker() {
-    if [ -f "$DOCKER_COMPOSE_FILE" ]; then
-        echo -e "${GREEN}Starting services using Docker Compose...${NC}"
-        docker-compose -f "$DOCKER_COMPOSE_FILE" up --build -d
-    else
-        echo -e "${RED}Docker Compose file not found. Skipping Docker setup.${NC}"
-    fi
+# Function to run the Python application
+run_python_app() {
+  print_message "Running the Python application..."
+  cd $PYTHON_APP_DIR
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  python app.py &
+  cd $OriginalDir
 }
 
-# Clean up (stopping services)
-cleanup() {
-    echo -e "${RED}Stopping backend, frontend, and Python API services...${NC}"
-    kill $BACKEND_PID $FRONTEND_PID $PYTHON_API_PID
-    echo -e "${GREEN}Services stopped.${NC}"
+# Function to run the frontend application
+run_frontend_app() {
+  print_message "Running the frontend application..."
+  cd $FRONTEND_DIR
+  npm install
+  npm start &
+  cd $OriginalDir
 }
 
-# Parse input arguments
-if [ "$1" == "initdb" ]; then
-    init_database
-elif [ "$1" == "start" ]; then
-    install_dependencies
-    start_python_api
-    start_backend
-    start_frontend
-elif [ "$1" == "docker" ]; then
-    use_docker
-elif [ "$1" == "stop" ]; then
-    cleanup
-else
-    echo "$NEXDEFEND_ART"
-    echo -e "${GREEN}Usage: ./nexdefend_setup.sh [initdb|start|docker|stop]${NC}"
-    echo "initdb - Initialize the PostgreSQL database"
-    echo "start  - Install dependencies and start backend & frontend services"
-    echo "docker - Run the services using Docker Compose"
-    echo "stop   - Stop running backend and frontend services"
-fi
+# Main script execution
+print_message "$NEXDEFEND_ART"
+print_message "Starting NexDefend setup..."
+
+run_docker_compose
+initialize_database
+run_go_app
+run_python_app
+run_frontend_app
+
+print_message "NexDefend setup completed successfully!"

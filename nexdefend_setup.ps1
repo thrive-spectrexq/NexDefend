@@ -26,137 +26,74 @@ $NEXDEFEND_ART = @"
  |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_| 
 "@
 
-Write-Host "Starting NexDefend Setup..."
+# Function to print messages
+function Print-Message {
+    param (
+        [string]$Message
+    )
+    Write-Host -ForegroundColor Green $Message
+}
 
-# Initialize Database
+# Function to print error messages
+function Print-Error {
+    param (
+        [string]$Message
+    )
+    Write-Host -ForegroundColor Red $Message
+}
+
+# Function to run Docker Compose
+function Run-DockerCompose {
+    Print-Message "Starting Docker Compose..."
+    docker-compose -f $DOCKER_COMPOSE_FILE up -d
+}
+
+# Function to initialize the database
 function Initialize-Database {
-    Write-Host "Initializing the database..."
-    psql -U $env:POSTGRES_USER -d $env:POSTGRES_DB -f $SQL_SCRIPT
-    if ($?) {
-        Write-Host "Database initialized successfully!"
-    }
-    else {
-        Write-Host "Failed to initialize the database." -ForegroundColor Red
-        exit 1
-    }
+    Print-Message "Initializing the database..."
+    docker exec -i $(docker-compose ps -q db) psql -U $env:POSTGRES_USER -d $env:POSTGRES_DB < $SQL_SCRIPT
 }
 
-# Install Dependencies (Go, Python, JavaScript)
-function Install-Dependencies {
-    Write-Host "Installing Go dependencies..."
+# Function to build and run the Go application
+function Run-GoApp {
+    Print-Message "Building and running the Go application..."
     Set-Location $GO_APP_DIR
-    if (!(Test-Path "go.sum")) {
-        go mod tidy
-    }
-    else {
-        Write-Host "Go dependencies are already installed. Skipping..."
-    }
-    Set-Location $OriginalDir  # Return to the original directory
-
-    Write-Host "Installing Python dependencies..."
-    if (Test-Path $PYTHON_APP_DIR) {
-        Set-Location $PYTHON_APP_DIR
-        if (!(pip freeze | Select-String -Pattern "Flask")) {
-            pip install -r requirements.txt
-        }
-        else {
-            Write-Host "Python dependencies are already installed. Skipping..."
-        }
-        Set-Location $OriginalDir  # Return to the original directory
-    }
-    else {
-        Write-Host "Python directory path does not exist." -ForegroundColor Red
-    }
-
-    Write-Host "Installing JavaScript dependencies (React frontend)..."
-    if (Test-Path $FRONTEND_DIR) {
-        Set-Location $FRONTEND_DIR
-        if (!(Test-Path "node_modules")) {
-            npm install
-        }
-        else {
-            Write-Host "JavaScript dependencies are already installed. Skipping..."
-        }
-        Set-Location $OriginalDir  # Return to the original directory
-    }
-    else {
-        Write-Host "Frontend directory path does not exist." -ForegroundColor Red
-    }
+    go build -o nexdefend
+    Start-Process -NoNewWindow -FilePath "./nexdefend"
+    Set-Location $OriginalDir
 }
 
-# Start Python Server
-function Start-PythonServer {
-    Write-Host "Starting the Python server..."
+# Function to run the Python application
+function Run-PythonApp {
+    Print-Message "Running the Python application..."
     Set-Location $PYTHON_APP_DIR
-    Start-Process python -ArgumentList "api.py"
-    Write-Host "Python server running on port 5000"
-    Set-Location $OriginalDir  # Return to the original directory
+    python -m venv venv
+    .\venv\Scripts\Activate
+    pip install -r requirements.txt
+    Start-Process -NoNewWindow -FilePath "python" -ArgumentList "app.py"
+    Set-Location $OriginalDir
 }
 
-# Build and Start Backend (Go)
-function Start-Backend {
-    Write-Host "Starting the Go backend..."
-    Set-Location $GO_APP_DIR
-    Start-Process go -ArgumentList "run main.go"
-    Write-Host "Backend service running on port $env:BACKEND_PORT"
-    Set-Location $OriginalDir  # Return to the original directory
+# Function to run the frontend application
+function Run-FrontendApp {
+    Print-Message "Running the frontend application..."
+    Set-Location $FRONTEND_DIR
+    npm install
+    Start-Process -NoNewWindow -FilePath "npm" -ArgumentList "start"
+    Set-Location $OriginalDir
 }
 
-# Start Frontend (React)
-function Start-Frontend {
-    Write-Host "Starting the React frontend..."
-    if (Test-Path $FRONTEND_DIR) {
-        Set-Location $FRONTEND_DIR
-        Start-Process npm -ArgumentList "start"
-        Write-Host "Frontend running on port $env:FRONTEND_PORT"
-        Set-Location $OriginalDir  # Return to the original directory
-    }
-    else {
-        Write-Host "Frontend directory path does not exist." -ForegroundColor Red
-    }
-}
+# Main script execution
+Print-Message $NEXDEFEND_ART
+Print-Message "Starting NexDefend setup..."
 
-# Option to use Docker
-function Use-Docker {
-    if (Test-Path $DOCKER_COMPOSE_FILE) {
-        Write-Host "Starting services using Docker Compose..."
-        docker-compose -f $DOCKER_COMPOSE_FILE up --build -d
-    }
-    else {
-        Write-Host "Docker Compose file not found. Skipping Docker setup." -ForegroundColor Red
-    }
-}
-
-# Clean up (stopping services)
-function Cleanup {
-    Write-Host "Stopping backend and frontend services..." -ForegroundColor Red
-    Stop-Process -Name "go" -Force
-    Stop-Process -Name "npm" -Force
-    Stop-Process -Name "python" -Force
-    Write-Host "Services stopped."
-}
-
-# Parse input arguments
-if ($args[0] -eq "initdb") {
+try {
+    Run-DockerCompose
     Initialize-Database
-}
-elseif ($args[0] -eq "start") {
-    Install-Dependencies
-    Start-PythonServer   # Start Python server before the Go backend
-    Start-Backend
-    Start-Frontend
-}
-elseif ($args[0] -eq "docker") {
-    Use-Docker
-}
-elseif ($args[0] -eq "stop") {
-    Cleanup
-}
-else {
-    Write-Host $NEXDEFEND_ART
-    Write-Host "Usage: ./nexdefend_setup.ps1 [initdb|start|docker|stop]"
-    Write-Host "initdb - Initialize the PostgreSQL database"
-    Write-Host "start  - Install dependencies and start backend & frontend services"
-    Write-Host "docker - Run the services using Docker Compose"
-    Write-Host "stop   - Stop running backend and frontend services"
+    Run-GoApp
+    Run-PythonApp
+    Run-FrontendApp
+    Print-Message "NexDefend setup completed successfully!"
+} catch {
+    Print-Error "Error during NexDefend setup: $_"
 }
