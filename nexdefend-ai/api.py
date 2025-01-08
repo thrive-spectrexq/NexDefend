@@ -1,5 +1,4 @@
 import logging
-
 from analysis import analyze_data
 from data_ingestion import fetch_suricata_events
 from flask import Flask, jsonify, make_response
@@ -7,10 +6,7 @@ from ml_anomaly_detection import detect_anomalies, preprocess_events
 
 app = Flask(__name__)
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 @app.route("/analysis", methods=["GET"])
 def get_analysis():
@@ -21,7 +17,6 @@ def get_analysis():
     except Exception as e:
         logging.error(f"Error during analysis: {e}")
         return make_response(jsonify({"error": "Failed to perform analysis"}), 500)
-
 
 @app.route("/anomalies", methods=["GET"])
 def get_anomalies():
@@ -34,6 +29,6 @@ def get_anomalies():
         logging.error(f"Error during anomaly detection: {e}")
         return make_response(jsonify({"error": "Failed to detect anomalies"}), 500)
 
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=5000)

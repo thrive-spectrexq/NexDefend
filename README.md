@@ -49,10 +49,6 @@ graph TD;
 1. Run the `nexdefend_setup.ps1` script:
 
     ```powershell
-    .\nexdefend_setup.ps1 initdb
-    ```
-
-    ```powershell
     .\nexdefend_setup.ps1 start
     ```
 
@@ -65,11 +61,7 @@ graph TD;
     ```
 
     ```bash
-    ./nexdefend_setup.sh initdb
-    ```
-
-    ```bash
-    ./nexdefend_setup.sh start
+    ./nexdefend_setup.sh
     ```
 
 2. Optional, run `nexdefend_setup.sh docker` script:
@@ -83,7 +75,7 @@ graph TD;
 1. Install python packages:
 
     ```bash
-    pip install -r requirements.txt
+    pip install -r nexdefend-ai/requirements.txt
     ```
 
 2. Run the application:

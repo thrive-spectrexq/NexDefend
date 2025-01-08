@@ -29,11 +29,11 @@ set -e
 
 # ASCII Art for NexDefend
 NEXDEFEND_ART=$(cat << "EOF"
-  _   _           ____        __                _
- | \ | | _____  _|  _ \  ___ / _| ___  ___  ___| |_
- |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \/ __|/ _ \ __|
- | |\  |  __/>  <| |_| |  __/  _|  __/ (__|  __/ |_
- |_| \_|\___/_/\_\____/ \___|_|  \___|\___|\___|\__|
+   _   _           ____        __                _ 
+ | \ | | _____  _|  _ \  ___ / _| ___ _ __   __| |
+ |  \| |/ _ \ \/ / | | |/ _ \ |_ / _ \ '_ \ / _` |
+ | |\  |  __/>  <| |_| |  __/  _|  __/ | | | (_| |
+ |_| \_|\___/_/\_\____/ \___|_|  \___|_| |_|\__,_|
 EOF
 )
 
@@ -47,15 +47,11 @@ print_error() {
   echo -e "${RED}$1${NC}"
 }
 
-# Function to run Docker Compose
-run_docker_compose() {
-  print_message "Starting Docker Compose..."
-  docker-compose -f $DOCKER_COMPOSE_FILE up -d
-}
-
 # Function to initialize the database
 initialize_database() {
   print_message "Initializing the database..."
+  docker-compose up -d db
+  sleep 10  # Wait for the database to be ready
   docker exec -i $(docker-compose ps -q db) psql -U $POSTGRES_USER -d $POSTGRES_DB < $SQL_SCRIPT
 }
 
@@ -88,14 +84,27 @@ run_frontend_app() {
   cd $OriginalDir
 }
 
+# Function to run Docker Compose
+run_docker_compose() {
+  print_message "Starting Docker Compose..."
+  docker-compose -f $DOCKER_COMPOSE_FILE up -d
+}
+
 # Main script execution
 print_message "$NEXDEFEND_ART"
 print_message "Starting NexDefend setup..."
 
-run_docker_compose
+# Manual initialization steps
 initialize_database
-run_go_app
 run_python_app
+run_go_app
 run_frontend_app
+
+# Menu option for Docker
+print_message "Do you want to start Docker Compose? (y/n)"
+read -r start_docker
+if [ "$start_docker" = "y" ]; then
+  run_docker_compose
+fi
 
 print_message "NexDefend setup completed successfully!"

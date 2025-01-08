@@ -4,3 +4,4 @@ numpy
 scikit-learn
 python-nmap
 requests
+waitress
