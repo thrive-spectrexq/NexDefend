@@ -5,3 +5,4 @@ scikit-learn
 python-nmap
 requests
 waitress
+python-dotenv
