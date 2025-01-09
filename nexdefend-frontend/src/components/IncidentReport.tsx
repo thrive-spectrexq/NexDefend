@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from './IncidentReport.module.css';
 
-const API_URL = "http://localhost:8080";
+const API_URL = process.env.REACT_APP_API_URL;
 
 interface Incident {
   id: string;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
 
-const API_URL = "https://nexdefend.onrender.com";
+const API_URL = process.env.REACT_APP_API_URL;
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');

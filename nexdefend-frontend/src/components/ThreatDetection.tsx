@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './ThreatDetection.module.css';
 
-const API_URL = "http://localhost:8080";
+const API_URL = process.env.REACT_APP_API_URL;
 
 interface Threat {
   id: string;

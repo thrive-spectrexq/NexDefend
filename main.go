@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	API_PREFIX    = "/api/v1"               // Prefix for API versioning
+	API_PREFIX    = "/api/v1"                          // Prefix for API versioning
 	PYTHON_API    = "https://nexdefend-1.onrender.com" // Python API Base URL
 	PYTHON_ROUTES = map[string]string{
 		"analysis":  "/analysis",
@@ -82,6 +82,9 @@ func main() {
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 	})
+
+	// Apply CORS middleware
+	router.Use(corsOptions.Handler)
 
 	srv := &http.Server{
 		Addr:    ":8080",
