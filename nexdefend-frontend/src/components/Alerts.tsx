@@ -15,6 +15,7 @@ const Alerts: React.FC = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -32,77 +33,62 @@ const Alerts: React.FC = () => {
         if (Array.isArray(data)) {
           setAlerts(data);
         } else {
-          console.error("Unexpected alerts data format:", data);
-          setAlerts([]); // Reset to empty array if data is not an array
+          setError('Unexpected response format');
         }
-      } catch (err) {
-        console.error(err); // Log the error for debugging
-        setError('Error fetching alerts. Please try again.');
+      } catch (error) {
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAlerts();
   }, [level, page]);
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+  };
+
+  const filteredAlerts = alerts.filter(alert =>
+    alert.alert_message.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className={styles.alertsContainer}>
-      <h2 className={styles.header}>Alerts</h2>
-
-      <div className={styles.filterContainer}>
-        <label htmlFor="levelFilter">Filter by level:</label>
-        <select
-          id="levelFilter"
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-          className={styles.select}
-        >
-          <option value="all">All</option>
-          <option value="critical">Critical</option>
-          <option value="medium">Medium</option>
+    <div className={styles.alerts}>
+      <h2>Alerts</h2>
+      {error && <p className={styles.error}>{error}</p>}
+      <div className={styles.controls}>
+        <select value={level} onChange={(e) => setLevel(e.target.value)}>
+          <option value="all">All Levels</option>
           <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
         </select>
+        <input
+          type="text"
+          placeholder="Search alerts"
+          value={search}
+          onChange={handleSearchChange}
+        />
       </div>
-
       {loading ? (
-        <p className={styles.loading}>Loading alerts...</p>
-      ) : error ? (
-        <p className={styles.error}>{error}</p>
-      ) : alerts.length === 0 ? (
-        <p className={styles.noAlerts}>No alerts to display</p>
+        <p>Loading...</p>
       ) : (
-        <ul className={styles.alertList}>
-          {alerts.map((alert) => (
-            <li
-              key={alert.id}
-              className={`${styles.alertItem} ${
-                alert.alert_level === 'critical'
-                  ? styles.critical
-                  : alert.alert_level === 'medium'
-                  ? styles.medium
-                  : styles.low
-              }`}
-            >
-              {alert.alert_message} - <strong>Level:</strong> {alert.alert_level}
-            </li>
+        <div className={styles.alertList}>
+          {filteredAlerts.map(alert => (
+            <div key={alert.id} className={styles.alertItem}>
+              <p><strong>Message:</strong> {alert.alert_message}</p>
+              <p><strong>Level:</strong> {alert.alert_level}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
-
       <div className={styles.pagination}>
-        <button
-          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          disabled={page === 1}
-          className={styles.pageButton}
-        >
+        <button onClick={() => setPage(page => Math.max(page - 1, 1))} disabled={page === 1}>
           Previous
         </button>
-        <span className={styles.pageInfo}>Page {page}</span>
-        <button
-          onClick={() => setPage((prev) => prev + 1)}
-          disabled={alerts.length === 0}
-          className={styles.pageButton}
-        >
+        <span>Page {page}</span>
+        <button onClick={() => setPage(page => page + 1)}>
           Next
         </button>
       </div>
