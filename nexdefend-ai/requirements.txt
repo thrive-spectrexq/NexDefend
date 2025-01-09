@@ -6,3 +6,4 @@ python-nmap
 requests
 waitress
 python-dotenv
+gunicorn
