@@ -28,7 +28,7 @@ import (
 
 var (
 	API_PREFIX    = "/api/v1"               // Prefix for API versioning
-	PYTHON_API    = "http://localhost:5000" // Python API Base URL
+	PYTHON_API    = "https://nexdefend-1.onrender.com" // Python API Base URL
 	PYTHON_ROUTES = map[string]string{
 		"analysis":  "/analysis",
 		"anomalies": "/anomalies",
