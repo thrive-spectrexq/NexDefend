@@ -1,86 +1,74 @@
 .container {
-  max-width: 600px;             
-  margin: 0 auto;               
-  padding: 20px;                
-  background-color: #f9f9f9;    
-  border-radius: 8px;           
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header {
-  font-size: 1.6em;             
-  color: #333;                  
-  margin-bottom: 10px;          
-  text-align: center;           
+  font-size: 1.6em;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 .fileInput {
-  display: block;               
-  margin: 10px auto;            
-  padding: 10px;                
-  font-size: 1em;               
-  cursor: pointer;              
-  border: 1px solid #ddd;       
-  border-radius: 4px;           
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  font-size: 1em;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .fileInput:hover, .fileInput:focus {
-  border-color: #007bff;        
+  border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
-.progress {
-  width: 100%;                  
-  height: 10px;                 
-  border-radius: 5px;           
-  margin: 15px 0;               
-  background-color: #ddd;       
+.upload {
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
 
-.progress::-webkit-progress-bar {
-  background-color: #ddd;
-}
-
-.progress::-webkit-progress-value {
-  background-color: #007bff;    
-}
-
-.progress::-moz-progress-bar {
-  background-color: #007bff;    
+h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
 }
 
 .error {
-  color: #d9534f;               
-  text-align: center;           
-  margin-top: 10px;             
-  font-weight: bold;            
+  color: red;
+  font-size: 1rem;
+  margin-bottom: 10px;
 }
 
 .success {
-  color: #28a745;               
-  text-align: center;           
-  margin-top: 10px;             
-  font-weight: bold;            
+  color: green;
+  font-size: 1rem;
+  margin-bottom: 10px;
 }
 
 .uploadList {
-  list-style: none;             
-  padding: 0;                   
-  margin-top: 15px;             
+  margin-top: 20px;
 }
 
 .uploadItem {
-  padding: 8px;                 
-  background-color: #007bff;    
-  color: #fff;                  
-  border-radius: 4px;           
-  margin: 5px 0;                
-  text-align: center;           
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-bottom: 10px;
 }
 
-.uploadItem:hover {
-  background-color: #0056b3;    
-  transform: scale(1.02);       
+.progressBar {
+  width: 100%;
+  background-color: #f3f3f3;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.progress {
+  height: 10px;
+  background-color: #4caf50;
 }
