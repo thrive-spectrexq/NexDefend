@@ -1,7 +1,7 @@
 import logging
+from flask import Flask, jsonify, make_response
 from analysis import analyze_data
 from data_ingestion import fetch_suricata_events
-from flask import Flask, jsonify, make_response
 from ml_anomaly_detection import detect_anomalies, preprocess_events
 
 app = Flask(__name__)
@@ -30,5 +30,4 @@ def get_anomalies():
         return make_response(jsonify({"error": "Failed to detect anomalies"}), 500)
 
 if __name__ == "__main__":
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000)
