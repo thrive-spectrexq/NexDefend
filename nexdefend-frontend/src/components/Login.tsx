@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 
-const API_URL = "http://localhost:8080";
+const API_URL = "https://nexdefend.onrender.com";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
