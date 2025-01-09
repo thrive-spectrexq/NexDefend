@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	API_PREFIX    = "/api/v1"                          // Prefix for API versioning
-	PYTHON_API    = "https://nexdefend-1.onrender.com" // Python API Base URL
+	API_PREFIX    string // Prefix for API versioning
+	PYTHON_API    string // Python API Base URL
 	PYTHON_ROUTES = map[string]string{
 		"analysis":  "/analysis",
 		"anomalies": "/anomalies",
@@ -39,6 +39,16 @@ func init() {
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found. Using system environment variables.")
+	}
+
+	API_PREFIX = os.Getenv("API_PREFIX")
+	if API_PREFIX == "" {
+		API_PREFIX = "/api/v1"
+	}
+
+	PYTHON_API = os.Getenv("PYTHON_API")
+	if PYTHON_API == "" {
+		PYTHON_API = "https://nexdefend-1.onrender.com"
 	}
 }
 
@@ -77,7 +87,7 @@ func main() {
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 
 	corsOptions := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://nexdefend.vercel.app/"},
+		AllowedOrigins:   []string{"https://nexdefend.vercel.app"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -88,7 +98,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: corsOptions.Handler(router),
+		Handler: router,
 	}
 
 	go func() {
