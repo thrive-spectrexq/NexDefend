@@ -26,7 +26,7 @@ ChartJS.register(
   ArcElement
 );
 
-const API_URL = "http://localhost:8080";
+const API_URL = "https://nexdefend.onrender.com";
 
 interface Threat {
   id: string;
