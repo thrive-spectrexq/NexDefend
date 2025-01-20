@@ -87,11 +87,11 @@ func main() {
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 
 	corsOptions := cors.New(cors.Options{
-    AllowedOrigins:   []string{"*"}, // Allow all origins
-    AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-    AllowedHeaders:   []string{"Authorization", "Content-Type"},
-    AllowCredentials: true,
-})
+		AllowedOrigins:   []string{"https://nexdefend.vercel.app"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	})
 
 	// Apply CORS middleware
 	router.Use(corsOptions.Handler)
