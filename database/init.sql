@@ -25,7 +25,8 @@ CREATE TABLE suricata_events (
     http JSONB,
     tls JSONB,
     dns JSONB,
-    alert JSONB
+    alert JSONB,
+    is_analyzed BOOLEAN DEFAULT FALSE
 );
 
 -- Create 'threats' table to store detected threats
