@@ -1,4 +1,5 @@
 import logging
+import os
 from flask import Flask, jsonify, make_response
 from flask_cors import CORS
 from analysis import analyze_data
@@ -8,7 +9,8 @@ from ml_anomaly_detection import detect_anomalies, preprocess_events
 app = Flask(__name__)
 
 # Enable CORS for all origins
-CORS(app)
+cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+CORS(app, origins=cors_origins)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
