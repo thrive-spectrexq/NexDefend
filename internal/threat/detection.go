@@ -3,6 +3,8 @@ package threat
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 
 	"github.com/hpcloud/tail" // Tail library for real-time log processing
@@ -12,6 +14,15 @@ const (
 	defaultLogPath       = "/var/log/suricata/eve.json"
 	sourceInstallLogPath = "/usr/local/var/log/suricata/eve.json"
 )
+
+var PYTHON_API_URL string
+
+func init() {
+	PYTHON_API_URL = os.Getenv("PYTHON_API")
+	if PYTHON_API_URL == "" {
+		PYTHON_API_URL = "http://localhost:5000" // Default for local dev
+	}
+}
 
 // SuricataEvent represents a structure for parsed Suricata JSON logs
 type SuricataEvent struct {
@@ -65,10 +76,10 @@ func watchSuricataLog(store EventStore) {
 	}
 
 	t, err := tail.TailFile(logPath, tail.Config{
-		Follow:    true,  // Follow file growth
-		MustExist: true,  // Ensure file exists
-		Poll:      true,  // Use polling for better compatibility
-		ReOpen:    true,  // Reopen file on rotation
+		Follow:    true,
+		MustExist: true,
+		Poll:      true,
+		ReOpen:    true,
 	})
 	if err != nil {
 		fmt.Printf("Error tailing Suricata log: %v\n", err)
@@ -89,11 +100,35 @@ func watchSuricataLog(store EventStore) {
 			continue
 		}
 
-		if err := store.StoreSuricataEvent(suricataEvent); err != nil {
+		eventID, err := store.StoreSuricataEvent(suricataEvent)
+		if err != nil {
 			fmt.Printf("Error storing Suricata event: %v\n", err)
+			continue
 		}
+
+		// Trigger real-time analysis after storing the event
+		go triggerAnalysis(eventID)
 	}
 }
+
+// triggerAnalysis makes an API call to the Python service to analyze a specific event
+func triggerAnalysis(eventID int) {
+	url := fmt.Sprintf("%s/analyze-event/%d", PYTHON_API_URL, eventID)
+	resp, err := http.Post(url, "application/json", nil)
+	if err != nil {
+		log.Printf("Error triggering analysis for event %d: %v", eventID, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Analysis for event %d failed with status: %s", eventID, resp.Status)
+		return
+	}
+
+	log.Printf("Successfully triggered analysis for event %d", eventID)
+}
+
 
 // ConvertMapToSuricataEvent converts a map to a SuricataEvent struct, parsing timestamps
 func ConvertMapToSuricataEvent(event map[string]interface{}) (SuricataEvent, error) {
