@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/thrive-spectrexq/NexDefend/internal/ai"
@@ -27,9 +28,10 @@ import (
 )
 
 var (
-	API_PREFIX    string // Prefix for API versioning
-	PYTHON_API    string // Python API Base URL
-	PYTHON_ROUTES = map[string]string{
+	API_PREFIX           string // Prefix for API versioning
+	PYTHON_API           string // Python API Base URL
+	CORS_ALLOWED_ORIGINS []string
+	PYTHON_ROUTES        = map[string]string{
 		"analysis":  "/analysis",
 		"anomalies": "/anomalies",
 	}
@@ -49,6 +51,13 @@ func init() {
 	PYTHON_API = os.Getenv("PYTHON_API")
 	if PYTHON_API == "" {
 		PYTHON_API = "https://nexdefend-1.onrender.com"
+	}
+
+	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if corsOrigins == "" {
+		CORS_ALLOWED_ORIGINS = []string{"https://nexdefend.vercel.app"}
+	} else {
+		CORS_ALLOWED_ORIGINS = strings.Split(corsOrigins, ",")
 	}
 }
 
@@ -87,7 +96,7 @@ func main() {
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 
 	corsOptions := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://nexdefend.vercel.app"},
+		AllowedOrigins:   CORS_ALLOWED_ORIGINS,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -143,7 +152,7 @@ func fetchPythonResults(endpoint string) map[string]interface{} {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading Python API response (%s): %v", endpoint, err)
 		return nil

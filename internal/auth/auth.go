@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtKey = []byte("secret_key")
@@ -14,7 +14,7 @@ var jwtKey = []byte("secret_key")
 // Claims struct for storing the user ID in the JWT token
 type Claims struct {
 	UserID int `json:"user_id"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // GenerateJWT generates a JWT token for a user based on user ID
@@ -23,8 +23,8 @@ func GenerateJWT(userId int) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userId, // Store user ID in the claims
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			Subject:   fmt.Sprint(userId), // Use userId as the subject
 		},
 	}

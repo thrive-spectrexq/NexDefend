@@ -3,25 +3,28 @@ services:
   api:
     build:
       context: .
-      dockerfile: .Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     depends_on:
       - db
     environment:
-      POSTGRES_USER: nexdefend
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: nexdefend_db
-      POSTGRES_HOST: db
+      DB_USER: nexdefend
+      DB_PASSWORD: password
+      DB_NAME: nexdefend_db
+      DB_HOST: db
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://nexdefend.vercel.app
     networks:
       - nexdefend-net
 
   ai:
     build:
       context: nexdefend-ai
-      dockerfile: nexdefend-ai/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    environment:
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://nexdefend.vercel.app
     networks:
       - nexdefend-net
 
@@ -30,6 +33,8 @@ services:
       context: nexdefend-frontend
     ports:
       - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://api:8080/api/v1
     depends_on:
       - api
       - ai
