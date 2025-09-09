@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/thrive-spectrexq/NexDefend/internal/ai"
@@ -18,6 +19,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/incident"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
+	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 
@@ -27,9 +29,10 @@ import (
 )
 
 var (
-	API_PREFIX    string // Prefix for API versioning
-	PYTHON_API    string // Python API Base URL
-	PYTHON_ROUTES = map[string]string{
+	API_PREFIX           string // Prefix for API versioning
+	PYTHON_API           string // Python API Base URL
+	CORS_ALLOWED_ORIGINS []string
+	PYTHON_ROUTES        = map[string]string{
 		"analysis":  "/analysis",
 		"anomalies": "/anomalies",
 	}
@@ -50,6 +53,13 @@ func init() {
 	if PYTHON_API == "" {
 		PYTHON_API = "https://nexdefend-1.onrender.com"
 	}
+
+	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if corsOrigins == "" {
+		CORS_ALLOWED_ORIGINS = []string{"https://nexdefend.vercel.app"}
+	} else {
+		CORS_ALLOWED_ORIGINS = strings.Split(corsOrigins, ",")
+	}
 }
 
 func main() {
@@ -59,6 +69,9 @@ func main() {
 
 	// Start Suricata threat detection with the database as EventStore
 	go threat.StartThreatDetection(database)
+
+	// Start collecting system metrics
+	go metrics.CollectMetrics(database)
 
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)
@@ -83,11 +96,14 @@ func main() {
 	api.HandleFunc("/python-analysis", PythonAnalysisHandler).Methods("GET")
 	api.HandleFunc("/python-anomalies", PythonAnomaliesHandler).Methods("GET")
 
+	// Metrics Endpoint
+	api.HandleFunc("/metrics", MetricsHandler(database)).Methods("GET")
+
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 
 	corsOptions := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://nexdefend.vercel.app"},
+		AllowedOrigins:   CORS_ALLOWED_ORIGINS,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -143,7 +159,7 @@ func fetchPythonResults(endpoint string) map[string]interface{} {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading Python API response (%s): %v", endpoint, err)
 		return nil
@@ -177,4 +193,37 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{"status": "success", "message": "Welcome to NexDefend API!"}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// MetricsHandler handles requests for system metrics
+func MetricsHandler(store metrics.MetricStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		metricType := r.URL.Query().Get("type")
+		if metricType == "" {
+			http.Error(w, "Missing 'type' query parameter", http.StatusBadRequest)
+			return
+		}
+
+		fromStr := r.URL.Query().Get("from")
+		toStr := r.URL.Query().Get("to")
+
+		from, err := time.Parse(time.RFC3339, fromStr)
+		if err != nil {
+			from = time.Now().Add(-1 * time.Hour) // Default to last hour
+		}
+
+		to, err := time.Parse(time.RFC3339, toStr)
+		if err != nil {
+			to = time.Now()
+		}
+
+		results, err := store.GetSystemMetrics(metricType, from, to)
+		if err != nil {
+			http.Error(w, "Failed to fetch system metrics", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(results)
+	}
 }
