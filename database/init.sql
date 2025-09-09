@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS threats CASCADE;
 DROP TABLE IF EXISTS uploaded_files CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS suricata_events CASCADE;
+DROP TABLE IF EXISTS system_metrics CASCADE;
 
 -- Create 'users' table to store user information
 CREATE TABLE users (
@@ -60,9 +61,18 @@ CREATE TABLE uploaded_files (
     alert BOOLEAN DEFAULT FALSE
 );
 
+-- Create 'system_metrics' table to store time-series system metrics
+CREATE TABLE system_metrics (
+    id SERIAL PRIMARY KEY,
+    metric_type VARCHAR(50) NOT NULL,
+    value DOUBLE PRECISION NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Add indexes for faster lookups
 CREATE INDEX idx_users_username ON users (username);
 CREATE INDEX idx_threats_timestamp ON threats (timestamp);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);
 CREATE INDEX idx_uploaded_files_filename ON uploaded_files (filename);
 CREATE INDEX idx_suricata_events_event_type ON suricata_events (event_type);
+CREATE INDEX idx_system_metrics_type_time ON system_metrics (metric_type, timestamp);
