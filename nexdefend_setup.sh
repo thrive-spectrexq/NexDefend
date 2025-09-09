@@ -71,7 +71,7 @@ run_python_app() {
   python3 -m venv venv
   source venv/bin/activate
   pip install -r requirements.txt
-  python app.py &
+  python api.py &
   cd $OriginalDir
 }
 
@@ -94,17 +94,17 @@ run_docker_compose() {
 print_message "$NEXDEFEND_ART"
 print_message "Starting NexDefend setup..."
 
-# Manual initialization steps
-initialize_database
-run_python_app
-run_go_app
-run_frontend_app
-
-# Menu option for Docker
-print_message "Do you want to start Docker Compose? (y/n)"
-read -r start_docker
-if [ "$start_docker" = "y" ]; then
+if [ "$1" == "docker" ]; then
+  print_message "Starting Docker Compose Setup..."
   run_docker_compose
+  print_message "Docker Compose setup completed successfully!"
+else
+  print_message "Starting Manual Setup..."
+  initialize_database
+  run_python_app
+  run_go_app
+  run_frontend_app
+  print_message "Manual Setup completed successfully!"
 fi
 
-print_message "NexDefend setup completed successfully!"
+print_message "NexDefend setup completed!"

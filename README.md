@@ -1,6 +1,15 @@
 # NexDefend
 
-**NexDefend** is designed to provide real-time system monitoring, AI-powered threat detection, alerts and automated incident response management that traces from Suricata logs, stores, analyzes and displays the results with dashboards.
+**NexDefend** is a security platform that provides real-time system monitoring, AI-powered threat detection, and automated incident response. It ingests Suricata logs, analyzes them for threats, and presents the findings through intuitive dashboards.
+
+## Features
+
+- **Real-time Threat Detection**: Ingests and analyzes Suricata logs in real-time.
+- **AI-Powered Analysis**: Utilizes machine learning models to detect anomalies and potential threats.
+- **Incident Response**: Automated incident reporting and management.
+- **Dashboards & Visualization**: Rich dashboards for visualizing security events and system metrics using Grafana.
+- **Vulnerability Scanning**: Integrated tools for scanning and managing vulnerabilities.
+- **Compliance Reporting**: Generates compliance reports based on system activity.
 
 ## Architecture
 
@@ -25,98 +34,97 @@ graph TD;
 
 ## Prerequisites
 
-- Before setting up NexDefend, ensure the following are installed on your system:
-
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 - [Suricata](https://suricata.io/download/)
-- [PostgreSQL](https://www.postgresql.org/download/)
+- [Go](https://golang.org/doc/install) (for manual setup)
+- [Node.js](https://nodejs.org/en/download/) (for manual setup)
+- [PostgreSQL](https://www.postgresql.org/download/) (for manual setup)
 
 ## Setup Instructions
 
-### To install
+### 1. Clone the Repository
 
-1. Clone the repository:
+```bash
+git clone https://github.com/thrive-spectrexq/NexDefend.git
+cd NexDefend
+```
 
-    ```bash
-    git clone https://github.com/thrive-spectrexq/NexDefend.git
-    ```
+### 2. Recommended Setup: Docker
 
-    ```bash
-    cd NexDefend
-    ```
+This is the easiest and recommended way to get NexDefend running. It uses Docker Compose to start all the required services.
 
-### Option 1: Running on Windows (via PowerShell)
+```bash
+docker-compose up -d
+```
 
-1. Run the `nexdefend_setup.ps1` script:
+This will start the following services:
+- `api`: The Go backend (port 8080)
+- `ai`: The Python AI service (port 5000)
+- `frontend`: The React frontend (port 3000)
+- `db`: The PostgreSQL database (port 5432)
+- `prometheus`: The Prometheus server (port 9090)
+- `grafana`: The Grafana server (port 3001)
 
-    ```powershell
-    .\nexdefend_setup.ps1 start
-    ```
+### 3. Scripted Setup
 
-### Option 2: Running on Linux/macOS
+These scripts automate the setup process.
 
-1. Run the `nexdefend_setup.sh` script:
+#### On Linux/macOS
 
-    ```bash
-    chmod +x nexdefend_setup.sh
-    ```
+To run the application with services running as background processes on your host:
+```bash
+chmod +x nexdefend_setup.sh
+./nexdefend_setup.sh
+```
 
-    ```bash
-    ./nexdefend_setup.sh
-    ```
+To run the application using Docker (equivalent to `docker-compose up -d`):
+```bash
+chmod +x nexdefend_setup.sh
+./nexdefend_setup.sh docker
+```
 
-2. Optional, run `nexdefend_setup.sh docker` script:
+#### On Windows (via PowerShell)
 
-    ```bash
-    ./nexdefend_setup.sh docker
-    ```
+```powershell
+.\nexdefend_setup.ps1 start
+```
 
-### Option 3: Running Manually
+### 4. Manual Setup
 
-1. Install python packages:
+If you prefer to run each component manually:
 
-    ```bash
-    pip install -r nexdefend-ai/requirements.txt
-    ```
+#### Backend (Go)
+```bash
+go mod tidy
+go run main.go
+```
 
-2. Run the application:
+#### AI Service (Python)
+```bash
+cd nexdefend-ai
+pip install -r requirements.txt
+python api.py
+```
 
-    ```bash
-    python nexdefend-ai/api.py
-    ```
+#### Frontend (React)
+```bash
+cd nexdefend-frontend
+npm install
+npm start
+```
 
-3. Open a new terminal and run:
+You will also need to have a PostgreSQL database running and configure the services to connect to it. See `docker-compose.yml` for the required environment variables.
 
-    ```bash
-    go mod tidy
-    ```
+## Usage
 
-4. Run the application:
+- **Web Application**: Access the NexDefend frontend at `http://localhost:3000`.
+- **Grafana Dashboards**: Access Grafana at `http://localhost:3001`.
+  - **Username**: admin
+  - **Password**: grafana
 
-    ```bash
-    go run main.go
-    ```
+## Contributing
 
-5. Open a new terminal and navigate to the frontend directory:
-
-    ```bash
-    cd nexdefend-frontend
-    ```
-
-6. Install the frontend dependencies:
-
-    ```bash
-    npm install
-    ```
-
-7. Start the frontend application:
-
-    ```bash
-    npm start
-    ```
-
-### In Development
-
-- NexDefend Real-Time System Monitoring and Threat Detection
+Contributions are welcome! Please feel free to open an issue or submit a pull request.
 
 ---
 
