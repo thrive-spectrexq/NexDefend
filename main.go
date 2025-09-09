@@ -19,6 +19,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/incident"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
+	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 
@@ -69,6 +70,9 @@ func main() {
 	// Start Suricata threat detection with the database as EventStore
 	go threat.StartThreatDetection(database)
 
+	// Start collecting system metrics
+	go metrics.CollectMetrics(database)
+
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)
 	router.Use(middleware.ErrorHandler)
@@ -91,6 +95,9 @@ func main() {
 	// Add handlers to query Python API
 	api.HandleFunc("/python-analysis", PythonAnalysisHandler).Methods("GET")
 	api.HandleFunc("/python-anomalies", PythonAnomaliesHandler).Methods("GET")
+
+	// Metrics Endpoint
+	api.HandleFunc("/metrics", MetricsHandler(database)).Methods("GET")
 
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")
@@ -186,4 +193,37 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{"status": "success", "message": "Welcome to NexDefend API!"}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// MetricsHandler handles requests for system metrics
+func MetricsHandler(store metrics.MetricStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		metricType := r.URL.Query().Get("type")
+		if metricType == "" {
+			http.Error(w, "Missing 'type' query parameter", http.StatusBadRequest)
+			return
+		}
+
+		fromStr := r.URL.Query().Get("from")
+		toStr := r.URL.Query().Get("to")
+
+		from, err := time.Parse(time.RFC3339, fromStr)
+		if err != nil {
+			from = time.Now().Add(-1 * time.Hour) // Default to last hour
+		}
+
+		to, err := time.Parse(time.RFC3339, toStr)
+		if err != nil {
+			to = time.Now()
+		}
+
+		results, err := store.GetSystemMetrics(metricType, from, to)
+		if err != nil {
+			http.Error(w, "Failed to fetch system metrics", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(results)
+	}
 }

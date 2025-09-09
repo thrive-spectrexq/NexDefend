@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat" // Import the threat package
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -155,4 +156,47 @@ func getEnv(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+// StoreSystemMetric stores a single system metric in the database
+func (db *Database) StoreSystemMetric(metric metrics.SystemMetric) error {
+	_, err := db.conn.Exec(
+		`INSERT INTO system_metrics (metric_type, value, timestamp)
+         VALUES ($1, $2, $3)`,
+		metric.MetricType,
+		metric.Value,
+		metric.Timestamp,
+	)
+	if err != nil {
+		return fmt.Errorf("error storing system metric: %v", err)
+	}
+	return nil
+}
+
+// GetSystemMetrics retrieves system metrics from the database for a given type and time range
+func (db *Database) GetSystemMetrics(metricType string, from, to time.Time) ([]metrics.SystemMetric, error) {
+	rows, err := db.conn.Query(
+		`SELECT id, metric_type, value, timestamp
+         FROM system_metrics
+         WHERE metric_type = $1 AND timestamp >= $2 AND timestamp <= $3
+         ORDER BY timestamp ASC`,
+		metricType,
+		from,
+		to,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error querying system metrics: %v", err)
+	}
+	defer rows.Close()
+
+	var result []metrics.SystemMetric
+	for rows.Next() {
+		var metric metrics.SystemMetric
+		if err := rows.Scan(&metric.ID, &metric.MetricType, &metric.Value, &metric.Timestamp); err != nil {
+			return nil, fmt.Errorf("error scanning system metric: %v", err)
+		}
+		result = append(result, metric)
+	}
+
+	return result, nil
 }

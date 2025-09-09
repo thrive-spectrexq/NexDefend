@@ -45,6 +45,7 @@ services:
       - "3000:3000"
     environment:
       REACT_APP_API_URL: http://api:8080/api/v1
+      REACT_APP_AI_API_URL: http://ai:5000
     depends_on:
       - api
       - ai
@@ -64,8 +65,37 @@ services:
     networks:
       - nexdefend-net
 
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - nexdefend-net
+
+  grafana:
+    image: grafana/grafana:10.0.3
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    depends_on:
+      - prometheus
+    networks:
+      - nexdefend-net
+
 volumes:
   db_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   nexdefend-net:

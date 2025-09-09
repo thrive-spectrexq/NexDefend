@@ -13,6 +13,7 @@ import Register from "./components/Register";
 import ThreatDetection from "./components/ThreatDetection";
 import Upload from "./components/Upload";
 import Compliance from "./components/Compliance";
+import MetricsDashboard from "./components/MetricsDashboard";
 
 const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
             <Route path="/upload" element={<ProtectedRoute element={Upload} />} />
             <Route path="/incident-report" element={<ProtectedRoute element={IncidentReport} />} />
             <Route path="/compliance" element={<ProtectedRoute element={Compliance} />} />
+            <Route path="/metrics" element={<ProtectedRoute element={MetricsDashboard} />} />
           </Routes>
         </main>
         <Footer />

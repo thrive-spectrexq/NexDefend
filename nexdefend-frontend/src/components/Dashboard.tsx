@@ -54,11 +54,17 @@ interface Anomaly {
   timestamp: string;
 }
 
+interface ApiMetrics {
+  events_processed: number;
+  anomalies_detected: number;
+}
+
 const Dashboard: React.FC = () => {
   const [threatData, setThreatData] = useState<Threat[]>([]);
   const [alertData, setAlertData] = useState<Alert[]>([]);
   const [analysisData, setAnalysisData] = useState<AnalysisResult[]>([]);
   const [anomalyData, setAnomalyData] = useState<Anomaly[]>([]);
+  const [apiMetrics, setApiMetrics] = useState<ApiMetrics | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -66,20 +72,22 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [threatRes, alertRes, analysisRes, anomalyRes] = await Promise.all([
+        const [threatRes, alertRes, analysisRes, anomalyRes, apiMetricsRes] = await Promise.all([
           fetch(`${API_URL}/threats`),
           fetch(`${API_URL}/alerts`),
           fetch(`${API_URL}/python-analysis`),
           fetch(`${API_URL}/python-anomalies`),
+          fetch(`${process.env.REACT_APP_AI_API_URL}/api-metrics`),
         ]);
 
-        if (!threatRes.ok || !alertRes.ok || !analysisRes.ok || !anomalyRes.ok)
+        if (!threatRes.ok || !alertRes.ok || !analysisRes.ok || !anomalyRes.ok || !apiMetricsRes.ok)
           throw new Error("Failed to fetch data");
 
         setThreatData(await threatRes.json());
         setAlertData(await alertRes.json());
         setAnalysisData(await analysisRes.json());
         setAnomalyData(await anomalyRes.json());
+        setApiMetrics(await apiMetricsRes.json());
         setFetchError(null);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -137,6 +145,16 @@ const Dashboard: React.FC = () => {
         <p className={styles.error}>{fetchError}</p>
       ) : (
         <>
+          <div className={styles.statContainer}>
+            <div className={styles.stat}>
+              <h3>Events Processed</h3>
+              <p>{apiMetrics?.events_processed}</p>
+            </div>
+            <div className={styles.stat}>
+              <h3>Anomalies Detected</h3>
+              <p>{apiMetrics?.anomalies_detected}</p>
+            </div>
+          </div>
           <div className={styles.chartContainer}>
             <div className={styles.chart}>
               <h3>Threat Severity Distribution</h3>
