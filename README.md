@@ -101,9 +101,15 @@ go run main.go
 
 #### AI Service (Python)
 ```bash
-cd nexdefend-ai
+cd nexdefend-ai && \
+python3 -m venv venv && \
+. venv/bin/activate && \
+pip install --upgrade pip && \
 pip install -r requirements.txt
-python api.py
+```
+
+```bash
+cd nexdefend-ai && . venv/bin/activate && python api.py
 ```
 
 #### Frontend (React)
