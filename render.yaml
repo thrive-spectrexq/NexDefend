@@ -1,3 +1,9 @@
+databases:
+  - name: nexdefend-db
+    databaseName: nexdefend_db
+    user: nexdefend
+    plan: starter
+
 services:
   - type: web
     name: nexdefend-api
@@ -13,7 +19,9 @@ services:
       - key: DB_NAME
         value: nexdefend_db
       - key: DB_HOST
-        value: <RENDER_DB_HOST>      # will come from managed PostgreSQL
+        fromDatabase:
+          name: nexdefend-db
+          property: host
       - key: DB_PORT
         value: 5432
       - key: PYTHON_API
@@ -35,11 +43,13 @@ services:
       - key: DB_USER
         value: nexdefend
       - key: DB_PASSWORD
-        sync: false   # set in Render dashboard
+        sync: false
       - key: DB_NAME
         value: nexdefend_db
       - key: DB_HOST
-        value: <RENDER_DB_HOST>
+        fromDatabase:
+          name: nexdefend-db
+          property: host
       - key: DB_PORT
         value: 5432
       - key: CORS_ALLOWED_ORIGINS
@@ -53,16 +63,18 @@ services:
     plan: starter
     envVars:
       - key: REACT_APP_API_URL
-        value: http://nexdefend-api:8080/api/v1
+        value: https://nexdefend-api.onrender.com/api/v1
       - key: REACT_APP_AI_API_URL
-        value: http://nexdefend-ai:5000
+        value: https://nexdefend-ai.onrender.com
 
   - type: worker
     name: nexdefend-suricata
     env: docker
-    image: jasonish/suricata:latest
+    docker:
+      image: jasonish/suricata
+      tag: latest
     plan: starter
-    command: -r /pcaps/test.pcap -l /var/log/suricata
+    startCommand: suricata -r /pcaps/test.pcap -l /var/log/suricata
     disk:
       name: suricata-logs
       mountPath: /var/log/suricata
@@ -71,9 +83,11 @@ services:
   - type: web
     name: nexdefend-prometheus
     env: docker
-    image: prom/prometheus:v2.47.2
+    docker:
+      image: prom/prometheus
+      tag: v2.47.2
     plan: starter
-    command: --config.file=/etc/prometheus/prometheus.yml
+    startCommand: prometheus --config.file=/etc/prometheus/prometheus.yml
     disk:
       name: prometheus_data
       mountPath: /prometheus
@@ -82,13 +96,15 @@ services:
   - type: web
     name: nexdefend-grafana
     env: docker
-    image: grafana/grafana:10.0.3
+    docker:
+      image: grafana/grafana
+      tag: 10.0.3
     plan: starter
     envVars:
       - key: GF_SECURITY_ADMIN_USER
         value: admin
       - key: GF_SECURITY_ADMIN_PASSWORD
-        value: grafana
+        sync: false   # set real password in Render dashboard
     disk:
       name: grafana_data
       mountPath: /var/lib/grafana
