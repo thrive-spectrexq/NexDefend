@@ -85,39 +85,6 @@ section {
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
-/* Trusted By Section */
-.trustedBySection {
-  background-color: #f8f9fa;
-  padding: 50px 20px;
-}
-
-.trustedBySection h2 {
-  margin-bottom: 40px;
-  font-size: 1.5rem;
-  color: #6c757d;
-  font-weight: 400;
-}
-
-.logos {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 50px;
-  flex-wrap: wrap;
-}
-
-.logos img {
-  height: 40px;
-  filter: grayscale(100%);
-  opacity: 0.6;
-  transition: all 0.3s ease;
-}
-
-.logos img:hover {
-  filter: grayscale(0%);
-  opacity: 1;
-}
-
 /* Features Section */
 .featuresSection {
   background-color: #ffffff;
@@ -125,14 +92,7 @@ section {
 
 .featuresSection h2 {
   font-size: 2.8rem;
-  margin-bottom: 20px;
-}
-
-.featuresSection > p {
-  max-width: 800px;
-  margin: 0 auto 50px auto;
-  font-size: 1.1rem;
-  color: #555;
+  margin-bottom: 50px;
 }
 
 .featureGrid {
@@ -162,77 +122,9 @@ section {
   margin-bottom: 15px;
 }
 
-.featureCard ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.featureCard li {
-  margin-bottom: 10px;
+.featureCard p {
   font-size: 1rem;
-  color: #333;
-}
-
-/* Statistics Section */
-.statsSection {
-  background-color: #1a2533;
-  color: white;
-  display: flex;
-  justify-content: space-around;
-  padding: 60px 20px;
-}
-
-.statIcon {
-  font-size: 3rem;
-  color: #00a4ff;
-  margin-bottom: 15px;
-}
-
-.statItem h3 {
-  font-size: 2.5rem;
-  margin: 0;
-  color: white;
-}
-
-.statItem p {
-  font-size: 1.1rem;
-  margin: 5px 0 0 0;
-}
-
-/* Testimonials Section */
-.testimonialsSection {
-  background-color: #f8f9fa;
-}
-
-.testimonialsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.testimonial {
-  padding: 30px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  text-align: left;
-}
-
-.testimonial p {
-  font-size: 1.25rem;
-  font-style: italic;
-  line-height: 1.6;
   color: #555;
-}
-
-.testimonial cite {
-  display: block;
-  margin-top: 20px;
-  font-weight: bold;
-  color: #333;
 }
 
 @media (max-width: 1024px) {
@@ -249,11 +141,6 @@ section {
 
   .heroTitle {
     font-size: 3rem;
-  }
-
-  .statsSection {
-    flex-direction: column;
-    gap: 40px;
   }
 }
 
@@ -282,23 +169,11 @@ section {
     max-width: 300px;
   }
 
-  .logos {
-    gap: 30px;
-  }
-
-  .logos img {
-    height: 30px;
-  }
-
   .featuresSection h2 {
     font-size: 2.2rem;
   }
 
   .featureGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .testimonialsGrid {
     grid-template-columns: 1fr;
   }
 }

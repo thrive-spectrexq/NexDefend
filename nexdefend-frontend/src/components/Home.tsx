@@ -10,13 +10,13 @@ const Home: React.FC = () => {
       {/* Hero Section */}
       <section className={styles.heroSection}>
         <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>The Open Source Security Platform</h1>
+          <h1 className={styles.heroTitle}>NexDefend</h1>
           <p className={styles.heroSubtitle}>
-            Unified XDR and SIEM protection for endpoints and cloud workloads.
+            A security platform that provides real-time system monitoring, AI-powered threat detection, and automated incident response.
           </p>
           <div className={styles.heroButtons}>
-            <button onClick={() => navigate('/login')} className={`${styles.btn} ${styles.btnPrimary}`}>Install NexDefend</button>
-            <button onClick={() => navigate('/login')} className={`${styles.btn} ${styles.btnSecondary}`}>Free Cloud Trial</button>
+            <button onClick={() => navigate('/register')} className={`${styles.btn} ${styles.btnPrimary}`}>Get Started</button>
+            <button onClick={() => navigate('/login')} className={`${styles.btn} ${styles.btnSecondary}`}>Login</button>
           </div>
         </div>
         <div className={styles.heroImage}>
@@ -24,96 +24,33 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Trusted By Section */}
-      <section className={styles.trustedBySection}>
-        <h2>Trusted by Leading Companies</h2>
-        <div className={styles.logos}>
-          <img src="https://via.placeholder.com/143x75.png?text=Linkurious" alt="Linkurious" />
-          <img src="https://via.placeholder.com/143x75.png?text=Telefonica" alt="Telefonica" />
-          <img src="https://via.placeholder.com/143x75.png?text=Globant" alt="Globant" />
-          <img src="https://via.placeholder.com/143x75.png?text=NASA" alt="NASA" />
-          <img src="https://via.placeholder.com/143x75.png?text=Rappi" alt="Rappi" />
-          <img src="https://via.placeholder.com/143x75.png?text=Mondelez" alt="Mondelez" />
-          <img src="https://via.placeholder.com/143x75.png?text=Intuit" alt="Intuit" />
-          <img src="https://via.placeholder.com/143x75.png?text=Ebay" alt="Ebay" />
-          <img src="https://via.placeholder.com/143x75.png?text=Cisco" alt="Cisco" />
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className={styles.featuresSection}>
-        <h2>Endpoint and Cloud Workload Protection</h2>
-        <p>NexDefend unifies historically separate functions into a single agent and platform architecture.</p>
+        <h2>Features</h2>
         <div className={styles.featureGrid}>
           <div className={styles.featureCard}>
-            <h3>Endpoint Security</h3>
-            <ul>
-              <li>Configuration Assessment</li>
-              <li>Malware Detection</li>
-              <li>File Integrity Monitoring</li>
-            </ul>
+            <h3>Real-time Threat Detection</h3>
+            <p>Ingests and analyzes Suricata logs in real-time.</p>
           </div>
           <div className={styles.featureCard}>
-            <h3>Threat Intelligence</h3>
-            <ul>
-              <li>Threat Hunting</li>
-              <li>Log Data Analysis</li>
-              <li>Vulnerability Detection</li>
-            </ul>
+            <h3>AI-Powered Analysis</h3>
+            <p>Utilizes machine learning models to detect anomalies and potential threats.</p>
           </div>
           <div className={styles.featureCard}>
-            <h3>Security Operations</h3>
-            <ul>
-              <li>Incident Response</li>
-              <li>Regulatory Compliance</li>
-              <li>IT Hygiene</li>
-            </ul>
+            <h3>Incident Response</h3>
+            <p>Automated incident reporting and management.</p>
           </div>
           <div className={styles.featureCard}>
-            <h3>Cloud Security</h3>
-            <ul>
-              <li>Container Security</li>
-              <li>Posture Management</li>
-              <li>Workload Protection</li>
-            </ul>
+            <h3>Dashboards & Visualization</h3>
+            <p>Rich dashboards for visualizing security events and system metrics using Grafana.</p>
           </div>
-        </div>
-      </section>
-
-      {/* Statistics Section */}
-      <section className={styles.statsSection}>
-        <div className={styles.statItem}>
-          <div className={styles.statIcon}><i className="fas fa-server"></i></div>
-          <h3>15+ Million</h3>
-          <p>Protected Endpoints</p>
-        </div>
-        <div className={styles.statItem}>
-          <div className={styles.statIcon}><i className="fas fa-users"></i></div>
-          <h3>100+ Thousand</h3>
-          <p>Enterprise Users</p>
-        </div>
-        <div className={styles.statItem}>
-          <div className={styles.statIcon}><i className="fas fa-download"></i></div>
-          <h3>30+ Million</h3>
-          <p>Downloads per Year</p>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className={styles.testimonialsSection}>
-        <h2>What Our Customers Say</h2>
-        <div className={styles.testimonialsGrid}>
-          <div className={styles.testimonial}>
-            <p>"We found in NexDefend the most complete security platform. We were seeking an open source SIEM solution that allowed scalability and integration with other tools, which made NexDefend the perfect fit."</p>
-            <cite>- Martin Petracca, IT Security Manager</cite>
+          <div className={styles.featureCard}>
+            <h3>Vulnerability Scanning</h3>
+            <p>Integrated tools for scanning and managing vulnerabilities.</p>
           </div>
-          <div className={styles.testimonial}>
-            <p>"In addition to the great advantage of being an open source platform, NexDefend is also easy to deploy, and its multiple capabilities have allowed us to achieve our goal with security at Woop. NexDefend is a unique tool and it’s perfect for startups like Woop that are looking for top security at a competitive cost.”</p>
-            <cite>- Haithem Souala, Site Reliability Engineer</cite>
-          </div>
-          <div className={styles.testimonial}>
-            <p>“Thanks to the excellent support, even if a person doesn't know much about NexDefend, they will be able to achieve their objectives because the support team will back them up whenever needed.”</p>
-            <cite>- Jorge Temoche, Chief Information Security Officer</cite>
+          <div className={styles.featureCard}>
+            <h3>Compliance Reporting</h3>
+            <p>Generates compliance reports based on system activity.</p>
           </div>
         </div>
       </section>
