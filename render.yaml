@@ -69,10 +69,8 @@ services:
 
   - type: worker
     name: nexdefend-suricata
-    env: docker
-    docker:
-      image: jasonish/suricata
-      tag: latest
+    env: image
+    image: jasonish/suricata:latest
     plan: starter
     startCommand: suricata -r /pcaps/test.pcap -l /var/log/suricata
     disk:
@@ -82,10 +80,8 @@ services:
 
   - type: web
     name: nexdefend-prometheus
-    env: docker
-    docker:
-      image: prom/prometheus
-      tag: v2.47.2
+    env: image
+    image: prom/prometheus:v2.47.2
     plan: starter
     startCommand: prometheus --config.file=/etc/prometheus/prometheus.yml
     disk:
@@ -95,10 +91,8 @@ services:
 
   - type: web
     name: nexdefend-grafana
-    env: docker
-    docker:
-      image: grafana/grafana
-      tag: 10.0.3
+    env: image
+    image: grafana/grafana:10.0.3
     plan: starter
     envVars:
       - key: GF_SECURITY_ADMIN_USER
