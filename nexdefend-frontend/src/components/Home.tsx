@@ -19,9 +19,6 @@ const Home: React.FC = () => {
             <button onClick={() => navigate('/login')} className={`${styles.btn} ${styles.btnSecondary}`}>Login</button>
           </div>
         </div>
-        <div className={styles.heroImage}>
-          <img src="https://via.placeholder.com/1000x500.png?text=NexDefend+Dashboard" alt="NexDefend Dashboard" />
-        </div>
       </section>
 
       {/* Features Section */}
@@ -54,6 +51,11 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className={styles.footer}>
+        <p>&copy; {new Date().getFullYear()} NexDefend. All rights reserved.</p>
+      </footer>
     </div>
   );
 };
