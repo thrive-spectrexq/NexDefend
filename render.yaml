@@ -9,11 +9,13 @@ services:
       - key: DB_USER
         value: nexdefend
       - key: DB_PASSWORD
-        value: password
+        sync: false   # set in Render dashboard
       - key: DB_NAME
         value: nexdefend_db
       - key: DB_HOST
-        value: nexdefend-db
+        value: <RENDER_DB_HOST>      # will come from managed PostgreSQL
+      - key: DB_PORT
+        value: 5432
       - key: PYTHON_API
         value: http://nexdefend-ai:5000
       - key: CORS_ALLOWED_ORIGINS
@@ -33,11 +35,11 @@ services:
       - key: DB_USER
         value: nexdefend
       - key: DB_PASSWORD
-        value: password
+        sync: false   # set in Render dashboard
       - key: DB_NAME
         value: nexdefend_db
       - key: DB_HOST
-        value: nexdefend-db
+        value: <RENDER_DB_HOST>
       - key: DB_PORT
         value: 5432
       - key: CORS_ALLOWED_ORIGINS
@@ -54,23 +56,6 @@ services:
         value: http://nexdefend-api:8080/api/v1
       - key: REACT_APP_AI_API_URL
         value: http://nexdefend-ai:5000
-
-  - type: private
-    name: nexdefend-db
-    env: docker
-    image: postgres:15
-    plan: starter
-    envVars:
-      - key: POSTGRES_USER
-        value: nexdefend
-      - key: POSTGRES_PASSWORD
-        value: password
-      - key: POSTGRES_DB
-        value: nexdefend_db
-    disk:
-      name: db_data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 1
 
   - type: worker
     name: nexdefend-suricata
