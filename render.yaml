@@ -1,0 +1,110 @@
+services:
+  - type: web
+    name: nexdefend-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: DB_USER
+        value: nexdefend
+      - key: DB_PASSWORD
+        value: password
+      - key: DB_NAME
+        value: nexdefend_db
+      - key: DB_HOST
+        value: nexdefend-db
+      - key: PYTHON_API
+        value: http://nexdefend-ai:5000
+      - key: CORS_ALLOWED_ORIGINS
+        value: http://localhost:3000,https://nexdefend.vercel.app
+    disk:
+      name: suricata-logs
+      mountPath: /var/log/suricata
+      sizeGB: 1
+
+  - type: web
+    name: nexdefend-ai
+    env: docker
+    dockerfilePath: ./nexdefend-ai/Dockerfile
+    dockerContext: ./nexdefend-ai
+    plan: starter
+    envVars:
+      - key: DB_USER
+        value: nexdefend
+      - key: DB_PASSWORD
+        value: password
+      - key: DB_NAME
+        value: nexdefend_db
+      - key: DB_HOST
+        value: nexdefend-db
+      - key: DB_PORT
+        value: 5432
+      - key: CORS_ALLOWED_ORIGINS
+        value: http://localhost:3000,https://nexdefend.vercel.app
+
+  - type: web
+    name: nexdefend-frontend
+    env: docker
+    dockerfilePath: ./nexdefend-frontend/Dockerfile
+    dockerContext: ./nexdefend-frontend
+    plan: starter
+    envVars:
+      - key: REACT_APP_API_URL
+        value: http://nexdefend-api:8080/api/v1
+      - key: REACT_APP_AI_API_URL
+        value: http://nexdefend-ai:5000
+
+  - type: private
+    name: nexdefend-db
+    env: docker
+    image: postgres:15
+    plan: starter
+    envVars:
+      - key: POSTGRES_USER
+        value: nexdefend
+      - key: POSTGRES_PASSWORD
+        value: password
+      - key: POSTGRES_DB
+        value: nexdefend_db
+    disk:
+      name: db_data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 1
+
+  - type: worker
+    name: nexdefend-suricata
+    env: docker
+    image: jasonish/suricata:latest
+    plan: starter
+    command: -r /pcaps/test.pcap -l /var/log/suricata
+    disk:
+      name: suricata-logs
+      mountPath: /var/log/suricata
+      sizeGB: 1
+
+  - type: web
+    name: nexdefend-prometheus
+    env: docker
+    image: prom/prometheus:v2.47.2
+    plan: starter
+    command: --config.file=/etc/prometheus/prometheus.yml
+    disk:
+      name: prometheus_data
+      mountPath: /prometheus
+      sizeGB: 1
+
+  - type: web
+    name: nexdefend-grafana
+    env: docker
+    image: grafana/grafana:10.0.3
+    plan: starter
+    envVars:
+      - key: GF_SECURITY_ADMIN_USER
+        value: admin
+      - key: GF_SECURITY_ADMIN_PASSWORD
+        value: grafana
+    disk:
+      name: grafana_data
+      mountPath: /var/lib/grafana
+      sizeGB: 1
