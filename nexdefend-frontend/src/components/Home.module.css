@@ -234,3 +234,71 @@ section {
   font-weight: bold;
   color: #333;
 }
+
+@media (max-width: 1024px) {
+  .heroSection {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .heroContent {
+    margin-right: 0;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .heroTitle {
+    font-size: 3rem;
+  }
+
+  .statsSection {
+    flex-direction: column;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  section {
+    padding: 60px 15px;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.1rem;
+  }
+
+  .heroButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .heroButtons .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .logos {
+    gap: 30px;
+  }
+
+  .logos img {
+    height: 30px;
+  }
+
+  .featuresSection h2 {
+    font-size: 2.2rem;
+  }
+
+  .featureGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonialsGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -15,7 +15,15 @@ def run(playwright):
     # Wait for the page to load, a specific element to be visible
     page.wait_for_selector("h1")
 
-    page.screenshot(path="jules-scratch/verification/homepage.png", full_page=True)
+    # Take desktop screenshot
+    page.screenshot(path="jules-scratch/verification/homepage_desktop.png", full_page=True)
+
+    # Resize for mobile
+    page.set_viewport_size({"width": 375, "height": 667})
+
+    # Take mobile screenshot
+    page.screenshot(path="jules-scratch/verification/homepage_mobile.png", full_page=True)
+
     browser.close()
 
 with sync_playwright() as playwright:

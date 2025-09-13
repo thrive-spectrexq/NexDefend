@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
         <div className={styles.footerSection}>
           <h4>Services</h4>
           <ul>
-            <li><a href="#">Wazuh Cloud</a></li>
+            <li><a href="#">NexDefend Cloud</a></li>
             <li><a href="#">Professional support</a></li>
             <li><a href="#">Consulting services</a></li>
             <li><a href="#">Training courses</a></li>
@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
             <button type="submit">Subscribe</button>
           </form>
           <p className={styles.privacyText}>
-            Wazuh will not sell, trade, lease, or rent your personal data to third parties. By subscribing, I agree to the use of my personal data in accordance with Wazuh Privacy Policy.
+            NexDefend will not sell, trade, lease, or rent your personal data to third parties. By subscribing, I agree to the use of my personal data in accordance with our Privacy Policy.
           </p>
         </div>
       </div>
