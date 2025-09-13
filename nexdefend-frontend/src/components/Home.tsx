@@ -20,7 +20,7 @@ const Home: React.FC = () => {
           </div>
         </div>
         <div className={styles.heroImage}>
-          <img src="https://wazuh.com/wp-content/themes/wazuh-v3/assets/images/home/wazuh-dashboard-wide.png?ver=1756220110980" alt="NexDefend Dashboard" />
+          <img src="https://via.placeholder.com/1000x500.png?text=NexDefend+Dashboard" alt="NexDefend Dashboard" />
         </div>
       </section>
 
@@ -28,15 +28,15 @@ const Home: React.FC = () => {
       <section className={styles.trustedBySection}>
         <h2>Trusted by Leading Companies</h2>
         <div className={styles.logos}>
-          <img src="https://wazuh.com/uploads/2024/11/Link-143x75-1.png?v=1732895037" alt="Linkurious" />
-          <img src="https://wazuh.com/uploads/2024/11/Telefonica-143x75-1.png?v=1732895377" alt="Telefonica" />
-          <img src="https://wazuh.com/uploads/2024/11/Globant-143x75-1.png?v=1732895471" alt="Globant" />
-          <img src="https://wazuh.com/uploads/2024/01/nasa-gray.png?v=1705340438" alt="NASA" />
-          <img src="https://wazuh.com/uploads/2024/01/Rappi-gray.png?v=1705340476" alt="Rappi" />
-          <img src="https://wazuh.com/uploads/2024/01/143x75-mondelez.png?v=1705433179" alt="Mondelez" />
-          <img src="https://wazuh.com/uploads/2024/01/Intuit.png?v=1705340341" alt="Intuit" />
-          <img src="https://wazuh.com/uploads/2024/01/Ebay-gray.png?v=1705340201" alt="Ebay" />
-          <img src="https://wazuh.com/uploads/2024/01/Cisco-gray.png?v=1705339557" alt="Cisco" />
+          <img src="https://via.placeholder.com/143x75.png?text=Linkurious" alt="Linkurious" />
+          <img src="https://via.placeholder.com/143x75.png?text=Telefonica" alt="Telefonica" />
+          <img src="https://via.placeholder.com/143x75.png?text=Globant" alt="Globant" />
+          <img src="https://via.placeholder.com/143x75.png?text=NASA" alt="NASA" />
+          <img src="https://via.placeholder.com/143x75.png?text=Rappi" alt="Rappi" />
+          <img src="https://via.placeholder.com/143x75.png?text=Mondelez" alt="Mondelez" />
+          <img src="https://via.placeholder.com/143x75.png?text=Intuit" alt="Intuit" />
+          <img src="https://via.placeholder.com/143x75.png?text=Ebay" alt="Ebay" />
+          <img src="https://via.placeholder.com/143x75.png?text=Cisco" alt="Cisco" />
         </div>
       </section>
 

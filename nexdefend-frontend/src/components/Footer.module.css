@@ -97,3 +97,20 @@
 .socialLinks a:hover {
   color: #00a4ff;
 }
+
+@media (max-width: 768px) {
+  .footerContent {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .footerSection ul {
+    display: inline-block;
+    text-align: left;
+  }
+
+  .footerBottom {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
