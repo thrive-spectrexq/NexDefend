@@ -1,23 +1,99 @@
 .footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 15px;
-  background: linear-gradient(90deg, #0f2027, #203a43, #2c5364); /* Dark gradient background */
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 60px 20px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.footerContent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+}
+
+.footerSection h4 {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  color: #00a4ff;
+  font-weight: 600;
+}
+
+.footerSection ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footerSection li {
+  margin-bottom: 12px;
+}
+
+.footerSection a {
   color: #f1f1f1;
-  font-size: 0.9em;
-  font-family: Arial, sans-serif;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  position: relative; /* This allows it to adjust based on content */
-}
-
-.footer p {
-  margin: 0;
-  color: #cce7ff; /* Soft light blue for readability */
-}
-
-.footer p:hover {
-  color: #ffe135; /* Soft yellow for interactivity */
+  text-decoration: none;
   transition: color 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.footerSection a:hover {
+  color: #00a4ff;
+}
+
+.newsletterForm {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.newsletterForm input {
+  padding: 12px;
+  border-radius: 5px 0 0 5px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: white;
+  flex-grow: 1;
+}
+
+.newsletterForm button {
+  padding: 12px 20px;
+  border-radius: 0 5px 5px 0;
+  border: none;
+  background-color: #00a4ff;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.privacyText {
+  font-size: 0.8rem;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+.footerBottom {
+  text-align: center;
+  border-top: 1px solid #444;
+  padding-top: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.socialLinks {
+  display: flex;
+  gap: 15px;
+}
+
+.socialLinks a {
+  color: #ffffff;
+  margin: 0 5px;
+  text-decoration: none;
+  font-size: 1.5rem;
+  transition: color 0.3s ease;
+}
+
+.socialLinks a:hover {
+  color: #00a4ff;
 }
