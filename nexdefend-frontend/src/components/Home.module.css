@@ -1,98 +1,84 @@
-/* General Styles */
 .homeContainer {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #333;
-  background-color: #ffffff;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  background-color: #0e1117;
+  color: #e5e7eb;
 }
 
-h1, h2, h3 {
-  color: #1a2533;
-  font-weight: 600;
-}
-
-section {
-  padding: 80px 20px;
-  text-align: center;
-}
-
-/* Hero Section */
+/* Hero */
 .heroSection {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0f1c 0%, #1a1a1a 100%);
   padding: 100px 20px;
-  background-color: #1a1a1a;
-  color: white;
 }
 
 .heroContent {
-  max-width: 600px;
-  text-align: left;
-  margin-right: 50px;
+  max-width: 800px;
 }
 
 .heroTitle {
   font-size: 4rem;
-  line-height: 1.1;
-  font-weight: 700;
-  color: white;
+  font-weight: 800;
+  color: #00a4ff;
+  margin-bottom: 20px;
 }
 
 .heroSubtitle {
-  font-size: 1.25rem;
-  margin: 20px 0 30px 0;
-  color: #f1f1f1;
+  font-size: 1.3rem;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  color: #cbd5e1;
 }
 
-.heroButtons .btn {
-  padding: 15px 35px;
-  margin-right: 15px;
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: bold;
-  cursor: pointer;
+.heroButtons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 14px 36px;
+  border-radius: 40px;
+  font-weight: 600;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  cursor: pointer;
 }
 
 .btnPrimary {
   background-color: #00a4ff;
-  color: white;
-  border: 2px solid #00a4ff;
+  color: #fff;
+  border: none;
 }
 
 .btnPrimary:hover {
   background-color: #007ecc;
-  border-color: #007ecc;
 }
 
 .btnSecondary {
-  background-color: transparent;
-  color: white;
-  border: 2px solid white;
+  border: 2px solid #fff;
+  background: transparent;
+  color: #fff;
 }
 
 .btnSecondary:hover {
-  background-color: white;
-  color: #1a1a1a;
+  background: #fff;
+  color: #0e1117;
 }
 
-.heroImage img {
-  width: 100%;
-  max-width: 650px;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-/* Features Section */
+/* Features */
 .featuresSection {
-  background-color: #ffffff;
+  padding: 80px 20px;
+  background: #111418;
+  text-align: center;
 }
 
 .featuresSection h2 {
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   margin-bottom: 50px;
+  color: #00a4ff;
 }
 
 .featureGrid {
@@ -104,76 +90,62 @@ section {
 }
 
 .featureCard {
-  background: #f8f9fa;
+  background: #1c1f26;
   padding: 30px;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: left;
-  border-top: 3px solid #00a4ff;
+  border: 1px solid #2a2f3a;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .featureCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
 .featureCard h3 {
-  font-size: 1.5rem;
-  margin-bottom: 15px;
+  font-size: 1.3rem;
+  margin: 15px 0;
+  color: #fff;
 }
 
 .featureCard p {
   font-size: 1rem;
-  color: #555;
+  color: #cbd5e1;
 }
 
-@media (max-width: 1024px) {
-  .heroSection {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .heroContent {
-    margin-right: 0;
-    margin-bottom: 40px;
-    text-align: center;
-  }
-
-  .heroTitle {
-    font-size: 3rem;
-  }
+.iconWrapper {
+  font-size: 2rem;
+  color: #00a4ff;
 }
 
-@media (max-width: 768px) {
-  section {
-    padding: 60px 15px;
-  }
+/* About */
+.aboutSection {
+  padding: 80px 20px;
+  text-align: center;
+  background: #0e1117;
+}
 
-  .heroTitle {
-    font-size: 2.5rem;
-  }
+.aboutSection h2 {
+  font-size: 2.2rem;
+  margin-bottom: 20px;
+  color: #00a4ff;
+}
 
-  .heroSubtitle {
-    font-size: 1.1rem;
-  }
+.aboutSection p {
+  max-width: 750px;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #e5e7eb;
+}
 
-  .heroButtons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-  }
-
-  .heroButtons .btn {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .featuresSection h2 {
-    font-size: 2.2rem;
-  }
-
-  .featureGrid {
-    grid-template-columns: 1fr;
-  }
+/* Footer */
+.footer {
+  background: #0a0f1c;
+  padding: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #a1a1aa;
+  border-top: 1px solid #1f2937;
 }
