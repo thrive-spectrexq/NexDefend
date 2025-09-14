@@ -1,12 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Home.module.css';
-
-// Sentinel-style hero image (illustrative, not included in code)
-// If you want an image, add it to the public folder and use <img src="/hero-image.png" ... />
+import { Shield, Activity, Cpu, BarChart3, Zap, FileCheck, Network, Users } from 'lucide-react';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+
+  const features = [
+    { title: "Cloud-Native SIEM & XDR", desc: "Seamless monitoring across cloud, hybrid, and on-prem environments.", icon: <CloudIcon /> },
+    { title: "Real-Time Threat Intelligence", desc: "Ingest & analyze Suricata logs, detect suspicious activity instantly.", icon: <Activity /> },
+    { title: "AI-Powered Analysis", desc: "Advanced ML models prioritize alerts & reduce false positives.", icon: <Cpu /> },
+    { title: "Automated Incident Response", desc: "Respond faster with playbooks & remediation workflows.", icon: <Zap /> },
+    { title: "Dashboards & Visualization", desc: "Grafana-powered dashboards with deep investigation insights.", icon: <BarChart3 /> },
+    { title: "Compliance Reporting", desc: "Generate audit-ready reports for regulatory requirements.", icon: <FileCheck /> },
+    { title: "Open Integration Ecosystem", desc: "Connect with 3rd-party tools & APIs for extensibility.", icon: <Network /> },
+    { title: "Collaborative Investigation", desc: "SOC teams streamline evidence collection & case management.", icon: <Users /> }
+  ];
 
   return (
     <div className={styles.homeContainer}>
@@ -15,85 +24,36 @@ const Home: React.FC = () => {
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>NexDefend</h1>
           <p className={styles.heroSubtitle}>
-            Unified Security Operations Platform: Real-time monitoring, AI-powered threat detection, automated incident response, and advanced analytics for modern enterprises.<br />
-            Inspired by industry leaders like Microsoft Sentinel, NexDefend delivers comprehensive SIEM and XDR capabilities for cloud, hybrid, and on-prem environments.
+            Unified Security Operations Platform for the modern enterprise.  
+            Real-time monitoring, AI-powered threat detection, automated incident response, and compliance-ready analytics.
           </p>
           <div className={styles.heroButtons}>
             <button onClick={() => navigate('/register')} className={`${styles.btn} ${styles.btnPrimary}`}>Get Started</button>
             <button onClick={() => navigate('/login')} className={`${styles.btn} ${styles.btnSecondary}`}>Login</button>
           </div>
         </div>
-        {/* Optionally add a hero image here */}
-        {/* <div className={styles.heroImage}><img src="/hero-image.png" alt="NexDefend Dashboard" /></div> */}
       </section>
 
-      {/* Features Section */}
+      {/* Features */}
       <section className={styles.featuresSection}>
         <h2>Modern Security Operations</h2>
         <div className={styles.featureGrid}>
-          <div className={styles.featureCard}>
-            <h3>Cloud-Native SIEM & XDR</h3>
-            <p>
-              Scalable, cloud-first security architecture. Monitor and defend cloud, hybrid, and on-prem resources seamlessly.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Real-Time Threat Intelligence</h3>
-            <p>
-              Ingest and analyze Suricata logs and other telemetry in real-time. Automated detection of suspicious activity and emerging threats.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>AI-Powered Analysis</h3>
-            <p>
-              Machine learning models powered by advanced analytics to surface anomalies, prioritize alerts, and reduce false positives.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Automated Incident Response</h3>
-            <p>
-              Respond to threats faster with playbooks, automated investigation, and integrated remediation workflows.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Rich Dashboards & Visualization</h3>
-            <p>
-              Interactive dashboards powered by Grafana for visualizing security events, metrics, and investigation timelines.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Vulnerability Management</h3>
-            <p>
-              Integrated scanning and asset management for proactive identification and mitigation of vulnerabilities.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Compliance Reporting</h3>
-            <p>
-              Generate audit-ready reports for regulatory compliance, including detailed activity logs and security posture summaries.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Open Integration Ecosystem</h3>
-            <p>
-              Connect with third-party security tools, APIs, and data sources for extensibility and custom automation.
-            </p>
-          </div>
-          <div className={styles.featureCard}>
-            <h3>Collaborative Investigation</h3>
-            <p>
-              Empower SOC teams with case management, evidence collection, and sharing for streamlined investigations.
-            </p>
-          </div>
+          {features.map((f, i) => (
+            <div key={i} className={styles.featureCard}>
+              <div className={styles.iconWrapper}>{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* About Section */}
-      <section>
+      {/* About */}
+      <section className={styles.aboutSection}>
         <h2>Why NexDefend?</h2>
-        <p style={{ maxWidth: 700, margin: '0 auto', fontSize: '1.1rem', color: '#555' }}>
-          NexDefend brings together advanced SIEM and XDR capabilities in a single platform, designed for scale, speed, and simplicity.<br />
-          Whether protecting cloud workloads, hybrid infrastructures, or on-prem assets, NexDefend helps your security team detect, investigate, and respond to threats with confidence.
+        <p>
+          Built to scale like Microsoft Sentinel, NexDefend unifies SIEM and XDR into a single, AI-driven security platform.  
+          Protect cloud workloads, hybrid infrastructures, and on-prem assets — detect, investigate, and respond with confidence.
         </p>
       </section>
 
@@ -104,5 +64,9 @@ const Home: React.FC = () => {
     </div>
   );
 };
+
+const CloudIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="lucide lucide-cloud" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19a4.5 4.5 0 0 0 .5-9 7 7 0 0 0-13.9 1.5A4.5 4.5 0 0 0 6.5 19h11z"/></svg>
+);
 
 export default Home;
