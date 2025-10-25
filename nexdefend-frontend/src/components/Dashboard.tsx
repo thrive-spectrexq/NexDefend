@@ -12,7 +12,6 @@ import {
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
-import styles from './Dashboard.module.css';
 
 ChartJS.register(
   CategoryScale,
@@ -159,65 +158,65 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={styles.dashboard}>
-      <h2>System Overview</h2>
+    <div className="p-5 font-sans">
+      <h2 className="text-4xl mb-5 text-gray-800">System Overview</h2>
       {loading ? (
         <p>Loading data...</p>
       ) : fetchError ? (
-        <p className={styles.error}>{fetchError}</p>
+        <p className="text-red-500 text-xl mb-5">{fetchError}</p>
       ) : (
         <>
-          <div className={styles.statContainer}>
-            <div className={styles.stat}>
-              <h3>Events Processed</h3>
-              <p>{apiMetrics?.events_processed}</p>
+          <div className="flex gap-5 mb-5">
+            <div className="flex-1 bg-white rounded-lg shadow-md p-5 text-center">
+              <h3 className="text-xl mb-2 text-gray-600">Events Processed</h3>
+              <p className="text-3xl font-bold text-gray-800">{apiMetrics?.events_processed}</p>
             </div>
-            <div className={styles.stat}>
-              <h3>Anomalies Detected</h3>
-              <p>{apiMetrics?.anomalies_detected}</p>
+            <div className="flex-1 bg-white rounded-lg shadow-md p-5 text-center">
+              <h3 className="text-xl mb-2 text-gray-600">Anomalies Detected</h3>
+              <p className="text-3xl font-bold text-gray-800">{apiMetrics?.anomalies_detected}</p>
             </div>
           </div>
-          <div className={styles.chartContainer}>
-            <div className={styles.chart}>
-              <h3>Threat Severity Distribution</h3>
+          <div className="flex flex-wrap gap-5">
+            <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+              <h3 className="text-2xl mb-2 text-gray-600">Threat Severity Distribution</h3>
               <Pie data={{
                 labels: Object.keys(severityCounts),
                 datasets: [{ label: 'Threat Severity Levels', data: Object.values(severityCounts), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] }],
               }} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
 
-            <div className={styles.chart}>
-              <h3>Alert Level Distribution</h3>
+            <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+              <h3 className="text-2xl mb-2 text-gray-600">Alert Level Distribution</h3>
               <Bar data={{
                 labels: Object.keys(alertCounts),
                 datasets: [{ label: 'Alert Levels', data: Object.values(alertCounts), backgroundColor: ['#4BC0C0', '#FF9F40', '#FF6384'] }],
               }} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
 
-            <div className={styles.chart}>
-              <h3>Analysis Results</h3>
+            <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+              <h3 className="text-2xl mb-2 text-gray-600">Analysis Results</h3>
               <Pie data={analysisChartData} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
 
-            <div className={styles.chart}>
-              <h3>Anomalies Detected</h3>
+            <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+              <h3 className="text-2xl mb-2 text-gray-600">Anomalies Detected</h3>
               <Line data={anomalyChartData} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
           </div>
 
-          <div className={styles.eventList}>
-            <h3>Recent Threats</h3>
-            <ul>{threatData.slice(0, 5).map(threat => <li key={threat.id}><strong>{threat.severity}</strong> - {threat.description}</li>)}</ul>
+          <div className="w-full bg-white rounded-lg shadow-md p-5 mb-5">
+            <h3 className="text-2xl mb-2 text-gray-600">Recent Threats</h3>
+            <ul className="list-none p-0">{threatData.slice(0, 5).map(threat => <li key={threat.id} className="text-base mb-1 text-gray-700"><strong>{threat.severity}</strong> - {threat.description}</li>)}</ul>
           </div>
 
-          <div className={styles.eventList}>
-            <h3>Recent Alerts</h3>
-            <ul>{alertData.slice(0, 5).map(alert => <li key={alert.id}><strong>{alert.level}</strong> - {alert.message}</li>)}</ul>
+          <div className="w-full bg-white rounded-lg shadow-md p-5 mb-5">
+            <h3 className="text-2xl mb-2 text-gray-600">Recent Alerts</h3>
+            <ul className="list-none p-0">{alertData.slice(0, 5).map(alert => <li key={alert.id} className="text-base mb-1 text-gray-700"><strong>{alert.level}</strong> - {alert.message}</li>)}</ul>
           </div>
 
-          <div className={styles.eventList}>
-            <h3>Recent Anomalies</h3>
-            <ul>{anomalyData.slice(0, 5).map(anomaly => <li key={anomaly.id}>{anomaly.description}</li>)}</ul>
+          <div className="w-full bg-white rounded-lg shadow-md p-5 mb-5">
+            <h3 className="text-2xl mb-2 text-gray-600">Recent Anomalies</h3>
+            <ul className="list-none p-0">{anomalyData.slice(0, 5).map(anomaly => <li key={anomaly.id} className="text-base mb-1 text-gray-700">{anomaly.description}</li>)}</ul>
           </div>
         </>
       )}
