@@ -3,7 +3,6 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import Alerts from "./components/Alerts";
 import Dashboard from "./components/Dashboard";
-import Footer from "./components/Footer";
 import Home from "./components/Home";
 import IncidentReport from "./components/IncidentReport";
 import Login from "./components/Login";
@@ -34,7 +33,6 @@ const App: React.FC = () => {
             <Route path="/metrics" element={<ProtectedRoute element={MetricsDashboard} />} />
           </Routes>
         </main>
-        <Footer />
       </div>
     </Router>
   );
