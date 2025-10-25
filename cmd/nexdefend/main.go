@@ -22,6 +22,8 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
+	"github.com/thrive-spectrexq/NexDefend/internal/dashboard"
+	"github.com/thrive-spectrexq/NexDefend/internal/websocket"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -73,6 +75,9 @@ func main() {
 	// Start collecting system metrics
 	go metrics.CollectMetrics(database)
 
+	hub := websocket.NewHub()
+	go hub.Run()
+
 	router := mux.NewRouter()
 	router.Use(logging.LogRequest)
 	router.Use(middleware.ErrorHandler)
@@ -98,6 +103,14 @@ func main() {
 
 	// Metrics Endpoint
 	api.HandleFunc("/metrics", MetricsHandler(database)).Methods("GET")
+
+	// Dashboard Endpoint
+	api.HandleFunc("/dashboard", dashboard.GetDashboardData).Methods("GET")
+
+	// Websocket Endpoint
+	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		websocket.HandleConnections(hub, w, r)
+	})
 
 	// Home Endpoint
 	router.HandleFunc("/", HomeHandler).Methods("GET")

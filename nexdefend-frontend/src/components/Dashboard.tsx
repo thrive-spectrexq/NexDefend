@@ -98,9 +98,31 @@ const Dashboard: React.FC = () => {
     };
 
     fetchData();
-    const intervalId = setInterval(fetchData, 5000);
 
-    return () => clearInterval(intervalId);
+    const ws = new WebSocket('ws://localhost:8080/ws');
+
+    ws.onopen = () => {
+      console.log('connected');
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'dashboardUpdate') {
+        setThreatData(data.threats);
+        setAlertData(data.alerts);
+        setAnalysisData(data.analysis);
+        setAnomalyData(data.anomalies);
+        setApiMetrics(data.apiMetrics);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('disconnected');
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
   const severityCounts = threatData.reduce((acc: Record<string, number>, threat) => {
