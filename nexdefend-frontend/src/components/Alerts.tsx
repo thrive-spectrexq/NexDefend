@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import styles from './Alerts.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -54,10 +53,10 @@ const Alerts: React.FC = () => {
   );
 
   return (
-    <div className={styles.alerts}>
+    <div>
       <h2>Alerts</h2>
-      {error && <p className={styles.error}>{error}</p>}
-      <div className={styles.controls}>
+      {error && <p>{error}</p>}
+      <div>
         <select value={level} onChange={(e) => setLevel(e.target.value)}>
           <option value="all">All Levels</option>
           <option value="low">Low</option>
@@ -74,16 +73,16 @@ const Alerts: React.FC = () => {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className={styles.alertList}>
+        <div>
           {filteredAlerts.map(alert => (
-            <div key={alert.id} className={styles.alertItem}>
+            <div key={alert.id}>
               <p><strong>Message:</strong> {alert.alert_message}</p>
               <p><strong>Level:</strong> {alert.alert_level}</p>
             </div>
           ))}
         </div>
       )}
-      <div className={styles.pagination}>
+      <div>
         <button onClick={() => setPage(page => Math.max(page - 1, 1))} disabled={page === 1}>
           Previous
         </button>

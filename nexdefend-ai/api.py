@@ -1,6 +1,6 @@
 import logging
 import os
-from flask import Flask, jsonify, make_response, request
+from flask import Flask, jsonify, make_response
 from flask_cors import CORS
 from prometheus_client import Counter, make_wsgi_app, Gauge
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -11,7 +11,7 @@ from data_ingestion import (
     fetch_suricata_event_by_id,
     update_event_analysis_status,
 )
-from ml_anomaly_detection import detect_anomalies, preprocess_events, predict_real_time
+from ml_anomaly_detection import detect_anomalies, preprocess_events
 
 app = Flask(__name__)
 
@@ -78,16 +78,6 @@ def analyze_single_event(event_id):
     except Exception as e:
         logging.error(f"Error during single event analysis for event {event_id}: {e}")
         return make_response(jsonify({"error": "Failed to analyze event"}), 500)
-
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        data = request.get_json()
-        prediction = predict_real_time(data)
-        return make_response(jsonify(prediction), 200)
-    except Exception as e:
-        logging.error(f"Error during real-time prediction: {e}")
-        return make_response(jsonify({"error": "Failed to make real-time prediction"}), 500)
 
 @app.route("/api-metrics", methods=["GET"])
 def get_api_metrics():

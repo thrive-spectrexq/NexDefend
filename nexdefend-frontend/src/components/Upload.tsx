@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import styles from './Upload.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -94,25 +93,24 @@ const Upload: React.FC = () => {
   };
 
   return (
-    <div className={styles.upload}>
+    <div>
       <h2>Upload Files</h2>
-      {error && <p className={styles.error}>{error}</p>}
-      {successMessage && <p className={styles.success}>{successMessage}</p>}
+      {error && <p>{error}</p>}
+      {successMessage && <p>{successMessage}</p>}
       <input type="file" multiple onChange={handleFileChange} />
-      <div className={styles.uploadList}>
+      <div>
         {uploads.map(upload => (
-          <div key={upload.id} className={styles.uploadItem}>
+          <div key={upload.id}>
             <p>{upload.filename}</p>
             {upload.progress > 0 && (
-              <div className={styles.progressBar}>
+              <div>
                 <div
-                  className={styles.progress}
                   style={{ width: `${upload.progress}%` }}
                 ></div>
               </div>
             )}
-            {upload.error && <p className={styles.error}>{upload.error}</p>}
-            {upload.success && <p className={styles.success}>Upload successful</p>}
+            {upload.error && <p>{upload.error}</p>}
+            {upload.success && <p>Upload successful</p>}
           </div>
         ))}
       </div>

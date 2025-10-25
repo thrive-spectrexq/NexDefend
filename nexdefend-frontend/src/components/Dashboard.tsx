@@ -12,7 +12,6 @@ import {
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
-import styles from './Dashboard.module.css';
 
 ChartJS.register(
   CategoryScale,
@@ -98,31 +97,9 @@ const Dashboard: React.FC = () => {
     };
 
     fetchData();
+    const intervalId = setInterval(fetchData, 5000);
 
-    const ws = new WebSocket('ws://localhost:8080/ws');
-
-    ws.onopen = () => {
-      console.log('connected');
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'dashboardUpdate') {
-        setThreatData(data.threats);
-        setAlertData(data.alerts);
-        setAnalysisData(data.analysis);
-        setAnomalyData(data.anomalies);
-        setApiMetrics(data.apiMetrics);
-      }
-    };
-
-    ws.onclose = () => {
-      console.log('disconnected');
-    };
-
-    return () => {
-      ws.close();
-    };
+    return () => clearInterval(intervalId);
   }, []);
 
   const severityCounts = threatData.reduce((acc: Record<string, number>, threat) => {
@@ -159,26 +136,26 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className={styles.dashboard}>
+    <div>
       <h2>System Overview</h2>
       {loading ? (
         <p>Loading data...</p>
       ) : fetchError ? (
-        <p className={styles.error}>{fetchError}</p>
+        <p>{fetchError}</p>
       ) : (
         <>
-          <div className={styles.statContainer}>
-            <div className={styles.stat}>
+          <div>
+            <div>
               <h3>Events Processed</h3>
               <p>{apiMetrics?.events_processed}</p>
             </div>
-            <div className={styles.stat}>
+            <div>
               <h3>Anomalies Detected</h3>
               <p>{apiMetrics?.anomalies_detected}</p>
             </div>
           </div>
-          <div className={styles.chartContainer}>
-            <div className={styles.chart}>
+          <div>
+            <div>
               <h3>Threat Severity Distribution</h3>
               <Pie data={{
                 labels: Object.keys(severityCounts),
@@ -186,7 +163,7 @@ const Dashboard: React.FC = () => {
               }} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
 
-            <div className={styles.chart}>
+            <div>
               <h3>Alert Level Distribution</h3>
               <Bar data={{
                 labels: Object.keys(alertCounts),
@@ -194,28 +171,28 @@ const Dashboard: React.FC = () => {
               }} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
 
-            <div className={styles.chart}>
+            <div>
               <h3>Analysis Results</h3>
               <Pie data={analysisChartData} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
 
-            <div className={styles.chart}>
+            <div>
               <h3>Anomalies Detected</h3>
               <Line data={anomalyChartData} options={{ responsive: true, maintainAspectRatio: false }} />
             </div>
           </div>
 
-          <div className={styles.eventList}>
+          <div>
             <h3>Recent Threats</h3>
             <ul>{threatData.slice(0, 5).map(threat => <li key={threat.id}><strong>{threat.severity}</strong> - {threat.description}</li>)}</ul>
           </div>
 
-          <div className={styles.eventList}>
+          <div>
             <h3>Recent Alerts</h3>
             <ul>{alertData.slice(0, 5).map(alert => <li key={alert.id}><strong>{alert.level}</strong> - {alert.message}</li>)}</ul>
           </div>
 
-          <div className={styles.eventList}>
+          <div>
             <h3>Recent Anomalies</h3>
             <ul>{anomalyData.slice(0, 5).map(anomaly => <li key={anomaly.id}>{anomaly.description}</li>)}</ul>
           </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import styles from './Register.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -48,32 +47,28 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className={styles.registerContainer}>
+    <div>
       <h2>Create an Account</h2>
-      <div className={styles.inputContainer}>
+      <div>
         <input
-          className={styles.inputField}
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
-          className={styles.inputField}
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          className={styles.inputField}
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
         <input
-          className={styles.inputField}
           type="password"
           placeholder="Confirm Password"
           value={confirmPassword}
@@ -81,18 +76,17 @@ const Register: React.FC = () => {
         />
       </div>
       <button
-        className={styles.registerButton}
         onClick={handleRegister}
         disabled={loading}
       >
         {loading ? 'Registering...' : 'Register'}
       </button>
-      {error && <p className={styles.errorMessage}>{error}</p>}
+      {error && <p>{error}</p>}
       
       {/* Link to Login Page */}
-      <div className={styles.loginPrompt}>
+      <div>
         Already have an account?{' '}
-        <Link to="/login" className={styles.loginLink}>
+        <Link to="/login">
           Login
         </Link>
       </div>

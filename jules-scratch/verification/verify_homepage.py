@@ -7,7 +7,7 @@ def run(playwright):
     page = context.new_page()
     time.sleep(30) # Wait for the server to start
     page.goto("http://localhost:3000")
-    page.screenshot(path="jules-scratch/verification/dashboard.png")
+    page.screenshot(path="jules-scratch/verification/homepage.png")
     browser.close()
 
 with sync_playwright() as playwright:

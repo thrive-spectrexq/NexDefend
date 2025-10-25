@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import styles from './IncidentReport.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -122,10 +121,10 @@ const IncidentReport: React.FC = () => {
   });
 
   return (
-    <div className={styles.incidentReport}>
+    <div>
       <h2>Incident Reports</h2>
-      {error && <p className={styles.error}>{error}</p>}
-      <div className={styles.filterSort}>
+      {error && <p>{error}</p>}
+      <div>
         <input
           type="text"
           placeholder="Filter by description"
@@ -138,15 +137,15 @@ const IncidentReport: React.FC = () => {
           <option value="severity">Severity</option>
         </select>
       </div>
-      <div className={styles.reportList}>
+      <div>
         {sortedReports.map((report) => (
-          <div key={report.id} className={styles.reportItem}>
+          <div key={report.id}>
             <p><strong>Description:</strong> {report.description}</p>
             <p><strong>Date:</strong> {report.date}</p>
             <p><strong>Status:</strong> {report.status}</p>
             <p><strong>Severity:</strong> {report.severity}</p>
             <p><strong>Assigned To:</strong> {report.assignedTo || 'Unassigned'}</p>
-            <div className={styles.comments}>
+            <div>
               <h4>Comments</h4>
               <ul>
                 {report.comments.map((comment, index) => (
@@ -161,7 +160,7 @@ const IncidentReport: React.FC = () => {
               />
               <button onClick={() => handleAddComment(report.id)}>Add Comment</button>
             </div>
-            <div className={styles.assign}>
+            <div>
               <input
                 type="text"
                 placeholder="Assign to"
@@ -170,7 +169,7 @@ const IncidentReport: React.FC = () => {
               />
               <button onClick={() => handleAssign(report.id)}>Assign</button>
             </div>
-            <div className={styles.statusUpdate}>
+            <div>
               <select
                 value={report.status}
                 onChange={(e) => handleStatusUpdate(report.id, e.target.value)}

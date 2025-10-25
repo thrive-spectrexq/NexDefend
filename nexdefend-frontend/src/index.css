@@ -1,26 +1,3 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6; /* Improved readability with line height */
-  background-color: #f4f4f4; /* Light background for better contrast */
-  color: #333; /* Dark text for better readability */
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-  background-color: #e8e8e8; /* Slight background for code blocks */
-  padding: 0.2em 0.4em; /* Padding around code for better visibility */
-  border-radius: 4px; /* Rounded corners for a nicer look */
-}
-
-/* Optional: Add some responsive design elements */
-@media (max-width: 768px) {
-  body {
-    padding: 1rem; /* Add padding for smaller screens */
-  }
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

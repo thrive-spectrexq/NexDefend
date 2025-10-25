@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './Compliance.module.css';
 
 // Mock data for compliance reports
 const mockReports = [
@@ -41,17 +40,17 @@ const Compliance: React.FC = () => {
   };
 
   return (
-    <div className={styles.complianceContainer}>
-      <h1 className={styles.title}>Compliance Management</h1>
+    <div>
+      <h1>Compliance Management</h1>
       <p>Monitor and manage compliance with various security standards and regulations.</p>
-      <div className={styles.reportsTable}>
-        <div className={styles.tableHeader}>
+      <div>
+        <div>
           <h2>Compliance Reports</h2>
-          <button onClick={downloadAllReports} className={styles.downloadAllButton}>
+          <button onClick={downloadAllReports}>
             Download All Reports
           </button>
         </div>
-        <table className={styles.table}>
+        <table>
           <thead>
             <tr>
               <th>Report Name</th>
@@ -65,13 +64,13 @@ const Compliance: React.FC = () => {
               <tr key={report.id}>
                 <td>{report.name}</td>
                 <td>
-                  <span className={`${styles.status} ${styles[report.status.toLowerCase().replace(' ', '')]}`}>
+                  <span>
                     {report.status}
                   </span>
                 </td>
                 <td>{report.date}</td>
                 <td>
-                  <button onClick={() => downloadReport(report)} className={styles.downloadButton}>
+                  <button onClick={() => downloadReport(report)}>
                     Download
                   </button>
                 </td>

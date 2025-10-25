@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import styles from './Login.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -44,18 +43,16 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className={styles.loginContainer}>
+    <div>
       <h2>Login into Dashboard</h2>
-      <div className={styles.inputContainer}>
+      <div>
         <input
-          className={styles.inputField}
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
-          className={styles.inputField}
           type="password"
           placeholder="Password"
           value={password}
@@ -63,15 +60,14 @@ const Login: React.FC = () => {
         />
       </div>
       <button
-        className={styles.loginButton}
         onClick={handleLogin}
         disabled={loading}
       >
         {loading ? 'Logging in...' : 'Login'}
       </button>
-      {error && <p className={styles.errorMessage}>{error}</p>}
-      <div className={styles.registerPrompt}>
-        <p>Don't have an account? <Link to="/register" className={styles.registerLink}>Register</Link></p>
+      {error && <p>{error}</p>}
+      <div>
+        <p>Don't have an account? <Link to="/register">Register</Link></p>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import styles from './Navbar.module.css';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -33,27 +32,27 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className={styles.navbar} aria-label="Main Navigation">
-      <div className={styles.navLeft}>
-        <Link to="/" className={styles.logo}>NexDefend</Link>
+    <nav aria-label="Main Navigation">
+      <div>
+        <Link to="/">NexDefend</Link>
       </div>
-      <div className={styles.userActions}>
+      <div>
         {user?.name && (
-          <span className={styles.userInfo}>
+          <span>
             {user.name} ({user.role})
           </span>
         )}
         {token ? (
           <>
-            <Link to="/dashboard" className={`${styles.btn} ${styles.btnSecondary}`}>Dashboard</Link>
-            <button onClick={handleLogout} className={styles.logoutButton} aria-label="Logout">
+            <Link to="/dashboard">Dashboard</Link>
+            <button onClick={handleLogout} aria-label="Logout">
               Logout
             </button>
           </>
         ) : (
           <>
-            <button onClick={handleLogin} className={`${styles.btn} ${styles.btnSecondary}`}>Login</button>
-            <button onClick={handleRegister} className={`${styles.btn} ${styles.btnPrimary}`}>Register</button>
+            <button onClick={handleLogin}>Login</button>
+            <button onClick={handleRegister}>Register</button>
           </>
         )}
       </div>

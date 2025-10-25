@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import styles from './ThreatDetection.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -54,15 +53,15 @@ const ThreatDetection: React.FC = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <h2 className={styles.header}>Threat Detection</h2>
-      <button onClick={handleDetection} disabled={loading} className={styles.detectButton}>
+    <div>
+      <h2>Threat Detection</h2>
+      <button onClick={handleDetection} disabled={loading}>
         {loading ? 'Running...' : 'Run Threat Detection'}
       </button>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p>{error}</p>}
 
       <h3>Threats Detected by the System</h3>
-      <table className={styles.table}>
+      <table>
         <thead>
           <tr>
             <th>Threat Type</th>
@@ -80,10 +79,10 @@ const ThreatDetection: React.FC = () => {
           ))}
         </tbody>
       </table>
-      {results.length === 0 && !loading && !error && <p className={styles.noResults}>No threats detected.</p>}
+      {results.length === 0 && !loading && !error && <p>No threats detected.</p>}
 
       <h3>Python-Generated Threat Analysis</h3>
-      <table className={styles.table}>
+      <table>
         <thead>
           <tr>
             <th>Analysis Type</th>
@@ -101,7 +100,7 @@ const ThreatDetection: React.FC = () => {
           ))}
         </tbody>
       </table>
-      {pythonResults.length === 0 && !loading && !error && <p className={styles.noResults}>No Python-generated threats detected.</p>}
+      {pythonResults.length === 0 && !loading && !error && <p>No Python-generated threats detected.</p>}
     </div>
   );
 };
