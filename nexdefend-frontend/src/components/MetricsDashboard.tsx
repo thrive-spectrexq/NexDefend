@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import styles from './Dashboard.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -84,10 +83,14 @@ const MetricsDashboard: React.FC = () => {
   };
 
   return (
-    <div className={styles.dashboard}>
-      <h2>System Metrics</h2>
-      <div className={styles.timeRangeSelector}>
-        <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+    <div className="p-5 font-sans">
+      <h2 className="text-4xl mb-5 text-gray-800">System Metrics</h2>
+      <div className="mb-5">
+        <select
+          value={timeRange}
+          onChange={(e) => setTimeRange(e.target.value)}
+          className="p-2 rounded-md border border-gray-300"
+        >
           <option value="1h">Last 1 Hour</option>
           <option value="6h">Last 6 Hours</option>
           <option value="24h">Last 24 Hours</option>
@@ -96,19 +99,19 @@ const MetricsDashboard: React.FC = () => {
       {loading ? (
         <p>Loading data...</p>
       ) : fetchError ? (
-        <p className={styles.error}>{fetchError}</p>
+        <p className="text-red-500 text-xl mb-5">{fetchError}</p>
       ) : (
-        <div className={styles.chartContainer}>
-          <div className={styles.chart}>
-            <h3>CPU Load (%)</h3>
+        <div className="flex flex-wrap gap-5">
+          <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+            <h3 className="text-2xl mb-2 text-gray-600">CPU Load (%)</h3>
             <Line data={createChartData(cpuData, 'CPU Load', '#FF6384')} options={{ responsive: true, maintainAspectRatio: false }} />
           </div>
-          <div className={styles.chart}>
-            <h3>Memory Usage (%)</h3>
+          <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+            <h3 className="text-2xl mb-2 text-gray-600">Memory Usage (%)</h3>
             <Line data={createChartData(memData, 'Memory Usage', '#36A2EB')} options={{ responsive: true, maintainAspectRatio: false }} />
           </div>
-          <div className={styles.chart}>
-            <h3>Disk Usage (%)</h3>
+          <div className="flex-1 basis-full md:basis-1/2-5 bg-white rounded-lg shadow-md p-5 mb-5">
+            <h3 className="text-2xl mb-2 text-gray-600">Disk Usage (%)</h3>
             <Line data={createChartData(diskData, 'Disk Usage', '#FFCE56')} options={{ responsive: true, maintainAspectRatio: false }} />
           </div>
         </div>
