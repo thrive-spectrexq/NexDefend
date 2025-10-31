@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 
 interface AuthState {
   token: string | null
@@ -7,10 +7,10 @@ interface AuthState {
   logout: () => void
 }
 
-const useAuthStore = create<AuthState>((set) => ({
+const useAuthStore = create<AuthState>()((set) => ({
   token: localStorage.getItem('token'),
   isAuthenticated: !!localStorage.getItem('token'),
-  login: (token) => {
+  login: (token: string) => {
     localStorage.setItem('token', token)
     set({ token, isAuthenticated: true })
   },
