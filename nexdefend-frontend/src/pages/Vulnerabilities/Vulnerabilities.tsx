@@ -5,18 +5,18 @@ const Vulnerabilities: React.FC = () => {
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Vulnerabilities</h1>
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-4xl font-bold tracking-tight">Vulnerabilities</h1>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Search vulnerabilities..."
-              className="bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
             />
           </div>
-          <button className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+          <button className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center shadow-md hover:shadow-lg transition-shadow duration-300">
             <ListFilter size={20} className="mr-2" />
             Filters
           </button>
@@ -24,15 +24,15 @@ const Vulnerabilities: React.FC = () => {
       </div>
 
       {/* Vulnerabilities Table */}
-      <div className="bg-gray-800 rounded-lg overflow-hidden">
+      <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-700">
             <tr>
-              <th className="py-3 px-6 text-left">Severity</th>
-              <th className="py-3 px-6 text-left">Vulnerability</th>
-              <th className="py-3 px-6 text-left">Asset</th>
-              <th className="py-3 px-6 text-left">First Seen</th>
-              <th className="py-3 px-6 text-left">Status</th>
+              <th className="py-3 px-6 text-left font-semibold">Severity</th>
+              <th className="py-3 px-6 text-left font-semibold">Vulnerability</th>
+              <th className="py-3 px-6 text-left font-semibold">Asset</th>
+              <th className="py-3 px-6 text-left font-semibold">First Seen</th>
+              <th className="py-3 px-6 text-left font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -78,14 +78,14 @@ const VulnerabilityRow: React.FC<VulnerabilityRowProps> = ({ severity, vulnerabi
   };
 
   return (
-    <tr className={`border-b border-gray-700 ${severityClasses[severity]}`}>
+    <tr className={`border-b border-gray-700 hover:bg-gray-700/50 transition-colors duration-200 ${severityClasses[severity]}`}>
       <td className="py-4 px-6">
-        <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${severityPillClasses[severity]}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${severityPillClasses[severity]}`}>
           {severity}
         </span>
       </td>
       <td className="py-4 px-6">{vulnerability}</td>
-      <td className="py-4 px-6 font-mono">{asset}</td>
+      <td className="py-4 px-6 font-mono text-gray-300">{asset}</td>
       <td className="py-4 px-6 text-gray-400">{firstSeen}</td>
       <td className={`py-4 px-6 font-semibold ${statusClasses[status]}`}>{status}</td>
     </tr>
