@@ -24,7 +24,7 @@ const Vulnerabilities: React.FC = () => {
       </div>
 
       {/* Vulnerabilities Table */}
-      <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
         <table className="min-w-full">
           <thead className="bg-gray-700">
             <tr>
