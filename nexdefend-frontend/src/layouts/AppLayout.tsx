@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router-dom';
-import Header from '../components/organisms/Header';
-import SideNav from '../components/organisms/SideNav';
+import { Outlet } from 'react-router-dom'
+import Header from '../components/organisms/Header'
+import SideNav from '../components/organisms/SideNav'
 
 const AppLayout = () => {
   return (
@@ -13,7 +13,7 @@ const AppLayout = () => {
         </main>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AppLayout;
+export default AppLayout

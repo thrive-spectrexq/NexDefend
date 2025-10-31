@@ -14,9 +14,9 @@ export default defineConfig({
       },
       '/ws': {
         target: process.env.WS_BASE_URL || 'ws://localhost:8080',
-        ws: true
-      }
-    }
+        ws: true,
+      },
+    },
   },
   test: {
     globals: true,

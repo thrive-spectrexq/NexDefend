@@ -1,13 +1,13 @@
-import useAuthStore from '../stores/authStore';
+import useAuthStore from '../stores/authStore'
 
 const Login = () => {
-  const { login } = useAuthStore();
+  const { login } = useAuthStore()
 
   const handleLogin = () => {
     // In a real application, you would perform a proper login flow.
     // For now, we'll just simulate a successful login.
-    login('fake-token');
-  };
+    login('fake-token')
+  }
 
   return (
     <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
@@ -22,7 +22,7 @@ const Login = () => {
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
