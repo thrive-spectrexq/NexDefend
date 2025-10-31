@@ -1,8 +1,0 @@
-/* In your CSS file */
-.toggle-checkbox:checked {
-  right: 0;
-  border-color: #3b82f6; /* blue-500 */
-}
-.toggle-checkbox:checked + .toggle-label {
-  background-color: #3b82f6; /* blue-500 */
-}
