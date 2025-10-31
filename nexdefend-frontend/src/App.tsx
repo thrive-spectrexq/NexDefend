@@ -1,42 +1,37 @@
-import React from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar/Navbar';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Alerts from './pages/Alerts/Alerts';
-import Vulnerabilities from './pages/Vulnerabilities/Vulnerabilities';
-import Settings from './pages/Settings/Settings';
-import Home from './pages/Home/Home';
-import Login from './pages/Login/Login';
-import Register from './pages/Register/Register';
-import PrivateRoute from './components/PrivateRoute';
-import PublicRoute from './components/PublicRoute';
-import { useAuth } from './context/AuthContext';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import AppLayout from './layouts/AppLayout'
+import Alerts from './pages/Alerts'
+import Dashboard from './pages/Dashboard'
+import Incidents from './pages/Incidents'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Reports from './pages/Reports'
+import Settings from './pages/Settings'
+import Vulnerabilities from './pages/Vulnerabilities'
+import PrivateRoute from './layouts/PrivateRoute'
+import PublicRoute from './layouts/PublicRoute'
 
-const App: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
-  const showNavbar = isAuthenticated && !['/', '/login', '/register'].includes(location.pathname);
-
+function App() {
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
-      {showNavbar && <Navbar />}
-      <main>
-        <Routes>
-          <Route element={<PublicRoute />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
-          <Route element={<PrivateRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+    <Router>
+      <Routes>
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
+        <Route element={<PrivateRoute />}>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/incidents" element={<Incidents />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/vulnerabilities" element={<Vulnerabilities />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
-        </Routes>
-      </main>
-    </div>
-  );
-};
+        </Route>
+      </Routes>
+    </Router>
+  )
+}
 
-export default App;
+export default App
