@@ -54,7 +54,7 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ icon, title, value }) => {
   return (
-    <div className="bg-gray-800 p-6 rounded-xl flex items-center shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+    <div className="bg-gray-800 p-6 rounded-xl flex items-center shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer border border-gray-700">
       <div className="mr-5 text-blue-500 bg-gray-700 p-4 rounded-full">{icon}</div>
       <div>
         <p className="text-gray-400 font-medium">{title}</p>
@@ -90,7 +90,7 @@ const AlertItem: React.FC<AlertItemProps> = ({ severity, description, time }) =>
   };
 
   return (
-    <li className={`flex justify-between items-center p-4 rounded-lg ${severityStyles[severity].bg}`}>
+    <li className={`flex justify-between items-center p-4 rounded-lg ${severityStyles[severity].bg} border border-gray-700`}>
       <div>
         <div className="flex items-center mb-1">
           <span className={`w-3 h-3 rounded-full mr-2 ${severityStyles[severity].pill}`}></span>

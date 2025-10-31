@@ -16,7 +16,7 @@ const TestApp: React.FC<{ initialEntries?: string[] }> = ({ initialEntries = ['/
 
 test('renders home page for unauthenticated users', () => {
   render(<TestApp />);
-  const headingElement = screen.getByRole('heading', { name: /welcome to nexdefend/i });
+  const headingElement = screen.getByRole('heading', { name: /your security, amplified./i });
   expect(headingElement).toBeInTheDocument();
 });
 

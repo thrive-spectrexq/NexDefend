@@ -16,7 +16,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-      <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+      <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
         <div className="text-center mb-8">
           <Shield size={48} className="mx-auto text-blue-500" />
           <h1 className="text-3xl font-bold mt-4">NexDefend</h1>

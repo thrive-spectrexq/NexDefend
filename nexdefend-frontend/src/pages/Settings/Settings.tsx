@@ -52,7 +52,7 @@ interface SettingsSectionProps {
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({ icon, title, children }) => {
   return (
-    <div className="bg-gray-800 p-8 rounded-xl shadow-lg">
+    <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
       <div className="flex items-center mb-6">
         <div className="mr-4 text-blue-500 bg-gray-700 p-3 rounded-full">{icon}</div>
         <h2 className="text-2xl font-bold">{title}</h2>
