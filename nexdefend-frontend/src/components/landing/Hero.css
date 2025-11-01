@@ -1,50 +1,26 @@
-.hero-section {
-  background: linear-gradient(90deg, #0a0a0a 0%, #1a1a1a 100%);
-  padding: 100px 0;
-  background: linear-gradient(to right, #000428, #004e92); /* dark-blue → cyber-purple */
-  color: white;
-  overflow: hidden; /* To contain animations */
+.hero {
+  text-align: center;
+  padding: 120px 20px;
+  background-color: #f9f9f9;
 }
 
-@keyframes fade-in-down {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.hero h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  color: #1a1a1a;
 }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.hero p {
+  font-size: 1.5rem;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto 40px;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-fade-in-down {
-  animation: fade-in-down 0.5s ease-out;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.5s ease-out 0.2s backwards;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out 0.4s backwards;
+.hero .cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
 }

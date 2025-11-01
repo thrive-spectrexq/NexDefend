@@ -1,4 +1,37 @@
+body {
+  font-family: 'Inter', sans-serif;
+  color: #1a1a1a;
+  background-color: #ffffff;
+}
+
 .homepage {
-  background-color: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #f5b000;
+  color: #1a1a1a;
+}
+
+.btn-primary:hover {
+  background-color: #e6a300;
+}
+
+.btn-secondary {
+  background-color: #0070f3;
   color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background-color: #005bb5;
 }
