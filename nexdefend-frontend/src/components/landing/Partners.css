@@ -1,0 +1,29 @@
+.partners {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #ffffff;
+}
+
+.partners h2 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  color: #1a1a1a;
+}
+
+.partner-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+
+.partner-logos img {
+  height: 40px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.partner-logos img:hover {
+  opacity: 1;
+}

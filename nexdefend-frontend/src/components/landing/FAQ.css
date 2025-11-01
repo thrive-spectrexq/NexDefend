@@ -1,0 +1,38 @@
+.faq {
+  padding: 80px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 60px;
+  color: #1a1a1a;
+}
+
+.faq-item {
+  border-bottom: 1px solid #eaeaea;
+  padding: 20px 0;
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.faq-question h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.faq-answer {
+  margin-top: 20px;
+  color: #666;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}

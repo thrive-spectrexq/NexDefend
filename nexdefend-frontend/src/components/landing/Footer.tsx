@@ -2,39 +2,47 @@ import './Footer.css';
 
 const Footer = () => {
   return (
-    <footer className="footer-section bg-gray-900 text-white py-12">
-      <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div>
-          <h3 className="font-bold mb-4">Product</h3>
+    <footer className="footer">
+      <div className="footer-links">
+        <div className="footer-column">
+          <h4>Explore</h4>
           <ul>
-            <li>Overview</li>
-            <li>Features</li>
-            <li>Architecture</li>
+            <li><a href="#">Overview</a></li>
+            <li><a href="#">XDR</a></li>
+            <li><a href="#">SIEM</a></li>
           </ul>
         </div>
-        <div>
-          <h3 className="font-bold mb-4">Docs</h3>
+        <div className="footer-column">
+          <h4>Services</h4>
           <ul>
-            <li>Setup</li>
-            <li>API</li>
-            <li>Contributing</li>
+            <li><a href="#">NexDefend Cloud</a></li>
+            <li><a href="#">Professional support</a></li>
+            <li><a href="#">Consulting services</a></li>
+            <li><a href="#">Training courses</a></li>
           </ul>
         </div>
-        <div>
-          <h3 className="font-bold mb-4">Community</h3>
+        <div className="footer-column">
+          <h4>Documentation</h4>
           <ul>
-            <li>GitHub</li>
-            <li>Discord</li>
-            <li>Twitter</li>
+            <li><a href="#">Quickstart</a></li>
+            <li><a href="#">Getting started</a></li>
+            <li><a href="#">Installation guide</a></li>
           </ul>
         </div>
-        <div>
-          <h3 className="font-bold mb-4">License</h3>
-          <p>GPL-3.0</p>
+        <div className="footer-column">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Community</a></li>
+            <li><a href="#">Legal</a></li>
+          </ul>
         </div>
       </div>
-      <div className="text-center mt-8 border-t border-gray-800 pt-8">
-        <p>© 2025 NexDefend.</p>
+      <div className="footer-bottom">
+        <p>&copy; 2025 NexDefend, Inc.</p>
+        <div className="social-links">
+          {/* Add social media icons */}
+        </div>
       </div>
     </footer>
   );
