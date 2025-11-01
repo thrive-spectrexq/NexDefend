@@ -1,20 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import './Hero.css';
 
-const Hero = () => {
+interface HeroProps {
+  onOpenSidebar: () => void;
+}
+
+const Hero: React.FC<HeroProps> = ({ onOpenSidebar }) => {
   return (
     <section className="hero">
       <div className="hero-content">
-        <h1>The Open Source Security Platform</h1>
-        <p>Unified XDR and SIEM protection for endpoints and cloud workloads.</p>
+        <h1>Cybersecurity for the AI-Driven Future</h1>
+        <p>NexDefend provides a unified AI-powered XDR platform to protect your organization from evolving threats.</p>
         <div className="hero-buttons">
-          <Link to="/getting-started" className="btn btn-primary">Install NexDefend</Link>
-          <Link to="/cloud-trial" className="btn btn-secondary">Free Cloud Trial</Link>
+          <button className="primary" onClick={onOpenSidebar}>Get started free</button>
+          <button className="secondary" onClick={onOpenSidebar}>Request a demo</button>
         </div>
-      </div>
-      <div className="hero-image">
-        <img src="https://via.placeholder.com/600x400.png/1a1a1a/ffffff?text=NexDefend+Dashboard" alt="NexDefend Dashboard" />
       </div>
     </section>
   );
