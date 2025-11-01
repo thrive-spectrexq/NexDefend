@@ -10,23 +10,25 @@ import Settings from './pages/Settings'
 import Vulnerabilities from './pages/Vulnerabilities'
 import PrivateRoute from './layouts/PrivateRoute'
 import PublicRoute from './layouts/PublicRoute'
+import HomePage from './pages/HomePage'
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route element={<PublicRoute />}>
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
         <Route element={<PrivateRoute />}>
-          <Route path="/" element={<AppLayout />}>
+          <Route path="/dashboard" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/incidents" element={<Incidents />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/vulnerabilities" element={<Vulnerabilities />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="incidents" element={<Incidents />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="vulnerabilities" element={<Vulnerabilities />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
       </Routes>
