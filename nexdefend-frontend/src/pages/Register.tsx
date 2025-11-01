@@ -1,10 +1,14 @@
+import './Register.css';
+
 const Register = () => {
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Register</h1>
-      <p>This is the register page.</p>
+    <div className="register-page">
+      <div className="register-form">
+        <h1>Register</h1>
+        <p>This is the register page.</p>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Register
+export default Register;
