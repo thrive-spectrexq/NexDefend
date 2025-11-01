@@ -1,37 +1,27 @@
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #eaeaea;
-}
-
-.header .logo a {
-  font-size: 28px;
-  font-weight: 700;
+.header .actions .btn {
+  padding: 10px 20px;
+  border-radius: 5px;
   text-decoration: none;
-  color: #1a1a1a;
-}
-
-.header nav ul {
-  list-style: none;
-  display: flex;
-  gap: 30px;
-}
-
-.header nav a {
-  text-decoration: none;
-  color: #4a4a4a;
   font-weight: 600;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.header nav a:hover {
+.header .actions .btn-primary {
+  background-color: #0070f3;
+  color: #fff;
+}
+
+.header .actions .btn-primary:hover {
+  background-color: #005bb5;
+}
+
+.header .actions .btn-secondary {
+  background-color: transparent;
   color: #0070f3;
+  border: 1px solid #0070f3;
 }
 
-.header .actions {
-  display: flex;
-  gap: 15px;
+.header .actions .btn-secondary:hover {
+  background-color: #0070f3;
+  color: #fff;
 }
