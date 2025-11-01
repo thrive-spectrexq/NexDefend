@@ -11,7 +11,7 @@ const SideNav = () => {
   return (
     <nav className="bg-gray-900 text-white w-64 p-4 flex flex-col border-r border-gray-700">
       <div className="mb-8">
-        <Link to="/" className="flex items-center space-x-2">
+        <Link to="/dashboard" className="flex items-center space-x-2">
           <Shield size={24} />
           <span className="text-2xl font-bold">NexDefend</span>
         </Link>
@@ -19,7 +19,7 @@ const SideNav = () => {
       <ul className="space-y-2">
         <li>
           <Link
-            to="/"
+            to="/dashboard"
             className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
           >
             <BarChart size={20} />
@@ -28,7 +28,7 @@ const SideNav = () => {
         </li>
         <li>
           <Link
-            to="/alerts"
+            to="/dashboard/alerts"
             className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
           >
             <AlertTriangle size={20} />
@@ -37,7 +37,7 @@ const SideNav = () => {
         </li>
         <li>
           <Link
-            to="/incidents"
+            to="/dashboard/incidents"
             className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
           >
             <FileText size={20} />
@@ -46,7 +46,7 @@ const SideNav = () => {
         </li>
         <li>
           <Link
-            to="/reports"
+            to="/dashboard/reports"
             className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
           >
             <FileText size={20} />
@@ -55,7 +55,7 @@ const SideNav = () => {
         </li>
         <li>
           <Link
-            to="/vulnerabilities"
+            to="/dashboard/vulnerabilities"
             className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
           >
             <Shield size={20} />
@@ -65,7 +65,7 @@ const SideNav = () => {
       </ul>
       <div className="mt-auto">
         <Link
-          to="/settings"
+          to="/dashboard/settings"
           className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
         >
           <Settings size={20} />
