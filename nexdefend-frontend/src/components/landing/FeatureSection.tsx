@@ -1,3 +1,4 @@
+import React from 'react';
 import './FeatureSection.css';
 
 interface FeatureSectionProps {
@@ -8,17 +9,16 @@ interface FeatureSectionProps {
   reverse?: boolean;
 }
 
-const FeatureSection = ({ title, description, image, imageAlt, reverse }: FeatureSectionProps) => {
+const FeatureSection: React.FC<FeatureSectionProps> = ({ title, description, image, imageAlt, reverse }) => {
   return (
-    <section className={`feature-section py-20 ${reverse ? 'bg-gray-800' : ''}`}>
-      <div className={`container mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center ${reverse ? 'md:grid-flow-col-dense' : ''}`}>
-        <div className={reverse ? 'md:col-start-2' : ''}>
-          <h2 className="text-4xl font-bold mb-4">{title}</h2>
-          <p className="text-xl">{description}</p>
-        </div>
-        <div>
-          <img src={image} alt={imageAlt} className="rounded-lg" />
-        </div>
+    <section className={`feature-section ${reverse ? 'reverse' : ''}`}>
+      <div className="feature-text">
+        <h2>{title}</h2>
+        <p>{description}</p>
+        <a href="#">Learn more about {title.split(' ')[1]} ></a>
+      </div>
+      <div className="feature-image">
+        <img src={image} alt={imageAlt} />
       </div>
     </section>
   );
