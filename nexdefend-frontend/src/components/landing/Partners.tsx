@@ -1,17 +1,15 @@
+import React from 'react';
 import './Partners.css';
 
 const Partners = () => {
   return (
     <section className="partners">
-      <h2>Endpoint and Cloud Workload Protection</h2>
-      <p>NexDefend unifies historically separate functions into a single agent and platform architecture.</p>
       <div className="partner-logos">
-        {/* Replace with actual partner logos */}
-        <img src="https://via.placeholder.com/100x40.png/1a1a1a/ffffff?text=Globant" alt="Globant" />
-        <img src="https://via.placeholder.com/100x40.png/1a1a1a/ffffff?text=Rappi" alt="Rappi" />
-        <img src="https://via.placeholder.com/100x40.png/1a1a1a/ffffff?text=Link" alt="Link" />
-        <img src="https://via.placeholder.com/100x40.png/1a1a1a/ffffff?text=NASA" alt="NASA" />
-        <img src="https://via.placeholder.com/100x40.png/1a1a1a/ffffff?text=eBay" alt="eBay" />
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Rappi_logo.svg/2560px-Rappi_logo.svg.png" alt="Rappi" />
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Cisco_logo_blue_2016.svg/2560px-Cisco_logo_blue_2016.svg.png" alt="Cisco" />
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/2449px-NASA_logo.svg.png" alt="NASA" />
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Intuit_logo_2022.svg/2560px-Intuit_logo_2022.svg.png" alt="Intuit" />
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Symantec_logo.svg/2560px-Symantec_logo.svg.png" alt="Symantec" />
       </div>
     </section>
   );
