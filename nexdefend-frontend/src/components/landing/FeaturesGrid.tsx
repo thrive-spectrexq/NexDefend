@@ -1,4 +1,3 @@
-import React from 'react';
 import './FeaturesGrid.css';
 
 const FeaturesGrid = () => {

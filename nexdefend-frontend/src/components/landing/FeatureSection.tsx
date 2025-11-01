@@ -15,7 +15,7 @@ const FeatureSection: React.FC<FeatureSectionProps> = ({ title, description, ima
       <div className="feature-text">
         <h2>{title}</h2>
         <p>{description}</p>
-        <a href="#">Learn more about {title.split(' ')[1]} ></a>
+        <a href="#">Learn more about {title.split(' ')[1]} &gt;</a>
       </div>
       <div className="feature-image">
         <img src={image} alt={imageAlt} />

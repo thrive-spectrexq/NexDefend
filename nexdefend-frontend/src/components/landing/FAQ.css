@@ -21,12 +21,23 @@
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-}
-
-.faq-question h3 {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
   font-size: 1.2rem;
   font-weight: 600;
   color: #1a1a1a;
+  padding: 0;
+}
+
+.faq-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.faq-icon.open {
+  transform: rotate(45deg);
 }
 
 .faq-answer {
@@ -35,4 +46,12 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
+}
+
+.faq-answer p {
+  margin: 0;
+}
+
+.faq-item.open .faq-answer {
+  max-height: 1000px; /* A large value to allow for any content height */
 }
