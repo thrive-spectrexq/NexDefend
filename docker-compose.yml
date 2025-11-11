@@ -9,14 +9,22 @@ services:
     depends_on:
       - db
     environment:
+      # Database
       DB_USER: nexdefend
       DB_PASSWORD: password
       DB_NAME: nexdefend_db
       DB_HOST: db
+      # Service Communication
       PYTHON_API: http://ai:5000
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://nexdefend.vercel.app
+      # Secrets (MUST change in production)
+      JWT_SECRET_KEY: "default_user_secret_key_12345"
+      AI_SERVICE_TOKEN: "default_secret_token"
+      # Features
+      FIM_PATH: /etc # Path to monitor inside the container
     volumes:
       - ./sample_eve.json:/var/log/suricata/eve.json
+      # Mount /etc read-only for FIM to scan
+      - /etc:/etc:ro 
     networks:
       - nexdefend-net
 
@@ -29,12 +37,16 @@ services:
     depends_on:
       - db
     environment:
+      # Database
       DB_USER: nexdefend
       DB_PASSWORD: password
       DB_NAME: nexdefend_db
       DB_HOST: db
       DB_PORT: 5432
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://nexdefend.vercel.app
+      # Service Communication
+      GO_API_URL: http://api:8080/api/v1
+      # Secrets (MUST match 'api' service)
+      AI_SERVICE_TOKEN: "default_secret_token"
     networks:
       - nexdefend-net
 
@@ -44,6 +56,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # These are build-time args, but Vite uses them
       REACT_APP_API_URL: http://api:8080/api/v1
       REACT_APP_AI_API_URL: http://ai:5000
     depends_on:
