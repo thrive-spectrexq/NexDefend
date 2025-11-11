@@ -29,7 +29,7 @@ graph TD;
     end
 
     %% === Backend Layer ===
-    subgraph "Go Backend (api:8080)"
+    subgraph "Go Backend api-8080"
         R[API Router]
         T[Threat Detection]
         FIM[File Integrity Monitor]
@@ -38,7 +38,7 @@ graph TD;
     end
 
     %% === AI Layer ===
-    subgraph "Python AI Service (ai:5000)"
+    subgraph "Python AI Service ai-5000"
         AI_API[AI API]
         ML[ML Model]
         SCAN[Nmap Scanner]
@@ -50,9 +50,9 @@ graph TD;
     %% === Connections ===
     S -->|Tails eve.json| T
     T -->|1. Store Event| DB
-    T -->|2. Trigger Analysis (by ID)| AI_API
+    T -->|2. Trigger Analysis by ID| AI_API
     AI_API -->|3. Fetch Event| DB
-    AI_API -->|4. Analyze| ML
+    AI_API -->|4. Analyze Data| ML
     ML -->|5. Anomaly Found| AI_API
     AI_API -->|6. Create Incident| R
     U <-->|REST API| R
@@ -60,7 +60,7 @@ graph TD;
     U -->|Scan Request| R
     R -->|Scan Proxy| AI_API
     AI_API -->|Run Scan| SCAN
-    SCAN -->|Creates Vulns| R
+    SCAN -->|Creates Vulnerabilities| R
     UP -->|Malware Hash Check| DB
     UP -->|Create Incident| R
     FIM -->|File Change Detected| R
