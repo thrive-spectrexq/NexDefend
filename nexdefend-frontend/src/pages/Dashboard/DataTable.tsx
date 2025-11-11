@@ -1,47 +1,5 @@
-const mockEvents = [
-  {
-    timestamp: '2025-11-01 14:15:12',
-    sourceIp: '198.51.100.24',
-    eventType: 'Potential SQL Injection',
-    severity: 'High',
-  },
-  {
-    timestamp: '2025-11-01 14:14:55',
-    sourceIp: '203.0.113.88',
-    eventType: 'Anomalous Process Detected',
-    severity: 'Critical',
-  },
-  {
-    timestamp: '2025-11-01 14:12:30',
-    sourceIp: '192.168.1.105',
-    eventType: 'User Login from new IP',
-    severity: 'Low',
-  },
-  {
-    timestamp: '2025-11-01 14:10:02',
-    sourceIp: '10.0.0.52',
-    eventType: 'Firewall Rule Modified',
-    severity: 'Medium',
-  },
-  {
-    timestamp: '2025-11-01 14:08:45',
-    sourceIp: '192.168.1.101',
-    eventType: 'Multiple Login Failures',
-    severity: 'High',
-  },
-  {
-    timestamp: '2025-11-01 14:05:19',
-    sourceIp: '172.16.31.10',
-    eventType: 'Malware Signature Detected',
-    severity: 'Critical',
-  },
-  {
-    timestamp: '2025-11-01 14:02:44',
-    sourceIp: '203.0.113.12',
-    eventType: 'Network Scan Detected',
-    severity: 'Medium',
-  },
-];
+import { Threat } from '../../api/apiClient';
+import { Loader2 } from 'lucide-react';
 
 const severityClasses: { [key: string]: string } = {
   critical: 'text-red-400 font-bold uppercase',
@@ -50,13 +8,18 @@ const severityClasses: { [key: string]: string } = {
   low: 'text-green-500 font-semibold',
 };
 
-const DataTable = () => {
+interface DataTableProps {
+  threats: Threat[];
+  isLoading: boolean;
+}
+
+const DataTable = ({ threats, isLoading }: DataTableProps) => {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 h-full">
       <h3 className="text-xl font-bold text-white mb-4">Recent Events</h3>
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-96">
         <table className="w-full text-sm text-left text-gray-400">
-          <thead className="text-xs text-gray-400 uppercase bg-gray-700">
+          <thead className="text-xs text-gray-400 uppercase bg-gray-700 sticky top-0">
             <tr>
               <th scope="col" className="px-6 py-3">Timestamp</th>
               <th scope="col" className="px-6 py-3">Source IP</th>
@@ -65,16 +28,31 @@ const DataTable = () => {
             </tr>
           </thead>
           <tbody>
-            {mockEvents.map((event, index) => (
-              <tr key={index} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
-                <td className="px-6 py-4">{event.timestamp}</td>
-                <td className="px-6 py-4">{event.sourceIp}</td>
-                <td className="px-6 py-4">{event.eventType}</td>
-                <td className={`px-6 py-4 ${severityClasses[event.severity.toLowerCase()] || ''}`}>
-                  {event.severity}
+            {isLoading && (
+              <tr>
+                <td colSpan={4} className="text-center p-8">
+                  <Loader2 size={32} className="animate-spin inline" />
                 </td>
               </tr>
-            ))}
+            )}
+            {!isLoading && threats.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center p-8">
+                  No recent events found.
+                </td>
+              </tr>
+            )}
+            {!isLoading &&
+              threats.map((event) => (
+                <tr key={event.id} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
+                  <td className="px-6 py-4">{new Date(event.timestamp).toLocaleString()}</td>
+                  <td className="px-6 py-4">{event.source_ip}</td>
+                  <td className="px-6 py-4">{event.event_type}</td>
+                  <td className={`px-6 py-4 ${severityClasses[event.severity.toLowerCase()] || ''}`}>
+                    {event.severity}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
