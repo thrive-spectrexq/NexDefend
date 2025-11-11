@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, Vulnerability } from '../api/apiClient';
+import { apiClient } from '../api/apiClient';
+import type { Vulnerability } from '../api/apiClient'; // <-- FIX
 import { Loader2 } from 'lucide-react';
-import './Vulnerabilities.css'; // We'll create this
+import './Vulnerabilities.css';
 
 const severityClasses: { [key: string]: string } = {
   critical: 'text-red-400 font-bold uppercase',
