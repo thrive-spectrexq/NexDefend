@@ -4,8 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"time"
-
-	"github.com/lib/pq" // Import pq for handling JSONB notes
+	// "github.com/lib/pq" // Removed: Unused import
 )
 
 // Severity levels for incidents
@@ -51,9 +50,15 @@ type CreateIncidentRequest struct {
 
 // UpdateIncidentRequest defines the payload for updating an incident
 type UpdateIncidentRequest struct {
-	Status     *Status  `json:"status,omitempty"`
-	AssignedTo *string  `json:"assigned_to,omitempty"`
-	AddNote    *string  `json:"add_note,omitempty"` // Field to add a new note
+	Status     *Status `json:"status,omitempty"`
+	AssignedTo *string `json:"assigned_to,omitempty"`
+	AddNote    *string `json:"add_note,omitempty"` // Field to add a new note
+}
+
+// --- NEW: DBQueryRower interface ---
+// This interface is implemented by both *sql.DB and *sql.Tx
+type DBQueryRower interface {
+	QueryRow(query string, args ...interface{}) *sql.Row
 }
 
 // CreateIncident creates a new incident in the database.
@@ -98,7 +103,8 @@ func CreateIncident(db *sql.DB, req CreateIncidentRequest) (*Incident, error) {
 }
 
 // GetIncident retrieves a single incident by its ID.
-func GetIncident(db *sql.DB, id int) (*Incident, error) {
+// --- UPDATED: Accepts the DBQueryRower interface ---
+func GetIncident(db DBQueryRower, id int) (*Incident, error) {
 	var incident Incident
 	query := `
         SELECT id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id
@@ -133,7 +139,7 @@ func ListIncidents(db *sql.DB, status *Status) ([]Incident, error) {
 	query := `
         SELECT id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id
         FROM incidents`
-	
+
 	if status != nil {
 		query += " WHERE status = $1 ORDER BY created_at DESC"
 		rows, err = db.Query(query, *status)
@@ -179,6 +185,7 @@ func UpdateIncident(db *sql.DB, id int, req UpdateIncidentRequest) (*Incident, e
 	defer tx.Rollback() // Rollback if not committed
 
 	// 1. Get current incident data
+	// --- UPDATED: Now correctly passes the transaction (tx) ---
 	incident, err := GetIncident(tx, id)
 	if err != nil {
 		return nil, err
@@ -211,7 +218,7 @@ func UpdateIncident(db *sql.DB, id int, req UpdateIncidentRequest) (*Incident, e
 			return nil, err
 		}
 	}
-	
+
 	// 4. Commit all other updates
 	query := `
         UPDATE incidents
@@ -228,6 +235,6 @@ func UpdateIncident(db *sql.DB, id int, req UpdateIncidentRequest) (*Incident, e
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-	
+
 	return incident, nil
 }
