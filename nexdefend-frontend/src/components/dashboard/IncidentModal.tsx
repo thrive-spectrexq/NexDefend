@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, Incident } from '../../api/apiClient';
+import { apiClient } from '../../api/apiClient';
+import type { Incident } from '../../api/apiClient'; // <-- FIX
 import { X } from 'lucide-react';
 
 interface IncidentModalProps {
