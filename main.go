@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
+	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
@@ -24,6 +24,9 @@ func main() {
 	logging.InitLogging()
 	database := db.InitDB()
 	defer db.CloseDB()
+
+	// Initialize threat detection with config
+	threat.InitDetection(cfg.PythonAPI, cfg.AIServiceToken)
 
 	// Start Suricata threat detection with the database as EventStore
 	go threat.StartThreatDetection(database)
