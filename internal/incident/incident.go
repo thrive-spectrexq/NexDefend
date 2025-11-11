@@ -1,11 +1,11 @@
 package incident
 
 import (
-	"errors"
-	"fmt"
-	"log"
-	"sync"
+	"database/sql"
+	"encoding/json"
 	"time"
+
+	"github.com/lib/pq" // Import pq for handling JSONB notes
 )
 
 // Severity levels for incidents
@@ -30,172 +30,204 @@ const (
 
 // Incident represents a security incident with details and tracking info.
 type Incident struct {
-	ID          int       `json:"id"`
-	Description string    `json:"description"`
-	Severity    Severity  `json:"severity"`
-	Status      Status    `json:"status"`
-	AssignedTo  string    `json:"assigned_to,omitempty"`
-	Notes       []string  `json:"notes,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID             int             `json:"id"`
+	Description    string          `json:"description"`
+	Severity       Severity        `json:"severity"`
+	Status         Status          `json:"status"`
+	AssignedTo     sql.NullString  `json:"assigned_to"`
+	Notes          json.RawMessage `json:"notes"` // Use json.RawMessage for JSONB
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	RelatedEventID sql.NullInt64   `json:"related_event_id"`
 }
 
-// IncidentManager manages a list of incidents with thread safety.
-type IncidentManager struct {
-	incidents map[int]*Incident
-	mu        sync.Mutex
-	nextID    int
+// CreateIncidentRequest defines the payload for creating a new incident
+type CreateIncidentRequest struct {
+	Description    string   `json:"description"`
+	Severity       Severity `json:"severity"`
+	Status         Status   `json:"status"`
+	RelatedEventID *int     `json:"related_event_id,omitempty"`
 }
 
-// NewIncidentManager initializes a new IncidentManager instance.
-func NewIncidentManager() *IncidentManager {
-	return &IncidentManager{
-		incidents: make(map[int]*Incident),
-		nextID:    1,
-	}
+// UpdateIncidentRequest defines the payload for updating an incident
+type UpdateIncidentRequest struct {
+	Status     *Status  `json:"status,omitempty"`
+	AssignedTo *string  `json:"assigned_to,omitempty"`
+	AddNote    *string  `json:"add_note,omitempty"` // Field to add a new note
 }
 
-// CreateIncident creates a new incident and adds it to the manager.
-func (m *IncidentManager) CreateIncident(description string, severity Severity) (*Incident, error) {
-	if description == "" {
-		return nil, errors.New("incident description cannot be empty")
-	}
-	if severity != SeverityLow && severity != SeverityMedium && severity != SeverityHigh && severity != SeverityCritical {
-		return nil, errors.New("invalid severity level")
+// CreateIncident creates a new incident in the database.
+func CreateIncident(db *sql.DB, req CreateIncidentRequest) (*Incident, error) {
+	var incident Incident
+	var relatedEventID sql.NullInt64
+	if req.RelatedEventID != nil {
+		relatedEventID = sql.NullInt64{Int64: int64(*req.RelatedEventID), Valid: true}
 	}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	incident := &Incident{
-		ID:          m.nextID,
-		Description: description,
-		Severity:    severity,
-		Status:      StatusOpen,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+	if req.Status == "" {
+		req.Status = StatusOpen // Default status
 	}
-	m.incidents[incident.ID] = incident
-	m.nextID++
 
-	log.Printf("New incident created: %+v", incident)
-	return incident, nil
+	query := `
+        INSERT INTO incidents (description, severity, status, related_event_id, created_at, updated_at, notes)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '[]'::jsonb)
+        RETURNING id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id`
+
+	err := db.QueryRow(
+		query,
+		req.Description,
+		req.Severity,
+		req.Status,
+		relatedEventID,
+	).Scan(
+		&incident.ID,
+		&incident.Description,
+		&incident.Severity,
+		&incident.Status,
+		&incident.AssignedTo,
+		&incident.Notes,
+		&incident.CreatedAt,
+		&incident.UpdatedAt,
+		&incident.RelatedEventID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	return &incident, nil
 }
 
-// GetIncident retrieves an incident by its ID.
-func (m *IncidentManager) GetIncident(id int) (*Incident, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// GetIncident retrieves a single incident by its ID.
+func GetIncident(db *sql.DB, id int) (*Incident, error) {
+	var incident Incident
+	query := `
+        SELECT id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id
+        FROM incidents
+        WHERE id = $1`
 
-	incident, exists := m.incidents[id]
-	if !exists {
-		return nil, fmt.Errorf("incident with ID %d not found", id)
+	err := db.QueryRow(query, id).Scan(
+		&incident.ID,
+		&incident.Description,
+		&incident.Severity,
+		&incident.Status,
+		&incident.AssignedTo,
+		&incident.Notes,
+		&incident.CreatedAt,
+		&incident.UpdatedAt,
+		&incident.RelatedEventID,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Not found is not a server error
+		}
+		return nil, err
 	}
-	return incident, nil
+	return &incident, nil
 }
 
-// UpdateIncidentStatus updates the status of an incident.
-func (m *IncidentManager) UpdateIncidentStatus(id int, status Status) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// ListIncidents retrieves all incidents, optionally filtering by status.
+func ListIncidents(db *sql.DB, status *Status) ([]Incident, error) {
+	var rows *sql.Rows
+	var err error
 
-	incident, exists := m.incidents[id]
-	if !exists {
-		return fmt.Errorf("incident with ID %d not found", id)
+	query := `
+        SELECT id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id
+        FROM incidents`
+	
+	if status != nil {
+		query += " WHERE status = $1 ORDER BY created_at DESC"
+		rows, err = db.Query(query, *status)
+	} else {
+		query += " ORDER BY created_at DESC"
+		rows, err = db.Query(query)
 	}
 
-	incident.Status = status
-	incident.UpdatedAt = time.Now()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-	log.Printf("Incident status updated: %+v", incident)
-	return nil
+	var incidents []Incident
+	for rows.Next() {
+		var incident Incident
+		err := rows.Scan(
+			&incident.ID,
+			&incident.Description,
+			&incident.Severity,
+			&incident.Status,
+			&incident.AssignedTo,
+			&incident.Notes,
+			&incident.CreatedAt,
+			&incident.UpdatedAt,
+			&incident.RelatedEventID,
+		)
+		if err != nil {
+			return nil, err // Handle scan error
+		}
+		incidents = append(incidents, incident)
+	}
+	return incidents, nil
 }
 
-// AssignIncident assigns an incident to a specific responder.
-func (m *IncidentManager) AssignIncident(id int, responder string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// UpdateIncident updates an existing incident's status, assignee, or adds a note.
+func UpdateIncident(db *sql.DB, id int, req UpdateIncidentRequest) (*Incident, error) {
+	// Start a transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // Rollback if not committed
 
-	incident, exists := m.incidents[id]
-	if !exists {
-		return fmt.Errorf("incident with ID %d not found", id)
+	// 1. Get current incident data
+	incident, err := GetIncident(tx, id)
+	if err != nil {
+		return nil, err
+	}
+	if incident == nil {
+		return nil, sql.ErrNoRows // Or a custom not found error
 	}
 
-	incident.AssignedTo = responder
-	incident.UpdatedAt = time.Now()
-
-	log.Printf("Incident assigned to %s: %+v", responder, incident)
-	return nil
-}
-
-// AddNote adds a note to an incident.
-func (m *IncidentManager) AddNote(id int, note string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	incident, exists := m.incidents[id]
-	if !exists {
-		return fmt.Errorf("incident with ID %d not found", id)
+	// 2. Apply updates
+	if req.Status != nil {
+		incident.Status = *req.Status
+	}
+	if req.AssignedTo != nil {
+		incident.AssignedTo = sql.NullString{String: *req.AssignedTo, Valid: true}
 	}
 
-	incident.Notes = append(incident.Notes, note)
-	incident.UpdatedAt = time.Now()
+	// 3. Handle adding a note (JSONB append)
+	if req.AddNote != nil {
+		// Create a simple note object
+		note := map[string]string{
+			"text": *req.AddNote,
+			"time": time.Now().UTC().Format(time.RFC3339),
+			// We can add user info here later from JWT context
+		}
+		noteJSON, _ := json.Marshal(note)
 
-	log.Printf("Note added to incident %d: %s", id, note)
-	return nil
-}
-
-// EscalateIncident escalates an incident to a higher severity or status.
-func (m *IncidentManager) EscalateIncident(id int) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	incident, exists := m.incidents[id]
-	if !exists {
-		return fmt.Errorf("incident with ID %d not found", id)
-	}
-
-	if incident.Severity == SeverityCritical {
-		return fmt.Errorf("incident with ID %d is already at the highest severity", id)
-	}
-
-	incident.Status = StatusEscalated
-	incident.UpdatedAt = time.Now()
-
-	log.Printf("Incident escalated: %+v", incident)
-	return nil
-}
-
-// DeleteIncident removes an incident from the manager.
-func (m *IncidentManager) DeleteIncident(id int) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	_, exists := m.incidents[id]
-	if !exists {
-		return fmt.Errorf("incident with ID %d not found", id)
-	}
-
-	delete(m.incidents, id)
-	log.Printf("Incident with ID %d deleted", id)
-	return nil
-}
-
-// ListIncidents returns all incidents, optionally filtering by status.
-func (m *IncidentManager) ListIncidents(status *Status) []*Incident {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	var incidents []*Incident
-	for _, incident := range m.incidents {
-		if status == nil || incident.Status == *status {
-			incidents = append(incidents, incident)
+		// Append the new note to the existing JSONB array
+		query := `UPDATE incidents SET notes = notes || $1::jsonb WHERE id = $2 RETURNING notes`
+		if err := tx.QueryRow(query, noteJSON, id).Scan(&incident.Notes); err != nil {
+			return nil, err
 		}
 	}
-	return incidents
-}
+	
+	// 4. Commit all other updates
+	query := `
+        UPDATE incidents
+        SET status = $1, assigned_to = $2, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+        RETURNING updated_at`
 
-// ResolveIncident marks an incident as resolved and updates the status and timestamp.
-func (m *IncidentManager) ResolveIncident(id int) error {
-	return m.UpdateIncidentStatus(id, StatusResolved)
+	err = tx.QueryRow(query, incident.Status, incident.AssignedTo, id).Scan(&incident.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	// 5. Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	
+	return incident, nil
 }
