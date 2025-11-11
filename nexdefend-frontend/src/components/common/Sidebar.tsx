@@ -17,6 +17,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     console.log('Login:', { email, password });
     // In a real application, you would call an API here
     onClose(); // Close sidebar on submission
+    setEmail('');
+    setPassword('');
   };
 
   const handleRegister = (e: React.FormEvent) => {
@@ -24,6 +26,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     console.log('Register:', { name, email, password });
     // In a real application, you would call an API here
     onClose(); // Close sidebar on submission
+    setName('');
+    setEmail('');
+    setPassword('');
   };
 
   return (
