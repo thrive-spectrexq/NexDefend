@@ -22,7 +22,8 @@ import (
 func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(func(next http.Handler) http.Handler {
-		return middleware.RateLimiter(next, 100, 200) 
+		// Fixed non-breaking space
+		return middleware.RateLimiter(next, 100, 200)
 	})
 	router.Use(logging.LogRequest)
 	router.Use(middleware.ErrorHandler)
@@ -38,10 +39,9 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 	// Pass the config to the JWT middleware
 	api.Use(auth.JWTMiddleware(cfg))
 
-	// ... (rest of the API routes from Milestone 1 are unchanged) ...
 	// Threat & Alert Routes (Read-only for most)
 	api.HandleFunc("/threats", threat.ThreatsHandler(database.GetDB(), c)).Methods("GET")
-	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET") 
+	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET") // Fixed non-breaking space
 
 	// Incident Management Routes (CRUD)
 	api.HandleFunc("/incidents", handlers.CreateIncidentHandler(database.GetDB())).Methods("POST")
@@ -64,16 +64,20 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 
 	// System Metrics
 	api.HandleFunc("/metrics", handlers.MetricsHandler(database)).Methods("GET")
-	
-	api.HandleFunc("/threats/ai-detect", ai.ThreatDetectionHandler).Methods("POST") 
+
+	api.HandleFunc("/threats/ai-detect", ai.ThreatDetectionHandler).Methods("POST") // Fixed non-breaking space
 
 	// Handlers to query Python API
 	api.HandleFunc("/python-analysis", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
-	api.HandleFunc("/python-anomalies", handlers.PythonAnomaliesHandler(cfg)).Methods("GET")
+	api.HandleFunc("/python-anomalies", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
+
+	// --- NEW SCAN ROUTE ADDED ---
+	api.HandleFunc("/scan", handlers.ScanHandler(cfg)).Methods("POST")
 
 
 	// CORS Configuration
 	corsOptions := cors.New(cors.Options{
+		// Fixed non-breaking spaces
 		AllowedOrigins:   cfg.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
