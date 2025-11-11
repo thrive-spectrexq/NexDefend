@@ -1,17 +1,17 @@
 package auth
 
 import (
-	"database/sql" // Added
-	"encoding/json" // Added
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
+	// "os" // REMOVED: Unused import
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/thrive-spectrexq/NexDefend/internal/config" // Import config
-	"golang.org/x/crypto/bcrypt"                          // Added
+	"golang.org/x/crypto/bcrypt"
 )
 
 var jwtKey []byte // This will be set by LoadConfig
