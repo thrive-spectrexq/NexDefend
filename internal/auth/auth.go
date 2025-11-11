@@ -3,13 +3,22 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("secret_key")
+var jwtKey []byte
+
+func init() {
+	key := os.Getenv("JWT_SECRET_KEY")
+	if key == "" {
+		key = "default_secret_key" // fallback to a default key for development
+	}
+	jwtKey = []byte(key)
+}
 
 // Claims struct for storing the user ID in the JWT token
 type Claims struct {

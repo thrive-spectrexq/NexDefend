@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 )
 
 // Threat represents a structured threat entity
@@ -20,8 +22,18 @@ type Threat struct {
 }
 
 // ThreatsHandler fetches and returns threat data
-func ThreatsHandler(db *sql.DB) http.HandlerFunc {
+func ThreatsHandler(db *sql.DB, c *cache.Cache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Create a cache key from the request query
+		cacheKey := r.URL.String()
+
+		// Try to get the response from the cache
+		if cached, found := c.Get(cacheKey); found {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(cached.([]byte))
+			return
+		}
+
 		// Parse optional query parameters for filtering
 		severity := r.URL.Query().Get("severity")
 		startTime := r.URL.Query().Get("start_time")
@@ -41,15 +53,25 @@ func ThreatsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Marshal the response to JSON
+		response, err := json.Marshal(threats)
+		if err != nil {
+			http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
+			return
+		}
+
+		// Store the response in the cache for 5 minutes
+		c.Set(cacheKey, response, 5*time.Minute)
+
 		// Respond with JSON-encoded threats
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(threats)
+		w.Write(response)
 	}
 }
 
 // FetchThreats retrieves threat data from the database
 func FetchThreats(db *sql.DB, severity, startTime, endTime string, limit int) ([]Threat, error) {
-	query := "SELECT id, description, severity, timestamp, source_ip, destination, event_type FROM threats WHERE 1=1"
+	query := "SELECT id, description, severity, timestamp, source_ip, destination_ip, event_type FROM threats WHERE 1=1"
 	args := []interface{}{}
 
 	// Add severity filter
