@@ -23,6 +23,9 @@ CREATE TABLE suricata_events (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP,
     event_type VARCHAR(50),
+    src_ip INET,
+    dest_ip INET,
+    dest_port INT,
     http JSONB,
     tls JSONB,
     dns JSONB,
@@ -36,8 +39,10 @@ CREATE TABLE threats (
     description TEXT,
     severity VARCHAR(20),
     timestamp TIMESTAMP,
-    source_ip VARCHAR(45),
-    destination TEXT,
+    source_ip INET,
+    source_port INT,
+    destination_ip INET,
+    destination_port INT,
     event_type VARCHAR(50)
 );
 
@@ -75,4 +80,6 @@ CREATE INDEX idx_threats_timestamp ON threats (timestamp);
 CREATE INDEX idx_alerts_created_at ON alerts (created_at);
 CREATE INDEX idx_uploaded_files_filename ON uploaded_files (filename);
 CREATE INDEX idx_suricata_events_event_type ON suricata_events (event_type);
+CREATE INDEX idx_suricata_events_timestamp ON suricata_events (timestamp);
+CREATE INDEX idx_suricata_events_alert ON suricata_events USING GIN (alert);
 CREATE INDEX idx_system_metrics_type_time ON system_metrics (metric_type, timestamp);
