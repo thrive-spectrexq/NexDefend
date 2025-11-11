@@ -20,6 +20,8 @@
 
 ## Architecture
 
+## Architecture
+
 ```mermaid
 graph TD;
     subgraph User
