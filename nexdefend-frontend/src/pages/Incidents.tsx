@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, Incident } from '../api/apiClient';
+import { apiClient } from '../api/apiClient';
+import type { Incident } from '../api/apiClient'; // <-- FIX
 import IncidentModal from '../components/dashboard/IncidentModal';
 import { Loader2 } from 'lucide-react';
-import './Incidents.css'; // We'll create this
+import './Incidents.css';
 
 const severityClasses: { [key: string]: string } = {
   critical: 'text-red-400 font-bold uppercase',
@@ -48,7 +49,7 @@ const Incidents = () => {
             <thead className="text-xs text-gray-400 uppercase bg-gray-700">
               <tr>
                 <th scope="col" className="px-6 py-3">ID</th>
-                <th scope="col" className="px-6 py-3">Description</th>
+                <th scope="col" className"px-6 py-3">Description</th>
                 <th scope="col" className="px-6 py-3">Severity</th>
                 <th scope="col" className="px-6 py-3">Status</th>
                 <th scope="col" className="px-6 py-3">Created</th>
