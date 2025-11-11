@@ -136,7 +136,7 @@ This will start the following services:
 
 ### 4. AI Model Training
 
-Before using the AI-powered features, you need to train the machine learning model. You can do this by sending a `POST` request to the `/train` endpoint of the AI service:
+After starting the services, you must train the AI model by sending a POST request to the AI service.
 
 ```bash
 curl -X POST http://localhost:5000/train
@@ -145,7 +145,8 @@ curl -X POST http://localhost:5000/train
 ### 4. Usage
 
 - **Web Application**: Access the NexDefend frontend at `http://localhost:3000`.
-- **AI Dashboard**: Access the AI Dashboard at `http://localhost:3000/dashboard/ai-dashboard`.
+- **Go API**: Access the Go API backend at `http://localhost:8080`.
+- **Python AI API**: Access the Python AI API backend at `http://localhost:5000`.
 - **Grafana Dashboards**: Access Grafana at `http://localhost:3001` (Username: `admin`, Password: `grafana`).
 
 ## Contributing
