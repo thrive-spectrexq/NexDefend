@@ -20,14 +20,11 @@
 
 ## Architecture
 
-## Architecture
-
 ```mermaid
 graph TD;
     subgraph User
         U[React Frontend]
     end
-
     subgraph "Go Backend (api:8080)"
         R[API Router]
         T[Threat Detection]
@@ -35,33 +32,26 @@ graph TD;
         DB[(PostgreSQL)]
         UP[Upload Handler]
     end
-
     subgraph "Python AI Service (ai:5000)"
         AI_API[AI API]
         ML[ML Model]
         SCAN[Nmap Scanner]
     end
-
     S[Suricata IDS] -->|Tails eve.json| T;
     T -->|1. Store Event| DB;
     T -->|2. Trigger Analysis (by ID)| AI_API;
-    
     AI_API -->|3. Fetch Event| DB;
     AI_API -->|4. Analyze| ML;
     ML -->|5. Anomaly Found| AI_API;
     AI_API -->|6. Create Incident| R;
-
     U <-->|REST API| R;
     R <--> DB;
-    
     U -->|Scan Request| R;
     R -->|Scan Proxy| AI_API;
     AI_API -->|Run Scan| SCAN;
     SCAN -->|Creates Vulns| R;
-
     UP -->|Malware Hash Check| DB;
     UP -->|Create Incident| R;
-    
     FIM -->|File Change Detected| R;
     R -->|Creates Incident| DB;
 ```
