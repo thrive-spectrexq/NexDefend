@@ -10,9 +10,11 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	APIPrefix           string
-	PythonAPI           string
+	APIPrefix          string
+	PythonAPI          string
 	CORSAllowedOrigins []string
+	JWTSecretKey       []byte // For user JWTs
+	AIServiceToken     string // For service-to-service auth
 }
 
 // LoadConfig loads the application configuration from environment variables
@@ -28,20 +30,34 @@ func LoadConfig() *Config {
 
 	pythonAPI := os.Getenv("PYTHON_API")
 	if pythonAPI == "" {
-		pythonAPI = "https://nexdefend-1.onrender.com"
+		pythonAPI = "http://localhost:5000" // Use localhost for AI dev
 	}
 
 	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
 	var allowedOrigins []string
 	if corsOrigins == "" {
-		allowedOrigins = []string{"https://nexdefend.vercel.app"}
+		allowedOrigins = []string{"http://localhost:5173"} // Default to Vite dev server
 	} else {
 		allowedOrigins = strings.Split(corsOrigins, ",")
 	}
 
+	jwtKey := os.Getenv("JWT_SECRET_KEY")
+	if jwtKey == "" {
+		jwtKey = "default_user_secret_key_12345" // Insecure, must be set in .env
+		log.Println("WARNING: JWT_SECRET_KEY not set, using insecure default.")
+	}
+
+	aiToken := os.Getenv("AI_SERVICE_TOKEN")
+	if aiToken == "" {
+		aiToken = "default_secret_token" // Insecure, must be set in .env
+		log.Println("WARNING: AI_SERVICE_TOKEN not set, using insecure default.")
+	}
+
 	return &Config{
-		APIPrefix:           apiPrefix,
-		PythonAPI:           pythonAPI,
+		APIPrefix:          apiPrefix,
+		PythonAPI:          pythonAPI,
 		CORSAllowedOrigins: allowedOrigins,
+		JWTSecretKey:       []byte(jwtKey),
+		AIServiceToken:     aiToken,
 	}
 }
