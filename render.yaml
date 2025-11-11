@@ -79,33 +79,33 @@ services:
       - key: NMAP_PRIVILEGED
         value: "true"
 
-  - type: web
+  - type: web # <--- This is still 'web'
     name: nexdefend-frontend
-    env: docker
-    dockerfilePath: ./nexdefend-frontend/Dockerfile
-    dockerContext: ./nexdefend-frontend
+    env: static # <--- FIX #1: Changed from 'docker' to 'static'
+    rootDir: nexdefend-frontend # <--- FIX #2: Specify the sub-directory
+    buildCommand: npm install && npm run build # <--- FIX #3: Add build command
+    staticPublishPath: dist # <--- FIX #4: Add static output path
     plan: starter
+    # envVars are used during the build process
     envVars:
-      # Vite Build-Time Env Vars
       - key: VITE_API_BASE_URL
-        value: "" # Use relative paths for proxy
+        value: "" # Use relative paths, rewrites will handle it
       - key: VITE_AUTH_BASE_URL
-        value: "" # Use relative paths for proxy
+        value: ""
     # Add Render URL rewrites to proxy API calls
-    rewrites:
-      # --- FIX: Point destinations to the correct internal Render URL ---
+    rewrites: # <--- FIX #5: This block is now VALID for a static service
       - source: "/api/:path*"
-        destination: "https://nexdefend-api.onrender.com/api/:path*"
+        destination: "https" # <--- FIX #6: Use the service name for internal proxying
       - source: "/login"
-        destination: "https://nexdefend-api.onrender.com/login"
+        destination: "https"
       - source: "/register"
-        destination: "https://nexdefend-api.onrender.com/register"
+        destination: "https"
       - source: "/*"
         destination: "/index.html"
 
   - type: worker
     name: nexdefend-suricata
-    # --- FIX: Use 'image: { url: ... }' syntax ---
+    # --- FIX #7: Use 'image: { url: ... }' syntax ---
     image:
       url: jasonish/suricata:latest
     plan: starter
@@ -117,7 +117,7 @@ services:
 
   - type: web
     name: nexdefend-prometheus
-    # --- FIX: Use 'image: { url: ... }' syntax ---
+    # --- FIX #7: Use 'image: { url: ... }' syntax ---
     image:
       url: prom/prometheus:v2.47.2
     plan: starter
@@ -129,7 +129,7 @@ services:
 
   - type: web
     name: nexdefend-grafana
-    # --- FIX: Use 'image: { url: ... }' syntax ---
+    # --- FIX #7: Use 'image: { url: ... }' syntax ---
     image:
       url: grafana/grafana:10.0.3
     plan: starter
