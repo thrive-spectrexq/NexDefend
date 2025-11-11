@@ -1,11 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 import './Hero.css';
 
-interface HeroProps {
-  onOpenSidebar: () => void;
-}
-
-const Hero: React.FC<HeroProps> = ({ onOpenSidebar }) => {
+// Removed HeroProps and onOpenSidebar prop
+const Hero: React.FC = () => {
   return (
     <section className="hero" aria-label="Hero section">
       <div className="hero-container">
@@ -15,8 +13,14 @@ const Hero: React.FC<HeroProps> = ({ onOpenSidebar }) => {
           <p className="hero-subtitle">NexDefend provides a unified AI-powered XDR platform to protect your organization from evolving threats.</p>
 
           <div className="hero-buttons">
-            <button className="btn btn-primary" onClick={onOpenSidebar} aria-label="Get started free">Get started free</button>
-            <button className="btn btn-ghost" onClick={onOpenSidebar} aria-label="Request a demo">Request a demo</button>
+            {/* Changed to a Link */}
+            <Link to="/register" className="btn btn-primary" aria-label="Get started free">
+              Get started free
+            </Link>
+            {/* Changed to a placeholder link */}
+            <a href="#demo" className="btn btn-ghost" aria-label="Request a demo">
+              Request a demo
+            </a>
           </div>
 
           <ul className="hero-features" aria-hidden>
@@ -37,7 +41,7 @@ const Hero: React.FC<HeroProps> = ({ onOpenSidebar }) => {
 
         <div className="hero-right" aria-hidden>
           <div className="illustration" role="img" aria-label="abstract network illustration">
-            {/* Lightweight inline SVG illustration to keep no external assets required */}
+            {/* Lightweight inline SVG illustration */}
             <svg viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" className="network-svg">
               <defs>
                 <linearGradient id="g1" x1="0" x2="1">
