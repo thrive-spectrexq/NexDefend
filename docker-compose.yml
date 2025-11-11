@@ -9,22 +9,20 @@ services:
     depends_on:
       - db
     environment:
-      # Database
       DB_USER: nexdefend
       DB_PASSWORD: password
       DB_NAME: nexdefend_db
       DB_HOST: db
-      # Service Communication
       PYTHON_API: http://ai:5000
-      # Secrets (MUST change in production)
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://nexdefend.vercel.app
       JWT_SECRET_KEY: "default_user_secret_key_12345"
       AI_SERVICE_TOKEN: "default_secret_token"
-      # Features
       FIM_PATH: /etc # Path to monitor inside the container
     volumes:
+      # Mount the sample log and the shared log volume
       - ./sample_eve.json:/var/log/suricata/eve.json
-      # Mount /etc read-only for FIM to scan
-      - /etc:/etc:ro 
+      - suricata_logs:/var/log/suricata
+      - /etc:/etc:ro # Mount /etc read-only for FIM
     networks:
       - nexdefend-net
 
@@ -37,15 +35,13 @@ services:
     depends_on:
       - db
     environment:
-      # Database
       DB_USER: nexdefend
       DB_PASSWORD: password
       DB_NAME: nexdefend_db
       DB_HOST: db
       DB_PORT: 5432
-      # Service Communication
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://nexdefend.vercel.app
       GO_API_URL: http://api:8080/api/v1
-      # Secrets (MUST match 'api' service)
       AI_SERVICE_TOKEN: "default_secret_token"
     networks:
       - nexdefend-net
@@ -56,7 +52,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # These are build-time args, but Vite uses them
       REACT_APP_API_URL: http://api:8080/api/v1
       REACT_APP_AI_API_URL: http://ai:5000
     depends_on:
@@ -104,11 +99,28 @@ services:
       - prometheus
     networks:
       - nexdefend-net
+  
+  # --- NEW SERVICE ---
+  suricata:
+    image: jasonish/suricata:latest
+    # This command tells suricata to watch the 'eth0' interface
+    # and log to the shared volume in eve.json format.
+    command: -i eth0 -D -v --eve-log-output /var/log/suricata/eve.json
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_NICE
+    volumes:
+      - suricata_logs:/var/log/suricata
+    network_mode: "service:api" # Shares the network stack with the 'api'
+    depends_on:
+      - api
 
 volumes:
   db_data:
   prometheus_data:
   grafana_data:
+  suricata_logs: # Define the shared log volume
 
 networks:
   nexdefend-net:
