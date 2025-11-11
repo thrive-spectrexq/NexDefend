@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenSidebar }) => {
     { href: '#platform', text: 'Platform' },
     { href: '#solutions', text: 'Solutions' },
     { href: '#resources', text: 'Resources' },
-    { href: '/docs', text: 'Documentation' },
+    { href: '#documentation', text: 'Documentation' },
   ];
 
   return (
