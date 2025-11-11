@@ -11,7 +11,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/compliance"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
-	"github.com/thrive-spectrexq/NexDefend/internal/handlers" // Main handlers
+	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/threat"
@@ -22,24 +22,26 @@ import (
 func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(func(next http.Handler) http.Handler {
-		// Note: Rate limiter might be too aggressive for a real app, adjust as needed.
-		return middleware.RateLimiter(next, 100, 200) // Increased limit
+		return middleware.RateLimiter(next, 100, 200) 
 	})
 	router.Use(logging.LogRequest)
 	router.Use(middleware.ErrorHandler)
 
 	// --- Public Routes ---
 	router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
-	router.HandleFunc("/register", auth.RegisterHandler(database.GetDB())).Methods("POST")
-	router.HandleFunc("/login", auth.LoginHandler(database.GetDB())).Methods("POST")
+	// Pass the JWT key from config to the handlers
+	router.HandleFunc("/register", auth.RegisterHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
+	router.HandleFunc("/login", auth.LoginHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
 
 	// --- API v1 Routes (Authenticated) ---
 	api := router.PathPrefix(cfg.APIPrefix).Subrouter()
-	api.Use(auth.JWTMiddleware)
+	// Pass the config to the JWT middleware
+	api.Use(auth.JWTMiddleware(cfg))
 
+	// ... (rest of the API routes from Milestone 1 are unchanged) ...
 	// Threat & Alert Routes (Read-only for most)
 	api.HandleFunc("/threats", threat.ThreatsHandler(database.GetDB(), c)).Methods("GET")
-	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET") // This handler seems to be missing from your files, but I'm keeping the route.
+	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET") 
 
 	// Incident Management Routes (CRUD)
 	api.HandleFunc("/incidents", handlers.CreateIncidentHandler(database.GetDB())).Methods("POST")
@@ -62,13 +64,8 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 
 	// System Metrics
 	api.HandleFunc("/metrics", handlers.MetricsHandler(database)).Methods("GET")
-
-	// --- Deprecated / To-be-removed ---
-	// These routes seem to be placeholders or part of old logic.
-	// We will replace them with our new database-driven endpoints.
-	// api.HandleFunc("/incident-report", incident.ReportHandler).Methods("POST") // Replaced by POST /incidents
-	// api.HandleFunc("/vulnerability-scan", vulnerability.ScanHandler).Methods("GET") // Will be replaced by POST /scan in Milestone 4
-	api.HandleFunc("/threats/ai-detect", ai.ThreatDetectionHandler).Methods("POST") // Placeholder AI route
+	
+	api.HandleFunc("/threats/ai-detect", ai.ThreatDetectionHandler).Methods("POST") 
 
 	// Handlers to query Python API
 	api.HandleFunc("/python-analysis", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
@@ -83,8 +80,6 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 		AllowCredentials: true,
 	})
 
-	// Apply CORS middleware
-	// Note: Applying CORS at the top-level router to cover all routes, including public ones.
 	router.Use(corsOptions.Handler)
 
 	return router
