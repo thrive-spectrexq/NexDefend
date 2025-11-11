@@ -1,0 +1,8 @@
+.train-model-button {
+  margin-top: 2rem;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
