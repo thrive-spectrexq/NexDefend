@@ -48,7 +48,7 @@ services:
   - type: web
     name: nexdefend-ai
     env: docker
-    dockerfilePath: ./nexdefend-ai/Dockerfile  # <--- This line points to the file we fixed
+    dockerfilePath: ./nexdefend-ai/Dockerfile
     dockerContext: ./nexdefend-ai
     plan: starter
     envVars:
@@ -77,7 +77,7 @@ services:
         sync: false # Set this in Render Dashboard
       # --- Allow scans to Render services ---
       - key: NMAP_PRIVILEGED
-        value: "true" 
+        value: "true"
 
   - type: web
     name: nexdefend-frontend
@@ -93,19 +93,21 @@ services:
         value: "" # Use relative paths for proxy
     # Add Render URL rewrites to proxy API calls
     rewrites:
+      # --- FIX: Point destinations to the correct internal Render URL ---
       - source: "/api/:path*"
-        destination: "https" # Your nexdefend-api URL will be prepended
+        destination: "https://nexdefend-api.onrender.com/api/:path*"
       - source: "/login"
-        destination: "https" # Your nexdefend-api URL
+        destination: "https://nexdefend-api.onrender.com/login"
       - source: "/register"
-        destination: "https" # Your nexdefend-api URL
+        destination: "https://nexdefend-api.onrender.com/register"
       - source: "/*"
         destination: "/index.html"
 
   - type: worker
     name: nexdefend-suricata
-    env: image
-    image: jasonish/suricata:latest
+    # --- FIX: Use 'image: { url: ... }' syntax ---
+    image:
+      url: jasonish/suricata:latest
     plan: starter
     startCommand: suricata -r /pcaps/test.pcap -l /var/log/suricata
     disk:
@@ -115,8 +117,9 @@ services:
 
   - type: web
     name: nexdefend-prometheus
-    env: image
-    image: prom/prometheus:v2.47.2
+    # --- FIX: Use 'image: { url: ... }' syntax ---
+    image:
+      url: prom/prometheus:v2.47.2
     plan: starter
     startCommand: prometheus --config.file=/etc/prometheus/prometheus.yml
     disk:
@@ -126,8 +129,9 @@ services:
 
   - type: web
     name: nexdefend-grafana
-    env: image
-    image: grafana/grafana:10.0.3
+    # --- FIX: Use 'image: { url: ... }' syntax ---
+    image:
+      url: grafana/grafana:10.0.3
     plan: starter
     envVars:
       - key: GF_SECURITY_ADMIN_USER
