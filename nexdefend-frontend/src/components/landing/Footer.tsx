@@ -8,8 +8,6 @@ const Footer = () => {
           <h4>Explore</h4>
           <ul>
             <li><a href="#">Overview</a></li>
-            <li><a href="#">XDR</a></li>
-            <li><a href="#">SIEM</a></li>
           </ul>
         </div>
         <div className="footer-column">
@@ -18,7 +16,6 @@ const Footer = () => {
             <li><a href="#">NexDefend Cloud</a></li>
             <li><a href="#">Professional support</a></li>
             <li><a href="#">Consulting services</a></li>
-            <li><a href="#">Training courses</a></li>
           </ul>
         </div>
         <div className="footer-column">
