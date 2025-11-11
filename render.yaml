@@ -15,7 +15,9 @@ services:
       - key: DB_USER
         value: nexdefend
       - key: DB_PASSWORD
-        sync: false   # set in Render dashboard
+        fromDatabase:
+          name: nexdefend-db
+          property: password
       - key: DB_NAME
         value: nexdefend_db
       - key: DB_HOST
@@ -24,10 +26,20 @@ services:
           property: host
       - key: DB_PORT
         value: 5432
+      # --- Service Communication ---
       - key: PYTHON_API
-        value: http://nexdefend-ai:5000
-      - key: CORS_ALLOWED_ORIGINS
-        value: http://localhost:3000,https://nexdefend.vercel.app
+        fromService:
+          type: web
+          name: nexdefend-ai
+          property: url
+      # --- Secrets ---
+      - key: JWT_SECRET_KEY
+        sync: false # Set this in Render Dashboard
+      - key: AI_SERVICE_TOKEN
+        sync: false # Set this in Render Dashboard
+      # --- Features ---
+      - key: FIM_PATH
+        value: /etc # Monitor the container's /etc directory
     disk:
       name: suricata-logs
       mountPath: /var/log/suricata
@@ -43,7 +55,9 @@ services:
       - key: DB_USER
         value: nexdefend
       - key: DB_PASSWORD
-        sync: false
+        fromDatabase:
+          name: nexdefend-db
+          property: password
       - key: DB_NAME
         value: nexdefend_db
       - key: DB_HOST
@@ -52,8 +66,18 @@ services:
           property: host
       - key: DB_PORT
         value: 5432
-      - key: CORS_ALLOWED_ORIGINS
-        value: http://localhost:3000,https://nexdefend.vercel.app
+      # --- Service Communication ---
+      - key: GO_API_URL
+        fromService:
+          type: web
+          name: nexdefend-api
+          property: url
+      # --- Secrets ---
+      - key: AI_SERVICE_TOKEN
+        sync: false # Set this in Render Dashboard
+      # --- Allow scans to Render services ---
+      - key: NMAP_PRIVILEGED
+        value: "true" 
 
   - type: web
     name: nexdefend-frontend
@@ -62,10 +86,21 @@ services:
     dockerContext: ./nexdefend-frontend
     plan: starter
     envVars:
-      - key: REACT_APP_API_URL
-        value: https://nexdefend-api.onrender.com/api/v1
-      - key: REACT_APP_AI_API_URL
-        value: https://nexdefend-ai.onrender.com
+      # Vite Build-Time Env Vars
+      - key: VITE_API_BASE_URL
+        value: "" # Use relative paths for proxy
+      - key: VITE_AUTH_BASE_URL
+        value: "" # Use relative paths for proxy
+    # Add Render URL rewrites to proxy API calls
+    rewrites:
+      - source: "/api/:path*"
+        destination: "https://nexdefend-api.onrender.com/api/:path*"
+      - source: "/login"
+        destination: "https://nexdefend-api.onrender.com/login"
+      - source: "/register"
+        destination: "https://nexdefend-api.onrender.com/register"
+      - source: "/*"
+        destination: "/index.html"
 
   - type: worker
     name: nexdefend-suricata
@@ -98,7 +133,7 @@ services:
       - key: GF_SECURITY_ADMIN_USER
         value: admin
       - key: GF_SECURITY_ADMIN_PASSWORD
-        sync: false   # set real password in Render dashboard
+        sync: false # Set in Render dashboard
     disk:
       name: grafana_data
       mountPath: /var/lib/grafana
