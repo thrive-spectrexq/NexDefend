@@ -2,8 +2,10 @@ package upload
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,10 +15,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
+	"github.com/thrive-spectrexq/NexDefend/internal/incident" // Import incident package
 )
 
 const MaxUploadSize = 10 * 1024 * 1024                  // 10MB
-var allowedFileTypes = []string{".txt", ".csv", ".log"} // Add allowed extensions here
+var allowedFileTypes = []string{".txt", ".csv", ".log", ".pcap", ".json"} // Added more types
 
 type UploadResponse struct {
 	Filename       string `json:"filename"`
@@ -28,18 +31,28 @@ type UploadResponse struct {
 	Message        string `json:"message"`
 }
 
-func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
-	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadSize)
+// checkMalwareHash checks if a file hash exists in the malware registry.
+func checkMalwareHash(db *sql.DB, hash string) (isMalware bool, malwareName string) {
+	query := "SELECT malware_name FROM malware_hash_registry WHERE hash = $1"
+	err := db.QueryRow(query, hash).Scan(&malwareName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, ""
+		}
+		log.Printf("Error checking malware hash: %v", err)
+		return false, ""
+	}
+	return true, malwareName
+}
 
-	// Parse multipart form data
+func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
+	// ... (file parsing logic is unchanged) ...
+	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadSize)
 	if err := r.ParseMultipartForm(MaxUploadSize); err != nil {
 		http.Error(w, "File too big!", http.StatusBadRequest)
 		log.Printf("File too big: %v", err)
 		return
 	}
-
-	// Get the uploaded file
 	file, handler, err := r.FormFile("uploadFile")
 	if err != nil {
 		http.Error(w, "Unable to retrieve file!", http.StatusBadRequest)
@@ -47,35 +60,25 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-
-	// Log the file upload initiation
 	log.Printf("File upload initiated: %s by %s", handler.Filename, r.RemoteAddr)
-
-	// Sanitize and validate the file name
 	safeFilename := filepath.Base(handler.Filename)
 	if strings.Contains(safeFilename, "..") || safeFilename == "" {
 		http.Error(w, "Invalid file name!", http.StatusBadRequest)
 		log.Printf("Invalid file name: %s", handler.Filename)
 		return
 	}
-
-	// Validate file type
 	fileExt := strings.ToLower(filepath.Ext(safeFilename))
 	if !isAllowedFileType(fileExt) {
 		http.Error(w, "Unsupported file type!", http.StatusBadRequest)
 		log.Printf("Unsupported file type: %s", fileExt)
 		return
 	}
-
-	// Ensure the uploads directory exists
 	uploadDir := "./uploads"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		http.Error(w, "Failed to create upload directory!", http.StatusInternalServerError)
 		log.Printf("Failed to create upload directory: %v", err)
 		return
 	}
-
-	// Generate a unique destination path using UUID
 	dstPath := filepath.Join(uploadDir, uuid.New().String()+fileExt)
 	dst, err := os.Create(dstPath)
 	if err != nil {
@@ -84,8 +87,6 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer dst.Close()
-
-	// Copy file data to destination
 	if _, err := io.Copy(dst, file); err != nil {
 		http.Error(w, "Failed to save the file!", http.StatusInternalServerError)
 		log.Printf("Failed to save file: %v", err)
@@ -94,15 +95,28 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate hash for the file
 	hash := generateFileHash(dstPath)
-
-	// File analysis (basic example: checking file size)
 	fileSize := handler.Size
 	alert := false
 	analysisResult := "File appears clean"
-	if fileSize > MaxUploadSize {
+
+	// --- NEW MALWARE CHECK ---
+	database := db.GetDB() // Get database connection
+	isMalware, malwareName := checkMalwareHash(database, hash)
+	if isMalware {
 		alert = true
-		analysisResult = "File exceeds safe size limit"
+		analysisResult = fmt.Sprintf("MALWARE DETECTED: %s", malwareName)
+		log.Printf("[UPLOAD] CRITICAL: Malware detected in file %s. Hash: %s, Name: %s", safeFilename, hash, malwareName)
+
+		// Create a critical incident
+		incidentReq := incident.CreateIncidentRequest{
+			Description: fmt.Sprintf("Malware Detected in Upload: %s (File: %s)", malwareName, safeFilename),
+			Severity:    incident.SeverityCritical,
+		}
+		if _, err := incident.CreateIncident(database, incidentReq); err != nil {
+			log.Printf("[UPLOAD] Error creating incident for malware: %v", err)
+		}
 	}
+	// --- END MALWARE CHECK ---
 
 	// Save details to database
 	if err := saveFileDetails(safeFilename, dstPath, fileSize, hash, analysisResult, alert); err != nil {
@@ -128,6 +142,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("File uploaded and analyzed: %+v", response)
 }
 
+// ... (saveFileDetails, isAllowedFileType, generateFileHash functions are unchanged) ...
 func saveFileDetails(filename, filePath string, fileSize int64, hash, analysisResult string, alert bool) error {
 	query := `
         INSERT INTO uploaded_files (filename, file_path, file_size, hash, analysis_result, alert)
