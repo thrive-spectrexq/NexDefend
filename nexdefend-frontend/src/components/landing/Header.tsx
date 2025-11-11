@@ -19,6 +19,14 @@ const Header: React.FC<HeaderProps> = ({ onOpenSidebar }) => {
     }
   };
 
+  // New navigation links
+  const navLinks = [
+    { href: '#platform', text: 'Platform' },
+    { href: '#solutions', text: 'Solutions' },
+    { href: '#resources', text: 'Resources' },
+    { href: '/docs', text: 'Documentation' },
+  ];
+
   return (
     <header className="w-full nd-header">
       <div className="nd-container">
@@ -29,9 +37,16 @@ const Header: React.FC<HeaderProps> = ({ onOpenSidebar }) => {
         </div>
 
         <nav className="nd-nav">
-          <a href="#features" className="text-sm hover:text-white/90 transition">Features</a>
-          <a href="#pricing" className="text-sm hover:text-white/90 transition">Pricing</a>
-          <a href="/docs" className="text-sm hover:text-white/90 transition">Docs</a>
+          {/* Updated Desktop Nav */}
+          {navLinks.map((link) => (
+            <a 
+              key={link.text} 
+              href={link.href} 
+              className="text-sm hover:text-white/90 transition"
+            >
+              {link.text}
+            </a>
+          ))}
         </nav>
 
         <div className="nd-ctas">
@@ -55,18 +70,23 @@ const Header: React.FC<HeaderProps> = ({ onOpenSidebar }) => {
           onClick={handleMobileToggle}
           className="nd-mobile-toggle"
         >
-          {/* If using controlled behavior, keep icon consistent for mobile */}
           {isControlled ? <Menu size={20} /> : (open ? <X size={20} /> : <Menu size={20} />)}
         </button>
       </div>
 
-      {/* Only show the internal mobile panel when Header is uncontrolled */}
+      {/* Updated Mobile Panel */}
       {!isControlled && open && (
         <div className="nd-mobile-panel">
           <div className="nd-mobile-inner">
-            <a href="#features" className="block text-sm py-2 px-2 rounded hover:bg-slate-700">Features</a>
-            <a href="#pricing" className="block text-sm py-2 px-2 rounded hover:bg-slate-700">Pricing</a>
-            <a href="/docs" className="block text-sm py-2 px-2 rounded hover:bg-slate-700">Docs</a>
+            {navLinks.map((link) => (
+              <a 
+                key={link.text} 
+                href={link.href} 
+                className="block text-sm py-2 px-2 rounded hover:bg-slate-700"
+              >
+                {link.text}
+              </a>
+            ))}
             <div className="pt-2 border-t border-slate-700">
               <Link to="/login" className="block py-2 px-2 rounded hover:bg-slate-700 flex items-center gap-2">
                 <LogIn size={16} /> Sign in
