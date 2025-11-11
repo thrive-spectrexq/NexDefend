@@ -1,36 +1,8 @@
 package routes
 
-import (
-	"encoding/json"
-	"net/http"
-	"github.com/thrive-spectrexq/NexDefend/internal/auth"
-	"github.com/thrive-spectrexq/NexDefend/internal/models"
-)
-
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-
-	// Insert user into the database
-	// (Password hashing, etc., will be added here)
-
-	// Respond with success message
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
-}
-
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	// Handle user login and return JWT token
-	token, err := auth.GenerateJWT(1) // Mock user ID
-	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
-		return
-	}
-
-	// Respond with the token
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
-}
+// This file is intentionally left empty.
+// All auth handler logic (RegisterHandler, LoginHandler) has been
+// consolidated into internal/auth/auth.go and is wired
+// into the main router in internal/routes/routes.go.
+// This file is kept to prevent "package routes" declaration errors
+// but its contents are removed to fix build-time redeclaration conflicts.
