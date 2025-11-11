@@ -1,6 +1,7 @@
 import useAuthStore from '../../stores/authStore';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, Threat, Incident } from '../../api/apiClient';
+import { apiClient } from '../../api/apiClient';
+import type { Threat, Incident } from '../../api/apiClient'; // <-- FIX
 import StatCard from './StatCard';
 import ChartCard from './ChartCard';
 import DataTable from './DataTable';
