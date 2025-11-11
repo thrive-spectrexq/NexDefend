@@ -1,57 +1,81 @@
-.faq {
-  padding: 80px 20px;
-  max-width: 800px;
+:root {
+  --faq-bg: #ffffff;
+  --faq-contrast: #0b1220;
+  --faq-muted: #6b7280;
+  --faq-border: rgba(15,23,36,0.06);
+  --faq-open: #eef2ff;
+}
+
+/* FAQ wrapper */
+.nd-faq {
+  max-width: 880px;
   margin: 0 auto;
+  padding: 1rem;
 }
 
-.faq h2 {
-  text-align: center;
-  font-size: 2.5rem;
-  margin-bottom: 60px;
-  color: #1a1a1a;
+/* Item card */
+.nd-faq .faq-item {
+  background: var(--faq-bg);
+  border: 1px solid var(--faq-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(11,17,32,0.03);
 }
 
-.faq-item {
-  border-bottom: 1px solid #eaeaea;
-  padding: 20px 0;
-}
-
-.faq-question {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
+/* Question button */
+.nd-faq .faq-question {
   width: 100%;
-  background: none;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: transparent;
+  border: 0;
   text-align: left;
-  font-size: 1.2rem;
+  cursor: pointer;
+}
+.nd-faq .faq-question .q-title {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--faq-contrast);
+}
+.nd-faq .faq-question .q-sub {
+  font-size: .85rem;
+  color: var(--faq-muted);
+  margin-top: 4px;
+}
+
+/* Answer panel */
+.nd-faq .faq-answer {
+  padding: .95rem 1rem 1.15rem 1rem;
+  font-size: .95rem;
+  color: #273449;
+  border-top: 1px solid var(--faq-border);
+  background: linear-gradient(180deg, rgba(238,242,255,0.6), transparent);
+}
+
+/* Minimal animation for expand/collapse (works when toggling height via JS or when content is present) */
+.nd-faq .faq-collapse {
+  transition: max-height 250ms ease, opacity 200ms ease;
+  overflow: hidden;
+  max-height: 1000px; /* content shown by default in our components; set to 0 for collapsed controlled by class */
+  opacity: 1;
+}
+
+/* If your JS toggles an 'is-closed' class */
+.nd-faq .is-closed .faq-collapse {
+  max-height: 0;
+  opacity: 0;
   padding: 0;
 }
 
-.faq-icon {
-  font-size: 1.5rem;
-  font-weight: bold;
+/* Focus styles for keyboard users */
+.nd-faq .faq-question:focus {
+  outline: 3px solid rgba(99,102,241,0.16);
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
-.faq-icon.open {
-  transform: rotate(45deg);
-}
-
-.faq-answer {
-  margin-top: 20px;
-  color: #666;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.faq-answer p {
-  margin: 0;
-}
-
-.faq-item.open .faq-answer {
-  max-height: 1000px; /* A large value to allow for any content height */
+/* Responsive */
+@media (prefers-reduced-motion: reduce) {
+  .nd-faq .faq-collapse { transition: none; }
 }
