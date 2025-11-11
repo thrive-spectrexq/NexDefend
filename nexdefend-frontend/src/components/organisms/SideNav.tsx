@@ -5,6 +5,7 @@ import {
   FileText,
   Settings,
   BarChart,
+  BrainCircuit,
 } from 'lucide-react'
 
 const SideNav = () => {
@@ -24,6 +25,15 @@ const SideNav = () => {
           >
             <BarChart size={20} />
             <span>Dashboard</span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/dashboard/ai-dashboard"
+            className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700"
+          >
+            <BrainCircuit size={20} />
+            <span>AI Dashboard</span>
           </Link>
         </li>
         <li>

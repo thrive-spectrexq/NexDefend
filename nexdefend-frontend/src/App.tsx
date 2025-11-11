@@ -11,6 +11,7 @@ import Vulnerabilities from './pages/Vulnerabilities'
 import PrivateRoute from './layouts/PrivateRoute'
 import PublicRoute from './layouts/PublicRoute'
 import HomePage from './pages/HomePage'
+import AIDashboardPage from './pages/AIDashboardPage'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="ai-dashboard" element={<AIDashboardPage />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="incidents" element={<Incidents />} />
             <Route path="reports" element={<Reports />} />
