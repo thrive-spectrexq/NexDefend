@@ -14,6 +14,15 @@ DATABASE_CONFIG = {
     "port": os.getenv("DB_PORT"),
 }
 
+def fetch_all_suricata_events():
+    """Fetches all Suricata events from the PostgreSQL database."""
+    connection = psycopg2.connect(**DATABASE_CONFIG)
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM suricata_events;")
+    events = cursor.fetchall()
+    connection.close()
+    return events
+
 def fetch_unprocessed_suricata_events():
     """Fetches all unprocessed Suricata events from the PostgreSQL database."""
     connection = psycopg2.connect(**DATABASE_CONFIG)
