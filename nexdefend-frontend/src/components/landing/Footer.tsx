@@ -1,44 +1,49 @@
-import './Footer.css';
+import React from 'react';
+import { Github, Twitter, Mail } from 'lucide-react';
 
-const Footer = () => {
+const Footer: React.FC = () => {
   return (
-    <footer className="footer">
-      <div className="footer-links">
-        <div className="footer-column">
-          <h4>Explore</h4>
-          <ul>
-            <li><a href="#">Overview</a></li>
-          </ul>
+    <footer className="bg-slate-900 text-slate-300 mt-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 className="text-white font-semibold text-lg">NexDefend</h3>
+            <p className="mt-2 text-sm text-slate-400">Real-time system monitoring and threat detection for modern infrastructure.</p>
+            <div className="flex items-center gap-3 mt-4">
+              <a href="https://github.com/thrive-spectrexq/NexDefend" aria-label="GitHub" className="text-slate-400 hover:text-white">
+                <Github />
+              </a>
+              <a href="https://twitter.com/" aria-label="Twitter" className="text-slate-400 hover:text-white">
+                <Twitter />
+              </a>
+              <a href="mailto:hello@nexdefend.example" aria-label="Email" className="text-slate-400 hover:text-white">
+                <Mail />
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-white font-medium">Product</h4>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><a href="/features" className="hover:text-white transition">Features</a></li>
+              <li><a href="/pricing" className="hover:text-white transition">Pricing</a></li>
+              <li><a href="/docs" className="hover:text-white transition">Documentation</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-medium">Support</h4>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><a href="/faq" className="hover:text-white transition">FAQ</a></li>
+              <li><a href="/contact" className="hover:text-white transition">Contact</a></li>
+              <li><a href="/status" className="hover:text-white transition">System Status</a></li>
+            </ul>
+          </div>
         </div>
-        <div className="footer-column">
-          <h4>Services</h4>
-          <ul>
-            <li><a href="#">NexDefend Cloud</a></li>
-            <li><a href="#">Professional support</a></li>
-            <li><a href="#">Consulting services</a></li>
-          </ul>
-        </div>
-        <div className="footer-column">
-          <h4>Documentation</h4>
-          <ul>
-            <li><a href="#">Quickstart</a></li>
-            <li><a href="#">Getting started</a></li>
-            <li><a href="#">Installation guide</a></li>
-          </ul>
-        </div>
-        <div className="footer-column">
-          <h4>Resources</h4>
-          <ul>
-            <li><a href="#">Blog</a></li>
-            <li><a href="#">Community</a></li>
-            <li><a href="#">Legal</a></li>
-          </ul>
-        </div>
-      </div>
-      <div className="footer-bottom">
-        <p>&copy; 2025 NexDefend, Inc.</p>
-        <div className="social-links">
-          {/* Add social media icons */}
+
+        <div className="mt-8 border-t border-slate-800 pt-6 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center">
+          <div>© {new Date().getFullYear()} NexDefend. All rights reserved.</div>
+          <div className="mt-3 md:mt-0">Built with care • Privacy-first</div>
         </div>
       </div>
     </footer>
