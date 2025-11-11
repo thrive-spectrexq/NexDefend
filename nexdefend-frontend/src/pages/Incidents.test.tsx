@@ -13,7 +13,10 @@ vi.mock('../api/apiClient', () => ({
   },
 }));
 
-const mockedAxios = vi.mocked(apiClient);
+// --- FIX: Cast the specific methods, not the whole object ---
+const mockedApiGet = vi.mocked(apiClient.get);
+const mockedApiPut = vi.mocked(apiClient.put);
+// --- END FIX ---
 
 const mockIncidents: Incident[] = [
   {
@@ -62,14 +65,16 @@ describe('Incidents Page', () => {
   });
 
   it('renders a loading state initially', () => {
-    mockedAxios.get.mockResolvedValueOnce({ data: [] });
+    // --- FIX: Use mockedApiGet ---
+    mockedApiGet.mockResolvedValueOnce({ data: [] });
     renderComponent();
     expect(screen.getByRole('heading', { name: /security incidents/i })).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
   it('fetches and displays incidents in the table', async () => {
-    mockedAxios.get.mockResolvedValueOnce({ data: mockIncidents });
+    // --- FIX: Use mockedApiGet ---
+    mockedApiGet.mockResolvedValueOnce({ data: mockIncidents });
     renderComponent();
 
     expect(await screen.findByText('#1')).toBeInTheDocument();
@@ -84,7 +89,8 @@ describe('Incidents Page', () => {
   });
 
   it('opens the modal when "Manage" is clicked', async () => {
-    mockedAxios.get.mockResolvedValueOnce({ data: mockIncidents });
+    // --- FIX: Use mockedApiGet ---
+    mockedApiGet.mockResolvedValueOnce({ data: mockIncidents });
     renderComponent();
 
     // Find the "Manage" button for the first incident
@@ -97,8 +103,9 @@ describe('Incidents Page', () => {
   });
 
   it('updates an incident status when modal is saved', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockIncidents });
-    mockedAxios.put.mockResolvedValue({ data: {} }); // Mock the PUT request
+    // --- FIX: Use mockedApiGet and mockedApiPut ---
+    mockedApiGet.mockResolvedValue({ data: mockIncidents });
+    mockedApiPut.mockResolvedValue({ data: {} }); // Mock the PUT request
     renderComponent();
 
     // Open the modal
@@ -116,7 +123,7 @@ describe('Incidents Page', () => {
 
     // Wait for the mutation to complete and modal to close
     await waitFor(() => {
-      expect(mockedAxios.put).toHaveBeenCalledWith('/incidents/1', { status: 'Resolved' });
+      expect(mockedApiPut).toHaveBeenCalledWith('/incidents/1', { status: 'Resolved' });
     });
   });
 });
