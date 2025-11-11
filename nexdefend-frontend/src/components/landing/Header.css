@@ -1,86 +1,140 @@
-.header {
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+:root{
+  --nd-bg-start: #0f1724; /* slate-900 */
+  --nd-bg-end:   #0b1220; /* darker */
+  --nd-accent:   #6366f1; /* indigo-500 */
+  --nd-cta:      #4f46e5; /* indigo-600 */
+  --nd-text:     #ffffff;
+  --nd-muted:    rgba(255,255,255,0.85);
+}
+
+/* Header wrapper */
+.nd-header {
+  background: linear-gradient(90deg, var(--nd-bg-start), var(--nd-bg-end));
+  color: var(--nd-text);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02);
+}
+
+/* Container layout (you can also keep Tailwind's) */
+.nd-header .nd-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-}
-
-.logo {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #333;
-  text-decoration: none;
-}
-
-.header nav ul {
-  display: flex;
-  gap: 2rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.header nav a {
-  color: #333;
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.header nav a:hover {
-  color: #007bff;
-}
-
-.header-buttons {
-  display: flex;
-  align-items: center;
   gap: 1rem;
 }
 
-.header-buttons .primary {
-  padding: 0.6rem 1.2rem;
-  border-radius: 5px;
+/* Branding */
+.nd-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--nd-text);
+}
+.nd-brand .logo {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  box-shadow: 0 1px 6px rgba(0,0,0,0.5);
+}
+.nd-brand .title {
+  font-weight: 700;
+  line-height: 1;
+  font-size: 1.05rem;
+  letter-spacing: -0.2px;
+}
+.nd-brand .subtitle {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.85);
+  margin-top: -2px;
+}
+
+/* Desktop nav */
+.nd-nav {
+  display: none;
+  gap: 1.25rem;
+  align-items: center;
+}
+.nd-nav a {
+  color: var(--nd-muted);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color .15s ease;
+}
+.nd-nav a:hover,
+.nd-nav a:focus {
+  color: var(--nd-text);
+}
+
+/* CTA */
+.nd-ctas {
+  display: none;
+  gap: 0.5rem;
+  align-items: center;
+}
+.nd-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .7rem;
+  border-radius: 8px;
+  color: var(--nd-text);
+  background: rgba(255,255,255,0.06);
+  text-decoration: none;
+  transition: background .15s ease;
+}
+.nd-signin:hover { background: rgba(255,255,255,0.1); }
+.nd-getstarted {
+  background: var(--nd-cta);
+  color: white;
+  padding: .5rem .85rem;
+  border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  background-color: #ffc107;
-  color: #212529;
-  border: 1px solid #ffc107;
+  box-shadow: 0 6px 18px rgba(79,70,229,0.12);
+}
+.nd-getstarted:hover { filter: brightness(.98); }
+
+/* Mobile: show menu button and stack nav in mobile panel */
+.nd-mobile-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .35rem;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nd-text);
+  border: none;
+}
+.nd-mobile-panel {
+  display: none;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+}
+.nd-mobile-panel .nd-mobile-inner {
+  padding: .75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
 }
 
-.header-buttons .primary:hover {
-  background-color: #e0a800;
+/* Accessibility focus */
+.nd-header a:focus,
+.nd-header button:focus {
+  outline: 3px solid rgba(99,102,241,0.18);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
-.header-buttons .secondary {
-  padding: 0.6rem 1.2rem;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  background-color: #007bff;
-  color: #fff;
-  border: 1px solid #007bff;
-}
-
-.header-buttons .secondary:hover {
-  background-color: #0056b3;
-}
-
-.backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+/* Responsive rules */
+@media (min-width: 768px) {
+  .nd-nav { display: flex; }
+  .nd-ctas { display: flex; }
+  .nd-mobile-toggle { display: none; }
+  .nd-mobile-panel { display: none !important; }
 }
