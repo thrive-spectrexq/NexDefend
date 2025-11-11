@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X, LogIn } from 'lucide-react';
-import '../../styles/Header.css';
+import './Header.css';
 
 type HeaderProps = {
   onOpenSidebar?: () => void;
