@@ -1,4 +1,4 @@
-import { Threat } from '../../api/apiClient';
+import type { Threat } from '../../api/apiClient'; // <-- FIX
 import { Loader2 } from 'lucide-react';
 
 const severityClasses: { [key: string]: string } = {
