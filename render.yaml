@@ -48,7 +48,7 @@ services:
   - type: web
     name: nexdefend-ai
     env: docker
-    dockerfilePath: ./nexdefend-ai/Dockerfile
+    dockerfilePath: ./nexdefend-ai/Dockerfile  # <--- This line points to the file we fixed
     dockerContext: ./nexdefend-ai
     plan: starter
     envVars:
@@ -94,11 +94,11 @@ services:
     # Add Render URL rewrites to proxy API calls
     rewrites:
       - source: "/api/:path*"
-        destination: "https://nexdefend-api.onrender.com/api/:path*"
+        destination: "https" # Your nexdefend-api URL will be prepended
       - source: "/login"
-        destination: "https://nexdefend-api.onrender.com/login"
+        destination: "https" # Your nexdefend-api URL
       - source: "/register"
-        destination: "https://nexdefend-api.onrender.com/register"
+        destination: "https" # Your nexdefend-api URL
       - source: "/*"
         destination: "/index.html"
 
