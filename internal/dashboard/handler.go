@@ -13,8 +13,8 @@ func GetDashboardData(w http.ResponseWriter, r *http.Request) {
 			{ID: "2", Signature: "ET POLICY TCP Telnet Connection detected", Timestamp: time.Now(), Severity: 2},
 		},
 		Vulnerabilities: []Vulnerability{
-			{ID: "VULN-001", Description: "Outdated OpenSSL version", Severity: "High"},
-			{ID: "VULN-002", Description: "SQL Injection vulnerability in login form", Severity: "Critical"},
+			{ID: 1, Description: "Outdated OpenSSL version", Severity: "High"},
+			{ID: 2, Description: "SQL Injection vulnerability in login form", Severity: "Critical"},
 		},
 		ComplianceStatus: ComplianceStatus{
 			Compliant: true,

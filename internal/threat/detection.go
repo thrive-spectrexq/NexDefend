@@ -25,9 +25,6 @@ var (
 // InitDetection configures the threat detection service
 func InitDetection(pythonAPI, aiToken string) {
 	PYTHON_API_URL = pythonAPI
-	if PYTHON_API_URL == "" {
-		PYTHON_API_URL = "http://localhost:5000" // Default for local dev
-	}
 	AI_SERVICE_TOKEN = aiToken
 }
 
