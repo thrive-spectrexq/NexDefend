@@ -21,7 +21,6 @@ import (
 func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(func(next http.Handler) http.Handler {
-		// Fixed non-breaking space
 		return middleware.RateLimiter(next, 100, 200)
 	})
 	router.Use(logging.LogRequest)
@@ -29,14 +28,13 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 
 	// --- Public Routes ---
 	router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
-	// Pass the JWT key from config to the handlers
 	router.HandleFunc("/register", auth.RegisterHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
 
 	// --- API v1 Routes (Authenticated) ---
 	api := router.PathPrefix(cfg.APIPrefix).Subrouter()
-	// Pass the config to the JWT middleware
 	api.Use(auth.JWTMiddleware(cfg))
+	api.Use(middleware.AuditLogMiddleware(database))
 
 	// Event Viewing Route
 	api.HandleFunc("/events", handlers.GetEventsHandler()).Methods("GET")
@@ -63,19 +61,19 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 	// System Metrics
 	api.HandleFunc("/metrics", handlers.MetricsHandler(database)).Methods("GET")
 
-	api.HandleFunc("/threats/ai-detect", ai.ThreatDetectionHandler).Methods("POST") // Fixed non-breaking space
-
 	// Handlers to query Python API
 	api.HandleFunc("/python-analysis", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
 	api.HandleFunc("/python-anomalies", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
 
-	// --- NEW SCAN ROUTE ADDED ---
-	api.HandleFunc("/scan", handlers.ScanHandler(cfg)).Methods("POST")
-
+	// --- Admin Routes ---
+	adminRoutes := api.PathPrefix("").Subrouter()
+	adminRoutes.Use(middleware.RoleMiddleware("admin"))
+	adminRoutes.HandleFunc("/scan", handlers.ScanHandler(cfg)).Methods("POST")
+	adminRoutes.HandleFunc("/train", ai.TrainModelHandler).Methods("POST")
+	adminRoutes.HandleFunc("/threats/ai-detect", ai.ThreatDetectionHandler).Methods("POST")
 
 	// CORS Configuration
 	corsOptions := cors.New(cors.Options{
-		// Fixed non-breaking spaces
 		AllowedOrigins:   cfg.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},

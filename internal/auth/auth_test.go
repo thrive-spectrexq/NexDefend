@@ -13,7 +13,7 @@ import (
 
 func TestGenerateJWT(t *testing.T) {
 	jwtKey := []byte("test-secret")
-	tokenString, err := GenerateJWT(1, jwtKey)
+	tokenString, err := GenerateJWT(1, []string{"admin"}, 1, jwtKey)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
@@ -25,6 +25,8 @@ func TestGenerateJWT(t *testing.T) {
 	claims, ok := token.Claims.(*Claims)
 	assert.True(t, ok)
 	assert.Equal(t, 1, claims.UserID)
+	assert.Equal(t, []string{"admin"}, claims.Roles)
+	assert.Equal(t, 1, claims.OrganizationID)
 	assert.WithinDuration(t, time.Now().Add(24*time.Hour), claims.ExpiresAt.Time, 10*time.Second)
 }
 
@@ -40,7 +42,7 @@ func TestJWTMiddleware(t *testing.T) {
 
 	// Test case with a valid token
 	req := httptest.NewRequest("GET", "/", nil)
-	token, _ := GenerateJWT(1, jwtKey)
+	token, _ := GenerateJWT(1, []string{"admin"}, 1, jwtKey)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 	JWTMiddleware(cfg)(handler).ServeHTTP(rr, req)

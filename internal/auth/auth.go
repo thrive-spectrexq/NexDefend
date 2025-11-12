@@ -1,36 +1,44 @@
 package auth
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	// "os" // REMOVED: Unused import
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/thrive-spectrexq/NexDefend/internal/config" // Import config
+	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey []byte // This will be set by LoadConfig
-
-// Claims struct for storing the user ID in the JWT token
+// Claims struct for storing the user ID, roles, and organization ID in the JWT token
 type Claims struct {
-	UserID int `json:"user_id"`
+	UserID         int      `json:"user_id"`
+	Roles          []string `json:"roles"`
+	OrganizationID int      `json:"organization_id"`
 	jwt.RegisteredClaims
 }
 
-// --- User Struct (Moved from user_auth.go) ---
+// User struct
 type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
+	ID             int    `json:"id"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	Email          string `json:"email"`
+	OrganizationID int    `json:"organization_id"`
 }
 
-// --- Helper Functions (Moved from user_auth.go) ---
+// Context keys
+type contextKey string
+
+const (
+	userClaimsKey     contextKey = "userClaims"
+	organizationIDKey contextKey = "organizationID"
+)
+
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -41,13 +49,13 @@ func checkPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-// --- JWT Functions ---
-
-// GenerateJWT generates a JWT token for a user based on user ID
-func GenerateJWT(userId int, jwtKey []byte) (string, error) {
+// GenerateJWT generates a JWT token for a user
+func GenerateJWT(userId int, roles []string, organizationID int, jwtKey []byte) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
-		UserID: userId,
+		UserID:         userId,
+		Roles:          roles,
+		OrganizationID: organizationID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			Subject:   fmt.Sprint(userId),
@@ -56,8 +64,6 @@ func GenerateJWT(userId int, jwtKey []byte) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
 }
-
-// --- Auth Handlers (Consolidated) ---
 
 // RegisterHandler handles new user registrations
 func RegisterHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
@@ -80,8 +86,7 @@ func RegisterHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 			return
 		}
 
-		// Insert the new user into the database
-		_, err = db.Exec("INSERT INTO users (username, password, email, role) VALUES ($1, $2, $3, 'user')", user.Username, hashedPassword, user.Email)
+		_, err = db.Exec("INSERT INTO users (username, password, email, organization_id) VALUES ($1, $2, $3, $4)", user.Username, hashedPassword, user.Email, user.OrganizationID)
 		if err != nil {
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
@@ -102,7 +107,7 @@ func LoginHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 		}
 
 		var user User
-		err = db.QueryRow("SELECT id, username, password, email FROM users WHERE username = $1", creds.Username).Scan(&user.ID, &user.Username, &user.Password, &user.Email)
+		err = db.QueryRow("SELECT id, username, password, email, organization_id FROM users WHERE username = $1", creds.Username).Scan(&user.ID, &user.Username, &user.Password, &user.Email, &user.OrganizationID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Invalid username or password", http.StatusUnauthorized)
@@ -117,7 +122,24 @@ func LoginHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 			return
 		}
 
-		token, err := GenerateJWT(user.ID, jwtKey)
+		rows, err := db.Query("SELECT r.name FROM roles r JOIN user_roles ur ON r.id = ur.role_id WHERE ur.user_id = $1", user.ID)
+		if err != nil {
+			http.Error(w, "Failed to get user roles", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var roles []string
+		for rows.Next() {
+			var role string
+			if err := rows.Scan(&role); err != nil {
+				http.Error(w, "Failed to scan role", http.StatusInternalServerError)
+				return
+			}
+			roles = append(roles, role)
+		}
+
+		token, err := GenerateJWT(user.ID, roles, user.OrganizationID, jwtKey)
 		if err != nil {
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 			return
@@ -128,8 +150,6 @@ func LoginHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 		})
 	}
 }
-
-// --- JWT Middleware ---
 
 // JWTMiddleware verifies the JWT token in the Authorization header
 func JWTMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
@@ -164,7 +184,9 @@ func JWTMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), userClaimsKey, claims)
+			ctx = context.WithValue(ctx, organizationIDKey, claims.OrganizationID)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
