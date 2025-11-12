@@ -26,20 +26,17 @@ services:
           property: host
       - key: DB_PORT
         value: 5432
-      # --- Service Communication ---
       - key: PYTHON_API
         fromService:
           type: web
           name: nexdefend-ai
           property: url
-      # --- Secrets ---
       - key: JWT_SECRET_KEY
-        sync: false # Set this in Render Dashboard
+        sync: false
       - key: AI_SERVICE_TOKEN
-        sync: false # Set this in Render Dashboard
-      # --- Features ---
+        sync: false
       - key: FIM_PATH
-        value: /etc # Monitor the container's /etc directory
+        value: /etc
     disk:
       name: suricata-logs
       mountPath: /var/log/suricata
@@ -66,36 +63,33 @@ services:
           property: host
       - key: DB_PORT
         value: 5432
-      # --- Service Communication ---
       - key: GO_API_URL
         fromService:
           type: web
           name: nexdefend-api
           property: url
-      # --- Secrets ---
       - key: AI_SERVICE_TOKEN
-        sync: false # Set this in Render Dashboard
-      # --- Allow scans to Render services ---
+        sync: false
       - key: NMAP_PRIVILEGED
         value: "true"
 
-  - type: web # <--- This is still 'web'
+  - type: web
     name: nexdefend-frontend
-    env: static # <--- FIX #1: Changed from 'docker' to 'static'
-    rootDir: nexdefend-frontend # <--- FIX #2: Specify the sub-directory
-    buildCommand: npm install && npm run build # <--- FIX #3: Add build command
-    staticPublishPath: dist # <--- FIX #4: Add static output path
+    env: static # <--- FIX #1: This tells Render it's a static site
+    rootDir: nexdefend-frontend # <--- FIX #2: Tell Render where the frontend lives
+    buildCommand: npm install && npm run build # <--- FIX #3: Tell Render how to build it
+    staticPublishPath: dist # <--- FIX #4: Tell Render where the build output is
     plan: starter
-    # envVars are used during the build process
+    # dockerfilePath and dockerContext are REMOVED
     envVars:
       - key: VITE_API_BASE_URL
-        value: "" # Use relative paths, rewrites will handle it
+        value: "" # Not needed, rewrites will handle
       - key: VITE_AUTH_BASE_URL
         value: ""
-    # Add Render URL rewrites to proxy API calls
-    rewrites: # <--- FIX #5: This block is now VALID for a static service
+    # rewrites are now VALID because env is 'static'
+    rewrites:
       - source: "/api/:path*"
-        destination: "https" # <--- FIX #6: Use the service name for internal proxying
+        destination: "https" # <--- FIX #5: Correctly proxy to the API service
       - source: "/login"
         destination: "https"
       - source: "/register"
@@ -105,7 +99,6 @@ services:
 
   - type: worker
     name: nexdefend-suricata
-    # --- FIX #7: Use 'image: { url: ... }' syntax ---
     image:
       url: jasonish/suricata:latest
     plan: starter
@@ -117,7 +110,6 @@ services:
 
   - type: web
     name: nexdefend-prometheus
-    # --- FIX #7: Use 'image: { url: ... }' syntax ---
     image:
       url: prom/prometheus:v2.47.2
     plan: starter
@@ -129,7 +121,6 @@ services:
 
   - type: web
     name: nexdefend-grafana
-    # --- FIX #7: Use 'image: { url: ... }' syntax ---
     image:
       url: grafana/grafana:10.0.3
     plan: starter
@@ -137,7 +128,7 @@ services:
       - key: GF_SECURITY_ADMIN_USER
         value: admin
       - key: GF_SECURITY_ADMIN_PASSWORD
-        sync: false # Set in Render dashboard
+        sync: false
     disk:
       name: grafana_data
       mountPath: /var/lib/grafana
