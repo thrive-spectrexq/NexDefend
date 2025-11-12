@@ -67,13 +67,6 @@ graph TD;
     R -->|Creates Incident| DB
 ```
 
-## Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-- [Go](https://golang.org/doc/install) (for manual setup)
-- [Node.js](https://nodejs.org/en/download/) (for manual setup)
-- [PostgreSQL](https://www.postgresql.org/download/) (for manual setup)
-
 ## Setup Instructions
 
 ### 1. Clone the Repository
@@ -145,7 +138,7 @@ After starting the services, you must train the AI model by sending a POST reque
 curl -X POST http://localhost:5000/train
 ```
 
-### 4. Usage
+### 5. Usage
 
 - **Web Application**: Access the NexDefend frontend at `http://localhost:3000`.
 - **Go API**: Access the Go API backend at `http://localhost:8080`.
