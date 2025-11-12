@@ -8,10 +8,12 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/thrive-spectrexq/NexDefend/internal/config"
 )
 
 func TestGenerateJWT(t *testing.T) {
-	tokenString, err := GenerateJWT(1)
+	jwtKey := []byte("test-secret")
+	tokenString, err := GenerateJWT(1, jwtKey)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
@@ -27,28 +29,33 @@ func TestGenerateJWT(t *testing.T) {
 }
 
 func TestJWTMiddleware(t *testing.T) {
+	jwtKey := []byte("test-secret")
+	cfg := &config.Config{
+		JWTSecretKey: jwtKey,
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
 	// Test case with a valid token
 	req := httptest.NewRequest("GET", "/", nil)
-	token, _ := GenerateJWT(1)
+	token, _ := GenerateJWT(1, jwtKey)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
-	JWTMiddleware(handler).ServeHTTP(rr, req)
+	JWTMiddleware(cfg)(handler).ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 
 	// Test case with no token
 	req = httptest.NewRequest("GET", "/", nil)
 	rr = httptest.NewRecorder()
-	JWTMiddleware(handler).ServeHTTP(rr, req)
+	JWTMiddleware(cfg)(handler).ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 
 	// Test case with an invalid token
 	req = httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer invalid-token")
 	rr = httptest.NewRecorder()
-	JWTMiddleware(handler).ServeHTTP(rr, req)
+	JWTMiddleware(cfg)(handler).ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }

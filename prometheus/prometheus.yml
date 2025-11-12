@@ -2,10 +2,12 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'nexdefend-go'
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'nexdefend-api'
     static_configs:
       - targets: ['api:8080']
-
-  - job_name: 'nexdefend-python'
+  - job_name: 'nexdefend-ai'
     static_configs:
       - targets: ['ai:5000']

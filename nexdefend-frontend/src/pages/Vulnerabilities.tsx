@@ -125,8 +125,8 @@ const Vulnerabilities = () => {
             </thead>
             <tbody>
               {data.map((vuln) => (
-                <tr key={vuln.id} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
-                  <td className="px-6 py-4 font-bold">#{vuln.id}</td>
+                <tr key={vuln.ID} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
+                  <td className="px-6 py-4 font-bold">#{vuln.ID}</td>
                   <td className="px-6 py-4">{vuln.description}</td>
                   <td className={`px-6 py-4 ${severityClasses[vuln.severity.toLowerCase()] || ''}`}>
                     {vuln.severity}
@@ -137,7 +137,7 @@ const Vulnerabilities = () => {
                   <td className="px-6 py-4">
                     <select
                       value={vuln.status}
-                      onChange={(e) => handleStatusChange(vuln.id, e.target.value as Vulnerability['status'])}
+                      onChange={(e) => handleStatusChange(vuln.ID, e.target.value as Vulnerability['status'])}
                       className={`bg-gray-700 border border-gray-600 rounded p-1 text-xs ${statusClasses[vuln.status.toLowerCase()] || ''}`}
                       disabled={updateMutation.isPending}
                     >

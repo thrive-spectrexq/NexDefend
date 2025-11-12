@@ -69,7 +69,7 @@ describe('Incidents Page', () => {
     mockedApiGet.mockResolvedValueOnce({ data: [] });
     renderComponent();
     expect(screen.getByRole('heading', { name: /security incidents/i })).toBeInTheDocument();
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByTitle('Loading...')).toBeInTheDocument();
   });
 
   it('fetches and displays incidents in the table', async () => {

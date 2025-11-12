@@ -17,9 +17,11 @@ type Threat struct {
 }
 
 type Vulnerability struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	Description string `json:"description"`
 	Severity    string `json:"severity"`
+	HostIP      string `json:"host_ip,omitempty"`
+	Port        int    `json:"port,omitempty"`
 }
 
 type ComplianceStatus struct {

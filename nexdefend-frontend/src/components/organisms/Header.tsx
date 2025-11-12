@@ -6,16 +6,19 @@ const Header = () => {
 
   return (
     <header className="bg-gray-900 text-white p-4 flex justify-between items-center border-b border-gray-700">
-      {/* Search Bar */}
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-          <Search size={20} />
-        </span>
-        <input
-          type="text"
-          placeholder="Search for alerts, IPs, incidents..."
-          className="bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-64 md:w-96"
-        />
+      <div className="flex items-center space-x-8">
+        <h1 className="text-2xl font-bold text-blue-400">NexDefend</h1>
+        {/* Search Bar */}
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search size={20} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search for alerts, IPs, incidents..."
+            className="bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-64 md:w-96"
+          />
+        </div>
       </div>
 
       {/* User Actions */}
