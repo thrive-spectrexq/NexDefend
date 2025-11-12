@@ -9,12 +9,14 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, icon, isLoading }: StatCardProps) => {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 flex items-center">
-      <div className="text-blue-400 mr-6">{icon}</div>
+    <div className="bg-gray-800 border border-gray-700 rounded-lg p-5 flex items-center transition-all duration-300 hover:bg-gray-700 hover:shadow-lg border-t-4 border-t-blue-600">
+      <div className="bg-blue-600/20 text-blue-400 p-3 rounded-full mr-4">
+        {icon}
+      </div>
       <div>
-        <p className="text-sm text-gray-400 uppercase">{title}</p>
+        <p className="text-sm text-gray-400 uppercase font-medium">{title}</p>
         {isLoading ? (
-          <Loader2 size={32} className="animate-spin mt-1" />
+          <Loader2 size={28} className="animate-spin mt-1" />
         ) : (
           <h3 className="text-3xl font-bold text-white">{value}</h3>
         )}
