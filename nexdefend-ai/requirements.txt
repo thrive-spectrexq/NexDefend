@@ -10,6 +10,8 @@ gunicorn
 flask-cors
 pandas
 prometheus-client
+opentelemetry-instrumentation-flask
+opentelemetry-exporter-otlp
 # The following are dependencies of the packages above
 blinker==1.9.0
 certifi==2025.8.3

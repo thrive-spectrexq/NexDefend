@@ -33,15 +33,31 @@ func GetEventsHandler() http.HandlerFunc {
 			return
 		}
 
-		query := fmt.Sprintf(`{
-			"query": {
-				"bool": {
-					"must": [
-						{ "match": { "organization_id": %d } }
-					]
+		queryParam := r.URL.Query().Get("q")
+		var query string
+		if queryParam != "" {
+			query = fmt.Sprintf(`{
+				"query": {
+					"bool": {
+						"must": [
+							{ "query_string": { "query": "%s" } },
+							{ "match": { "organization_id": %d } }
+						]
+					}
 				}
-			}
-		}`, orgID)
+			}`, queryParam, orgID)
+		} else {
+			query = fmt.Sprintf(`{
+				"query": {
+					"bool": {
+						"must": [
+							{ "match_all": {} },
+							{ "match": { "organization_id": %d } }
+						]
+					}
+				}
+			}`, orgID)
+		}
 
 		res, err := osClient.Search(
 			osClient.Search.WithIndex("events"),

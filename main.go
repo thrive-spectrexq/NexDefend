@@ -16,10 +16,22 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"github.com/thrive-spectrexq/NexDefend/internal/routes"
+	"github.com/thrive-spectrexq/NexDefend/internal/telemetry"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
 func main() {
 	cfg := config.LoadConfig()
+
+	tp, err := telemetry.InitTracerProvider()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
 
 	logging.InitLogging()
 	database := db.InitDB()
@@ -33,7 +45,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: router,
+		Handler: otelmux.Middleware("nexdefend-api")(router),
 	}
 
 	go func() {
@@ -47,7 +59,6 @@ func main() {
 	log.Println("Server exited gracefully")
 }
 
-// gracefulShutdown handles graceful server shutdown on interrupt signals
 func gracefulShutdown(srv *http.Server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)

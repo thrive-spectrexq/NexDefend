@@ -117,7 +117,10 @@ CREATE TABLE incidents (
     source_ip VARCHAR(255),
     organization_id INT REFERENCES organizations(id) ON DELETE CASCADE,
     parent_incident_id INT REFERENCES incidents(id) ON DELETE SET NULL,
-    mitre_ttp_id VARCHAR(20)
+    mitre_ttp_id VARCHAR(20),
+    risk_score INT,
+    entity_name VARCHAR(255),
+    disposition VARCHAR(50)
 );
 
 -- Create 'uploaded_files' table to store uploaded file information
