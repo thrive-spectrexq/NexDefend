@@ -50,6 +50,8 @@ export interface Threat {
   source_ip: string;
   destination: string;
   event_type: string;
+  protocol: string;
+  alert_category: string;
 }
 
 export interface Incident {
