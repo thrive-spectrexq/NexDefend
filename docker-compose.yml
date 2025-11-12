@@ -61,6 +61,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:5173" # Mapped to container port 5173
+    # --- ADDED VOLUME FOR LIVE RELOAD ---
+    volumes:
+      - ./nexdefend-frontend:/app
+      - /app/node_modules
     environment:
       REACT_APP_API_URL: http://api:8080/api/v1
       REACT_APP_AI_API_URL: http://ai:5000
