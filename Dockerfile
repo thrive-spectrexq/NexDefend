@@ -1,4 +1,5 @@
-FROM golang:1.21
+# --- FIX: Update Go version from 1.21 to 1.24.3 to match go.mod ---
+FROM golang:1.24.3
 
 WORKDIR /app
 
