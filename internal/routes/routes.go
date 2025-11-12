@@ -14,7 +14,6 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
-	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 )
 
@@ -39,9 +38,8 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 	// Pass the config to the JWT middleware
 	api.Use(auth.JWTMiddleware(cfg))
 
-	// Threat & Alert Routes (Read-only for most)
-	api.HandleFunc("/threats", threat.ThreatsHandler(database.GetDB(), c)).Methods("GET")
-	api.HandleFunc("/alerts", threat.AlertsHandler).Methods("GET") // Fixed non-breaking space
+	// Event Viewing Route
+	api.HandleFunc("/events", handlers.GetEventsHandler()).Methods("GET")
 
 	// Incident Management Routes (CRUD)
 	api.HandleFunc("/incidents", handlers.CreateIncidentHandler(database.GetDB())).Methods("POST")

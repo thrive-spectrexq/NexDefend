@@ -10,7 +10,7 @@ class TestMlAnomalyDetection(unittest.TestCase):
             (2, '2025-11-11T12:01:00', 'dns', '192.168.1.2', '8.8.8.8', 53, None, None, {'rrname': 'example.com'}, None, False),
         ]
         features = preprocess_events(events, is_training=True)
-        self.assertEqual(features.shape, (2, 5))
+        self.assertEqual(features.shape, (2, 9))
 
     def test_train_and_detect(self):
         events = [

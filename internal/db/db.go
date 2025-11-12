@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
-	"github.com/thrive-spectrexq/NexDefend/internal/threat" // Import the threat package
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
@@ -117,24 +116,6 @@ func GetDB() *sql.DB {
 	return db.conn
 }
 
-// StoreSuricataEvent stores Suricata events in the database and returns the new event's ID
-func (db *Database) StoreSuricataEvent(event threat.SuricataEvent) (int, error) {
-	var eventID int
-	err := db.conn.QueryRow(
-		`INSERT INTO suricata_events (timestamp, event_type, http, tls, dns, alert)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-		event.Timestamp,
-		event.EventType,
-		jsonValue(event.HTTP),
-		jsonValue(event.TLS),
-		jsonValue(event.DNS),
-		jsonValue(event.Alert),
-	).Scan(&eventID)
-	if err != nil {
-		return 0, fmt.Errorf("error storing Suricata event: %v", err)
-	}
-	return eventID, nil
-}
 
 // jsonValue marshals structs into JSON for storage
 func jsonValue(data interface{}) interface{} {

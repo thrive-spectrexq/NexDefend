@@ -5,11 +5,40 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gorilla/mux"
 	"github.com/thrive-spectrexq/NexDefend/internal/incident"
 )
+
+var kafkaProducer *kafka.Producer
+
+func init() {
+	// Initialize Kafka producer once.
+	kafkaBroker := os.Getenv("KAFKA_BROKER")
+	if kafkaBroker == "" {
+		kafkaBroker = "kafka:9092"
+	}
+	var err error
+	kafkaProducer, err = kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+	if err != nil {
+		log.Fatalf("Failed to create Kafka producer: %v", err)
+	}
+
+	// Go-routine to handle delivery reports
+	go func() {
+		for e := range kafkaProducer.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				if ev.TopicPartition.Error != nil {
+					log.Printf("Delivery failed: %v\n", ev.TopicPartition)
+				}
+			}
+		}
+	}()
+}
 
 func CreateIncidentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +58,19 @@ func CreateIncidentHandler(db *sql.DB) http.HandlerFunc {
 			log.Printf("Error creating incident: %v", err)
 			http.Error(w, "Failed to create incident", http.StatusInternalServerError)
 			return
+		}
+
+		// Produce incident to Kafka
+		topic := "incidents"
+		incidentJSON, err := json.Marshal(newIncident)
+		if err != nil {
+			log.Printf("Failed to marshal incident to JSON: %v", err)
+			// Don't block the HTTP response
+		} else {
+			kafkaProducer.Produce(&kafka.Message{
+				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+				Value:          incidentJSON,
+			}, nil)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

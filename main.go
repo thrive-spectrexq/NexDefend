@@ -12,11 +12,10 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
-	"github.com/thrive-spectrexq/NexDefend/internal/fim" // Import FIM
+	"github.com/thrive-spectrexq/NexDefend/internal/ingestor"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"github.com/thrive-spectrexq/NexDefend/internal/routes"
-	"github.com/thrive-spectrexq/NexDefend/internal/threat"
 )
 
 func main() {
@@ -26,17 +25,8 @@ func main() {
 	database := db.InitDB()
 	defer db.CloseDB()
 
-	threat.InitDetection(cfg.PythonAPI, cfg.AIServiceToken)
-	go threat.StartThreatDetection(database)
+	go ingestor.StartIngestor()
 	go metrics.CollectMetrics(database)
-
-	// Start File Integrity Monitoring
-	fimPath := os.Getenv("FIM_PATH")
-	if fimPath == "" {
-		fimPath = "." // Default to current directory for dev
-		log.Println("WARNING: FIM_PATH not set, monitoring current directory '.'")
-	}
-	go fim.RunWatcher(database.GetDB(), fimPath)
 
 	c := cache.NewCache()
 	router := routes.NewRouter(cfg, database, c)

@@ -120,6 +120,17 @@ services:
     networks:
       - nexdefend-net
 
+  nexdefend-agent:
+    build:
+      context: nexdefend-agent
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - nexdefend-net
+
   suricata:
     image: jasonish/suricata:latest
     command: -i eth0 -D -v --eve-log-output /var/log/suricata/eve.json
@@ -133,11 +144,79 @@ services:
     depends_on:
       - api
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - nexdefend-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.2.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - nexdefend-net
+
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_SECURITY_PLUGIN=true" # For development only
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - nexdefend-net
+
+  nexdefend-soar:
+    build:
+      context: nexdefend-soar
+      dockerfile: Dockerfile
+    networks:
+      - nexdefend-net
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      # DISABLE_SECURITY_DASHBOARDS_PLUGIN=true # For development only
+    networks:
+      - nexdefend-net
+
 volumes:
   db_data:
   prometheus_data:
   grafana_data:
   suricata_logs: # Define the shared log volume
+  opensearch_data:
 
 networks:
   nexdefend-net:

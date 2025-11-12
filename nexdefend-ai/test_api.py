@@ -2,7 +2,7 @@ import pytest
 import os
 import json
 from unittest.mock import patch, MagicMock
-from nex_defend-ai.api import app 
+from api import app
 
 # Set up the test client
 @pytest.fixture
@@ -36,8 +36,8 @@ def test_get_api_metrics(client):
     assert 'incidents_created' in data
 
 # --- Test /scan Endpoint ---
-@patch('nex_defend-ai.api.nmap.PortScanner')
-@patch('nex_defend-ai.api.requests.post')
+@patch('api.nmap.PortScanner')
+@patch('api.requests.post')
 def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     """Tests a successful scan that finds open ports and creates vulnerabilities."""
     # Mock the Nmap scan result
@@ -68,10 +68,10 @@ def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     assert first_call_args['severity'] == 'High'
 
 # --- Test /analyze-event Endpoint ---
-@patch('nex_defend-ai.api.fetch_suricata_event_by_id')
-@patch('nex_defend-ai.api.preprocess_events')
-@patch('nex_defend-ai.api.detect_anomalies')
-@patch('nex_defend-ai.api.requests.post')
+@patch('api.fetch_suricata_event_by_id')
+@patch('api.preprocess_events')
+@patch('api.detect_anomalies')
+@patch('api.requests.post')
 def test_analyze_event_creates_incident(mock_requests_post, mock_detect, mock_preprocess, mock_fetch, client):
     """Tests that an anomalous event triggers an incident creation call."""
     # Mock the data
