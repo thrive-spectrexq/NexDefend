@@ -1,11 +1,11 @@
 import useAuthStore from '../../stores/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/apiClient';
-import type { Threat, Incident } from '../../api/apiClient'; // <-- FIX
+import type { Threat, Incident } from '../../api/apiClient';
 import StatCard from './StatCard';
 import ChartCard from './ChartCard';
 import DataTable from './DataTable';
-import { ShieldCheck, AlertTriangle, Server, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Server, ShieldAlert, Loader2 } from 'lucide-react';
 
 // Fetch functions
 const fetchThreats = async (): Promise<Threat[]> => {
@@ -31,10 +31,44 @@ const Dashboard = () => {
     queryFn: fetchIncidents,
   });
 
+  // --- FIX: Add loading and error states ---
+  const isLoading = threatsQuery.isLoading || incidentsQuery.isLoading;
+  const isError = threatsQuery.isError || incidentsQuery.isError;
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen p-8 flex justify-center items-center">
+        <Loader2 size={48} className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen p-8">
+        <h1 className="text-3xl font-bold text-red-500">Error Loading Dashboard</h1>
+        <p>Could not fetch critical data. The API may be down.</p>
+        <p className="text-gray-400 mt-4">Details:</p>
+        {threatsQuery.error && (
+          <pre className="text-red-400">Threats Error: {threatsQuery.error.message}</pre>
+        )}
+        {incidentsQuery.error && (
+          <pre className="text-red-400">Incidents Error: {incidentsQuery.error.message}</pre>
+        )}
+      </div>
+    );
+  }
+  // --- END FIX ---
+
+  // We can now safely access .data because we've handled loading/error states
+  const threatCount = threatsQuery.data?.length || 0;
+  const incidentCount = incidentsQuery.data?.length || 0;
+  const threatsData = threatsQuery.data || [];
+
   return (
     <div className="bg-gray-900 text-white min-h-screen p-8">
       <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Welcome to NexDefend</h1>
+        <h1 className="text-3xl font-bold">Welcome to Nexdefend</h1>
         <button
           onClick={logout}
           className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
@@ -46,15 +80,15 @@ const Dashboard = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <StatCard 
           title="Total Threats (24h)" 
-          value={threatsQuery.isSuccess ? threatsQuery.data.length : 0} 
+          value={threatCount} 
           icon={<AlertTriangle size={32} />} 
-          isLoading={threatsQuery.isLoading}
+          isLoading={false}
         />
         <StatCard 
           title="Open Incidents" 
-          value={incidentsQuery.isSuccess ? incidentsQuery.data.length : 0} 
+          value={incidentCount} 
           icon={<ShieldAlert size={32} />}
-          isLoading={incidentsQuery.isLoading} 
+          isLoading={false} 
         />
         <StatCard 
           title="Vulnerabilities" 
@@ -74,14 +108,14 @@ const Dashboard = () => {
         <div className="lg:col-span-2">
           <ChartCard 
             title="Alerts Over Time" 
-            data={threatsQuery.data || []} 
-            isLoading={threatsQuery.isLoading} 
+            data={threatsData} 
+            isLoading={false} 
           />
         </div>
         <div>
           <DataTable 
-            threats={threatsQuery.data || []} 
-            isLoading={threatsQuery.isLoading} 
+            threats={threatsData} 
+            isLoading={false} 
           />
         </div>
       </section>
