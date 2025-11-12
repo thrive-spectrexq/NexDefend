@@ -27,7 +27,7 @@ services:
       - ./sample_eve.json:/var/log/suricata/eve.json
       - suricata_logs:/var/log/suricata
       # Mount /etc read-only for FIM to scan
-      - /etc:/etc:ro 
+      - /etc:/etc:ro
     networks:
       - nexdefend-net
 
@@ -56,8 +56,9 @@ services:
   frontend:
     build:
       context: nexdefend-frontend
+      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:5173" # FIX: Mapped to container port 5173
     environment:
       REACT_APP_API_URL: http://api:8080/api/v1
       REACT_APP_AI_API_URL: http://ai:5000
@@ -106,7 +107,7 @@ services:
       - prometheus
     networks:
       - nexdefend-net
-  
+
   suricata:
     image: jasonish/suricata:latest
     # This command tells suricata to watch the 'eth0' interface
