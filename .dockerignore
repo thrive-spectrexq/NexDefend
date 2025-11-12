@@ -1,0 +1,17 @@
+# Ignore local environment files
+.env
+
+# Ignore node modules
+node_modules
+nexdefend-frontend/node_modules
+
+# Ignore build artifacts
+build
+dist
+*.exe
+*.test
+*.out
+
+# Ignore git
+.git
+.gitignore
