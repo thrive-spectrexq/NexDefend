@@ -9,13 +9,23 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: process.env.API_BASE_URL || 'http://localhost:8080',
+        target: 'http://api:8080', // Use the Docker service name
         changeOrigin: true,
       },
       '/ws': {
-        target: process.env.WS_BASE_URL || 'ws://localhost:8080',
+        target: 'ws://api:8080', // Use the Docker service name
         ws: true,
       },
+      // --- ADD THESE NEW ENTRIES ---
+      '/login': {
+        target: 'http://api:8080', // Proxy to the backend
+        changeOrigin: true,
+      },
+      '/register': {
+        target: 'http://api:8080', // Proxy to the backend
+        changeOrigin: true,
+      },
+      // --- END OF NEW ENTRIES ---
     },
   },
   test: {
