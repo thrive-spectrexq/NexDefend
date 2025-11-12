@@ -7,8 +7,9 @@ const AppLayout = () => {
     <div className="flex h-screen bg-gray-900 text-white">
       <SideNav />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-800 p-4">
+        {/* This Header will now contain the user info and logout button */}
+        <Header /> 
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6 md:p-8">
           <Outlet />
         </main>
       </div>
