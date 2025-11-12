@@ -35,7 +35,9 @@ const Incidents = () => {
 
       {isLoading && (
         <div className="flex justify-center items-center p-12">
-          <Loader2 size={40} className="animate-spin" title="Loading..." />
+          <Loader2 size={40} className="animate-spin">
+            <title>Loading...</title>
+          </Loader2>
         </div>
       )}
 
