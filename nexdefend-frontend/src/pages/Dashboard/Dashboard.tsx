@@ -1,4 +1,3 @@
-import useAuthStore from '../../stores/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/apiClient';
 import type { Threat, Incident } from '../../api/apiClient';
@@ -14,13 +13,11 @@ const fetchThreats = async (): Promise<Threat[]> => {
 };
 
 const fetchIncidents = async (): Promise<Incident[]> => {
-  const { data } = await apiClient.get('/incidents?status=Open'); // Only show open incidents
+  const { data } = await apiClient.get('/incidents?status=Open');
   return data;
 };
 
 const Dashboard = () => {
-  const logout = useAuthStore((state) => state.logout);
-
   const threatsQuery = useQuery({
     queryKey: ['threats'],
     queryFn: fetchThreats,
@@ -31,95 +28,74 @@ const Dashboard = () => {
     queryFn: fetchIncidents,
   });
 
-  // --- FIX: Add loading and error states ---
   const isLoading = threatsQuery.isLoading || incidentsQuery.isLoading;
   const isError = threatsQuery.isError || incidentsQuery.isError;
 
-  if (isLoading) {
-    return (
-      <div className="bg-gray-900 text-white min-h-screen p-8 flex justify-center items-center">
-        <Loader2 size={48} className="animate-spin" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="bg-gray-900 text-white min-h-screen p-8">
-        <h1 className="text-3xl font-bold text-red-500">Error Loading Dashboard</h1>
-        <p>Could not fetch critical data. The API may be down.</p>
-        <p className="text-gray-400 mt-4">Details:</p>
-        {threatsQuery.error && (
-          <pre className="text-red-400">Threats Error: {threatsQuery.error.message}</pre>
-        )}
-        {incidentsQuery.error && (
-          <pre className="text-red-400">Incidents Error: {incidentsQuery.error.message}</pre>
-        )}
-      </div>
-    );
-  }
-  // --- END FIX ---
-
-  // We can now safely access .data because we've handled loading/error states
-  const threatCount = threatsQuery.data?.length || 0;
-  const incidentCount = incidentsQuery.data?.length || 0;
-  const threatsData = threatsQuery.data || [];
+  // We can now safely access .data by checking success state
+  const threatCount = threatsQuery.isSuccess ? threatsQuery.data.length : 0;
+  const incidentCount = incidentsQuery.isSuccess ? incidentsQuery.data.length : 0;
+  const threatsData = threatsQuery.isSuccess ? threatsQuery.data : [];
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen p-8">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Welcome to Nexdefend</h1>
-        <button
-          onClick={logout}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
-        >
-          Logout
-        </button>
-      </header>
+    // Removed wrapper div and header, as AppLayout handles it.
+    <>
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-        <StatCard 
-          title="Total Threats (24h)" 
-          value={threatCount} 
-          icon={<AlertTriangle size={32} />} 
-          isLoading={false}
-        />
-        <StatCard 
-          title="Open Incidents" 
-          value={incidentCount} 
-          icon={<ShieldAlert size={32} />}
-          isLoading={false} 
-        />
-        <StatCard 
-          title="Vulnerabilities" 
-          value={0} // We'll wire this up later
-          icon={<ShieldCheck size={32} />} 
-          isLoading={false}
-        />
-        <StatCard 
-          title="Systems Monitored" 
-          value={8} // This remains static for now
-          icon={<Server size={32} />} 
-          isLoading={false}
-        />
-      </section>
+      {isError ? (
+        <div className="bg-gray-800 p-6 rounded-lg border border-red-500">
+          <h2 className="text-2xl font-bold text-red-500">Error Loading Dashboard</h2>
+          <p className="mt-2">Could not fetch critical data. The API may be down.</p>
+          <pre className="text-red-300 mt-4 bg-gray-900 p-4 rounded">
+            {threatsQuery.error?.message || incidentsQuery.error?.message}
+          </pre>
+        </div>
+      ) : (
+        <>
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <StatCard 
+              title="Total Threats (24h)" 
+              value={threatCount} 
+              icon={<AlertTriangle size={28} />} 
+              isLoading={threatsQuery.isLoading}
+            />
+            <StatCard 
+              title="Open Incidents" 
+              value={incidentCount} 
+              icon={<ShieldAlert size={28} />}
+              isLoading={incidentsQuery.isLoading} 
+            />
+            <StatCard 
+              title="Vulnerabilities" 
+              value={0} // Placeholder
+              icon={<ShieldCheck size={28} />} 
+              isLoading={false}
+            />
+            <StatCard 
+              title="Systems Monitored" 
+              value={8} // Static for now
+              icon={<Server size={28} />} 
+              isLoading={false}
+            />
+          </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <ChartCard 
-            title="Alerts Over Time" 
-            data={threatsData} 
-            isLoading={false} 
-          />
-        </div>
-        <div>
-          <DataTable 
-            threats={threatsData} 
-            isLoading={false} 
-          />
-        </div>
-      </section>
-    </div>
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ChartCard 
+                title="Alerts Over Time" 
+                data={threatsData} 
+                isLoading={threatsQuery.isLoading} 
+              />
+            </div>
+            <div className="h-full">
+              <DataTable 
+                threats={threatsData} 
+                isLoading={threatsQuery.isLoading} 
+              />
+            </div>
+          </section>
+        </>
+      )}
+    </>
   );
 };
 
