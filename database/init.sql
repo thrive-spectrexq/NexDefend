@@ -83,7 +83,8 @@ CREATE TABLE incidents (
     notes JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    related_event_id INT REFERENCES suricata_events(id) ON DELETE SET NULL
+    related_event_id INTEGER REFERENCES suricata_events(id),
+    source_ip VARCHAR(255)
 );
 
 -- Create 'uploaded_files' table to store uploaded file information

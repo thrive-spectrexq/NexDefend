@@ -38,6 +38,7 @@ type Incident struct {
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
 	RelatedEventID sql.NullInt64   `json:"related_event_id"`
+	SourceIP       sql.NullString  `json:"source_ip"`
 }
 
 // CreateIncidentRequest defines the payload for creating a new incident
@@ -46,6 +47,7 @@ type CreateIncidentRequest struct {
 	Severity       Severity `json:"severity"`
 	Status         Status   `json:"status"`
 	RelatedEventID *int     `json:"related_event_id,omitempty"`
+	SourceIP       *string  `json:"source_ip,omitempty"`
 }
 
 // UpdateIncidentRequest defines the payload for updating an incident
@@ -68,15 +70,19 @@ func CreateIncident(db *sql.DB, req CreateIncidentRequest) (*Incident, error) {
 	if req.RelatedEventID != nil {
 		relatedEventID = sql.NullInt64{Int64: int64(*req.RelatedEventID), Valid: true}
 	}
+	var sourceIP sql.NullString
+	if req.SourceIP != nil {
+		sourceIP = sql.NullString{String: *req.SourceIP, Valid: true}
+	}
 
 	if req.Status == "" {
 		req.Status = StatusOpen // Default status
 	}
 
 	query := `
-        INSERT INTO incidents (description, severity, status, related_event_id, created_at, updated_at, notes)
-        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '[]'::jsonb)
-        RETURNING id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id`
+        INSERT INTO incidents (description, severity, status, related_event_id, source_ip, created_at, updated_at, notes)
+        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '[]'::jsonb)
+        RETURNING id, description, severity, status, assigned_to, notes, created_at, updated_at, related_event_id, source_ip`
 
 	err := db.QueryRow(
 		query,
@@ -84,6 +90,7 @@ func CreateIncident(db *sql.DB, req CreateIncidentRequest) (*Incident, error) {
 		req.Severity,
 		req.Status,
 		relatedEventID,
+		sourceIP,
 	).Scan(
 		&incident.ID,
 		&incident.Description,
@@ -94,6 +101,7 @@ func CreateIncident(db *sql.DB, req CreateIncidentRequest) (*Incident, error) {
 		&incident.CreatedAt,
 		&incident.UpdatedAt,
 		&incident.RelatedEventID,
+		&incident.SourceIP,
 	)
 
 	if err != nil {
