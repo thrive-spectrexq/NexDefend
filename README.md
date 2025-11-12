@@ -16,7 +16,7 @@
 - **Security Operations**:
     - **Incident Management**: A full-featured UI to track, triage, and manage the lifecycle of security incidents.
     - **Vulnerability Management**: Triage and manage discovered vulnerabilities from "Detected" to "Resolved".
-- **Rich Dashboards**: Visualizes security events and system metrics through a comprehensive React dashboard and Grafana integration.
+- **Dashboards**: Visualizes security events and system metrics through a comprehensive React dashboard and Grafana integration.
 
 ## Architecture
 
