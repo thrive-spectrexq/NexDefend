@@ -1,4 +1,4 @@
-# --- FIX: Update Go version from 1.21 to 1.24.3 to match go.mod ---
+# Use the correct Go version
 FROM golang:1.24.3
 
 WORKDIR /app
@@ -8,7 +8,10 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /nexdefend cmd/nexdefend/main.go
+# --- FIX: Changed the build path ---
+# From: cmd/nexdefend/main.go
+# To:   main.go
+RUN go build -o /nexdefend main.go
 
 EXPOSE 8080
 
