@@ -3,6 +3,8 @@ import { apiClient } from '../../api/apiClient';
 import type { Threat, Incident } from '../../api/apiClient';
 import StatCard from './StatCard';
 import ChartCard from './ChartCard';
+import AlertsBarChart from './AlertsBarChart';
+import ProtocolsPieChart from './ProtocolsPieChart';
 import DataTable from './DataTable';
 import { ShieldCheck, AlertTriangle, Server, ShieldAlert, Loader2 } from 'lucide-react';
 
@@ -68,6 +70,11 @@ const Dashboard = () => {
   return (
     <>
       <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <AlertsBarChart data={threatsData} />
+        <ProtocolsPieChart data={threatsData} />
+      </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard 
