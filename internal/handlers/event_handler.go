@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,12 @@ import (
 
 func GetEventsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		orgID, ok := r.Context().Value(organizationIDKey).(int)
+		if !ok {
+			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+			return
+		}
+
 		opensearchAddr := os.Getenv("OPENSEARCH_ADDR")
 		if opensearchAddr == "" {
 			opensearchAddr = "http://opensearch:9200"
@@ -26,9 +33,19 @@ func GetEventsHandler() http.HandlerFunc {
 			return
 		}
 
+		query := fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "match": { "organization_id": %d } }
+					]
+				}
+			}
+		}`, orgID)
+
 		res, err := osClient.Search(
 			osClient.Search.WithIndex("events"),
-			osClient.Search.WithBody(strings.NewReader(`{"query": {"match_all": {}}}`)),
+			osClient.Search.WithBody(strings.NewReader(query)),
 			osClient.Search.WithSize(100),
 			osClient.Search.WithSort("timestamp:desc"),
 		)

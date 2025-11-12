@@ -15,8 +15,11 @@ import (
 
 var kafkaProducer *kafka.Producer
 
+type contextKey string
+
+const organizationIDKey contextKey = "organizationID"
+
 func init() {
-	// Initialize Kafka producer once.
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
 	if kafkaBroker == "" {
 		kafkaBroker = "kafka:9092"
@@ -27,7 +30,6 @@ func init() {
 		log.Fatalf("Failed to create Kafka producer: %v", err)
 	}
 
-	// Go-routine to handle delivery reports
 	go func() {
 		for e := range kafkaProducer.Events() {
 			switch ev := e.(type) {
@@ -42,6 +44,12 @@ func init() {
 
 func CreateIncidentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		orgID, ok := r.Context().Value(organizationIDKey).(int)
+		if !ok {
+			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+			return
+		}
+
 		var req incident.CreateIncidentRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -53,19 +61,17 @@ func CreateIncidentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		newIncident, err := incident.CreateIncident(db, req)
+		newIncident, err := incident.CreateIncident(db, req, orgID)
 		if err != nil {
 			log.Printf("Error creating incident: %v", err)
 			http.Error(w, "Failed to create incident", http.StatusInternalServerError)
 			return
 		}
 
-		// Produce incident to Kafka
 		topic := "incidents"
 		incidentJSON, err := json.Marshal(newIncident)
 		if err != nil {
 			log.Printf("Failed to marshal incident to JSON: %v", err)
-			// Don't block the HTTP response
 		} else {
 			kafkaProducer.Produce(&kafka.Message{
 				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
@@ -81,6 +87,12 @@ func CreateIncidentHandler(db *sql.DB) http.HandlerFunc {
 
 func GetIncidentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		orgID, ok := r.Context().Value(organizationIDKey).(int)
+		if !ok {
+			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+			return
+		}
+
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
 		if err != nil {
@@ -88,7 +100,7 @@ func GetIncidentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		inc, err := incident.GetIncident(db, id)
+		inc, err := incident.GetIncident(db, id, orgID)
 		if err != nil {
 			log.Printf("Error getting incident: %v", err)
 			http.Error(w, "Failed to retrieve incident", http.StatusInternalServerError)
@@ -106,6 +118,12 @@ func GetIncidentHandler(db *sql.DB) http.HandlerFunc {
 
 func ListIncidentsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		orgID, ok := r.Context().Value(organizationIDKey).(int)
+		if !ok {
+			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+			return
+		}
+
 		statusQuery := r.URL.Query().Get("status")
 		var status *incident.Status
 
@@ -114,7 +132,7 @@ func ListIncidentsHandler(db *sql.DB) http.HandlerFunc {
 			status = &s
 		}
 
-		incidents, err := incident.ListIncidents(db, status)
+		incidents, err := incident.ListIncidents(db, status, orgID)
 		if err != nil {
 			log.Printf("Error listing incidents: %v", err)
 			http.Error(w, "Failed to retrieve incidents", http.StatusInternalServerError)
@@ -128,6 +146,12 @@ func ListIncidentsHandler(db *sql.DB) http.HandlerFunc {
 
 func UpdateIncidentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		orgID, ok := r.Context().Value(organizationIDKey).(int)
+		if !ok {
+			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+			return
+		}
+
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
 		if err != nil {
@@ -141,7 +165,7 @@ func UpdateIncidentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		updatedIncident, err := incident.UpdateIncident(db, id, req)
+		updatedIncident, err := incident.UpdateIncident(db, id, req, orgID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Incident not found", http.StatusNotFound)

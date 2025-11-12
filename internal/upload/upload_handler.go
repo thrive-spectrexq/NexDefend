@@ -15,11 +15,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
-	"github.com/thrive-spectrexq/NexDefend/internal/incident" // Import incident package
+	"github.com/thrive-spectrexq/NexDefend/internal/incident"
 )
 
-const MaxUploadSize = 10 * 1024 * 1024                  // 10MB
-var allowedFileTypes = []string{".txt", ".csv", ".log", ".pcap", ".json"} // Added more types
+const MaxUploadSize = 10 * 1024 * 1024
+var allowedFileTypes = []string{".txt", ".csv", ".log", ".pcap", ".json"}
+
+type contextKey string
+
+const organizationIDKey contextKey = "organizationID"
 
 type UploadResponse struct {
 	Filename       string `json:"filename"`
@@ -31,7 +35,6 @@ type UploadResponse struct {
 	Message        string `json:"message"`
 }
 
-// checkMalwareHash checks if a file hash exists in the malware registry.
 func checkMalwareHash(db *sql.DB, hash string) (isMalware bool, malwareName string) {
 	query := "SELECT malware_name FROM malware_hash_registry WHERE hash = $1"
 	err := db.QueryRow(query, hash).Scan(&malwareName)
@@ -46,7 +49,12 @@ func checkMalwareHash(db *sql.DB, hash string) (isMalware bool, malwareName stri
 }
 
 func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
-	// ... (file parsing logic is unchanged) ...
+	orgID, ok := r.Context().Value(organizationIDKey).(int)
+	if !ok {
+		http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+		return
+	}
+
 	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadSize)
 	if err := r.ParseMultipartForm(MaxUploadSize); err != nil {
 		http.Error(w, "File too big!", http.StatusBadRequest)
@@ -93,39 +101,33 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate hash for the file
 	hash := generateFileHash(dstPath)
 	fileSize := handler.Size
 	alert := false
 	analysisResult := "File appears clean"
 
-	// --- NEW MALWARE CHECK ---
-	database := db.GetDB() // Get database connection
+	database := db.GetDB()
 	isMalware, malwareName := checkMalwareHash(database, hash)
 	if isMalware {
 		alert = true
 		analysisResult = fmt.Sprintf("MALWARE DETECTED: %s", malwareName)
 		log.Printf("[UPLOAD] CRITICAL: Malware detected in file %s. Hash: %s, Name: %s", safeFilename, hash, malwareName)
 
-		// Create a critical incident
 		incidentReq := incident.CreateIncidentRequest{
 			Description: fmt.Sprintf("Malware Detected in Upload: %s (File: %s)", malwareName, safeFilename),
 			Severity:    incident.SeverityCritical,
 		}
-		if _, err := incident.CreateIncident(database, incidentReq); err != nil {
+		if _, err := incident.CreateIncident(database, incidentReq, orgID); err != nil {
 			log.Printf("[UPLOAD] Error creating incident for malware: %v", err)
 		}
 	}
-	// --- END MALWARE CHECK ---
 
-	// Save details to database
-	if err := saveFileDetails(safeFilename, dstPath, fileSize, hash, analysisResult, alert); err != nil {
+	if err := saveFileDetails(safeFilename, dstPath, fileSize, hash, analysisResult, alert, orgID); err != nil {
 		http.Error(w, "Failed to record file details!", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
 		return
 	}
 
-	// Build and send response
 	response := UploadResponse{
 		Filename:       safeFilename,
 		FilePath:       dstPath,
@@ -142,13 +144,12 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("File uploaded and analyzed: %+v", response)
 }
 
-// ... (saveFileDetails, isAllowedFileType, generateFileHash functions are unchanged) ...
-func saveFileDetails(filename, filePath string, fileSize int64, hash, analysisResult string, alert bool) error {
+func saveFileDetails(filename, filePath string, fileSize int64, hash, analysisResult string, alert bool, organizationID int) error {
 	query := `
-        INSERT INTO uploaded_files (filename, file_path, file_size, hash, analysis_result, alert)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO uploaded_files (filename, file_path, file_size, hash, analysis_result, alert, organization_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
     `
-	_, err := db.GetDB().Exec(query, filename, filePath, fileSize, hash, analysisResult, alert)
+	_, err := db.GetDB().Exec(query, filename, filePath, fileSize, hash, analysisResult, alert, organizationID)
 	return err
 }
 

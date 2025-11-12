@@ -1,6 +1,15 @@
 -- Initialize the database schema for NexDefend
 
 -- Drop tables if they already exist
+DROP TABLE IF EXISTS dashboards CASCADE;
+DROP TABLE IF EXISTS case_artifacts CASCADE;
+DROP TABLE IF EXISTS cases CASCADE;
+DROP TABLE IF EXISTS soar_playbooks CASCADE;
+DROP TABLE IF EXISTS entity_risk_scores CASCADE;
+DROP TABLE IF EXISTS user_audit_log CASCADE;
+DROP TABLE IF EXISTS user_roles CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
+DROP TABLE IF EXISTS organizations CASCADE;
 DROP TABLE IF EXISTS system_metrics CASCADE;
 DROP TABLE IF EXISTS uploaded_files CASCADE;
 DROP TABLE IF EXISTS alerts CASCADE;
@@ -12,6 +21,18 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS fim_baseline CASCADE;
 DROP TABLE IF EXISTS malware_hash_registry CASCADE;
 
+-- Create 'organizations' table for multi-tenancy
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create 'roles' table for RBAC
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
 
 -- Create 'users' table to store user information
 CREATE TABLE users (
@@ -19,8 +40,15 @@ CREATE TABLE users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(100) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')), -- 'admin' or 'user'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
+);
+
+-- Create 'user_roles' linking table for RBAC
+CREATE TABLE user_roles (
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    role_id INT REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
 );
 
 -- Create 'suricata_events' table to store all Suricata logs
@@ -35,7 +63,8 @@ CREATE TABLE suricata_events (
     tls JSONB,
     dns JSONB,
     alert JSONB,
-    is_analyzed BOOLEAN DEFAULT FALSE
+    is_analyzed BOOLEAN DEFAULT FALSE,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'threats' table to store detected threats
@@ -70,7 +99,8 @@ CREATE TABLE vulnerabilities (
     host_ip INET,
     port INT,
     discovered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'incidents' table
@@ -84,7 +114,10 @@ CREATE TABLE incidents (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     related_event_id INTEGER REFERENCES suricata_events(id),
-    source_ip VARCHAR(255)
+    source_ip VARCHAR(255),
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE,
+    parent_incident_id INT REFERENCES incidents(id) ON DELETE SET NULL,
+    mitre_ttp_id VARCHAR(20)
 );
 
 -- Create 'uploaded_files' table to store uploaded file information
@@ -96,7 +129,8 @@ CREATE TABLE uploaded_files (
     file_size BIGINT,
     hash VARCHAR(64) NOT NULL, -- SHA-256 hash
     analysis_result TEXT,
-    alert BOOLEAN DEFAULT FALSE
+    alert BOOLEAN DEFAULT FALSE,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'system_metrics' table to store time-series system metrics
@@ -104,7 +138,8 @@ CREATE TABLE system_metrics (
     id SERIAL PRIMARY KEY,
     metric_type VARCHAR(50) NOT NULL,
     value DOUBLE PRECISION NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'fim_baseline' table for File Integrity Monitoring
@@ -123,6 +158,66 @@ CREATE TABLE malware_hash_registry (
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create 'user_audit_log' table
+CREATE TABLE user_audit_log (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    action VARCHAR(255) NOT NULL,
+    target_type VARCHAR(50),
+    target_id INT,
+    details_json JSONB
+);
+
+-- Create 'entity_risk_scores' table for UEBA
+CREATE TABLE entity_risk_scores (
+    id SERIAL PRIMARY KEY,
+    entity_id VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    score INT NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reasoning_jsonb JSONB,
+    UNIQUE(entity_id, entity_type)
+);
+
+-- Create 'soar_playbooks' table
+CREATE TABLE soar_playbooks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    trigger_conditions_json JSONB NOT NULL,
+    steps_yaml TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create 'cases' table for case management
+CREATE TABLE cases (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    assignee_id INT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create 'case_artifacts' linking table
+CREATE TABLE case_artifacts (
+    id SERIAL PRIMARY KEY,
+    case_id INT REFERENCES cases(id) ON DELETE CASCADE,
+    artifact_type VARCHAR(50) NOT NULL,
+    artifact_id INT NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create 'dashboards' table for customizable dashboards
+CREATE TABLE dashboards (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    layout_jsonb JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Add indexes for faster lookups
 CREATE INDEX idx_users_username ON users (username);
@@ -138,3 +233,9 @@ CREATE INDEX idx_vulnerabilities_severity ON vulnerabilities (severity);
 CREATE INDEX idx_incidents_status ON incidents (status);
 CREATE INDEX idx_incidents_severity ON incidents (severity);
 CREATE INDEX idx_malware_hash_registry_hash ON malware_hash_registry (hash);
+CREATE INDEX idx_user_audit_log_user_id ON user_audit_log (user_id);
+CREATE INDEX idx_user_audit_log_timestamp ON user_audit_log (timestamp);
+CREATE INDEX idx_entity_risk_scores_entity ON entity_risk_scores (entity_id, entity_type);
+CREATE INDEX idx_cases_assignee_id ON cases (assignee_id);
+CREATE INDEX idx_case_artifacts_case_id ON case_artifacts (case_id);
+CREATE INDEX idx_dashboards_user_id ON dashboards (user_id);

@@ -46,12 +46,17 @@ func ThreatDetectionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // performAnomalyDetection is a placeholder for anomaly detection logic.
-// In a real scenario, this would use machine learning models or statistical methods.
 func performAnomalyDetection(data map[string]interface{}) (bool, float64) {
-	// Simulate anomaly detection with random values for demonstration
 	threatDetected := rand.Float64() > 0.7
-	confidence := rand.Float64()*(0.9-0.5) + 0.5 // Confidence between 50% and 90%
+	confidence := rand.Float64()*(0.9-0.5) + 0.5
 
 	fmt.Printf("Anomaly detection executed. Threat Detected: %v, Confidence: %.2f\n", threatDetected, confidence)
 	return threatDetected, confidence
+}
+
+// TrainModelHandler placeholder
+func TrainModelHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "AI model training started"})
 }
