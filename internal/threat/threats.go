@@ -3,6 +3,7 @@ package threat
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt" // <-- Make sure fmt is imported
 	"net/http"
 	"strconv"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 )
 
-// Threat represents a structured threat entity
+// ... (Threat struct is unchanged) ...
 type Threat struct {
 	ID          int       `json:"id"`
 	Description string    `json:"description"`
@@ -21,7 +22,7 @@ type Threat struct {
 	EventType   string    `json:"event_type"`
 }
 
-// ThreatsHandler fetches and returns threat data
+// ... (ThreatsHandler is unchanged) ...
 func ThreatsHandler(db *sql.DB, c *cache.Cache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Create a cache key from the request query
@@ -69,29 +70,35 @@ func ThreatsHandler(db *sql.DB, c *cache.Cache) http.HandlerFunc {
 	}
 }
 
+
 // FetchThreats retrieves threat data from the database
+// --- THIS FUNCTION IS FIXED ---
 func FetchThreats(db *sql.DB, severity, startTime, endTime string, limit int) ([]Threat, error) {
 	query := "SELECT id, description, severity, timestamp, source_ip, destination_ip, event_type FROM threats WHERE 1=1"
 	args := []interface{}{}
+	argCount := 1 // Start arg counter at 1
 
 	// Add severity filter
 	if severity != "" {
-		query += " AND severity = $1"
+		query += fmt.Sprintf(" AND severity = $%d", argCount)
 		args = append(args, severity)
+		argCount++
 	}
 
 	// Add timestamp range filter
 	if startTime != "" {
-		query += " AND timestamp >= $2"
+		query += fmt.Sprintf(" AND timestamp >= $%d", argCount)
 		args = append(args, startTime)
+		argCount++
 	}
 	if endTime != "" {
-		query += " AND timestamp <= $3"
+		query += fmt.Sprintf(" AND timestamp <= $%d", argCount)
 		args = append(args, endTime)
+		argCount++
 	}
 
 	// Add limit
-	query += " ORDER BY timestamp DESC LIMIT $4"
+	query += fmt.Sprintf(" ORDER BY timestamp DESC LIMIT $%d", argCount)
 	args = append(args, limit)
 
 	// Execute query
