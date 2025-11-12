@@ -1,12 +1,10 @@
-import logging
-import os
-import requests
-import nmap # <-- IMPORT NMAP
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 from prometheus_client import Counter, make_wsgi_app, Gauge
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
-# ... (all other imports are the same) ...
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+from telemetry import init_tracer_provider
 from data_ingestion import (
     fetch_unprocessed_suricata_events,
     fetch_suricata_event_by_id,
@@ -21,10 +19,11 @@ from ml_anomaly_detection import (
     train_model,
 )
 
-app = Flask(__name__)
+init_tracer_provider()
 
-# --- Configuration ---
-# ... (CORS, logging, etc. is unchanged) ...
+app = Flask(__name__)
+FlaskInstrumentor().instrument_app(app)
+
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, { '/metrics': make_wsgi_app() })
 cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 CORS(app, origins=cors_origins)
@@ -32,7 +31,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 GO_API_URL = os.getenv("GO_API_URL", "http://localhost:8080/api/v1")
 AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
 
-# --- Prometheus Metrics ---
 EVENTS_PROCESSED = Counter('events_processed_total', 'Total number of events processed')
 ANOMALIES_DETECTED = Counter('anomalies_detected_total', 'Total number of anomalies detected')
 INCIDENTS_CREATED = Counter('incidents_created_total', 'Total number of incidents automatically created')
@@ -40,9 +38,7 @@ HOSTS_SCANNED = Counter('hosts_scanned_total', 'Total number of hosts scanned')
 VULNS_DISCOVERED = Counter('vulnerabilities_discovered_total', 'Total vulnerabilities discovered by scanning')
 
 
-# --- Helper Functions for Automated Response ---
 def create_incident_in_backend(event_dict):
-    # ... (this function is unchanged from Milestone 2) ...
     try:
         alert_info = event_dict.get('alert') or {}
         description = f"AI Anomaly Detected: {alert_info.get('signature', 'No signature')}"
@@ -71,13 +67,10 @@ def create_incident_in_backend(event_dict):
     except Exception as e:
         logging.error(f"Error calling create_incident_in_backend: {e}")
 
-# --- NEW HELPER ---
 def create_vulnerability_in_backend(host, port, service_name):
-    """Calls the Go backend to create a new vulnerability."""
     try:
         description = f"Open port discovered: {port}/{service_name}"
         
-        # Simple severity logic for common ports
         severity = "Medium"
         if str(port) in ["22", "3389"]:
             severity = "High"
@@ -103,16 +96,12 @@ def create_vulnerability_in_backend(host, port, service_name):
             logging.info(f"Successfully created vulnerability for {host}:{port}")
             VULNS_DISCOVERED.inc()
         else:
-            # Handle duplicates (e.g., 4xx error if already exists)
             logging.warning(f"Failed to create vulnerability for {host}:{port}. Status: {response.status_code}, Body: {response.text}")
             
     except Exception as e:
         logging.error(f"Error calling create_vulnerability_in_backend: {e}")
 
-# --- API Endpoints ---
-
 @app.route("/train", methods=["POST"])
-# ... (this endpoint is unchanged) ...
 def train():
     try:
         events = fetch_all_suricata_events()
@@ -126,7 +115,6 @@ def train():
         return make_response(jsonify({"error": "Failed to train model"}), 500)
 
 @app.route("/analyze-event/<int:event_id>", methods=["POST"])
-# ... (this endpoint is unchanged) ...
 def analyze_single_event(event_id):
     try:
         auth_header = request.headers.get("Authorization")
@@ -151,12 +139,9 @@ def analyze_single_event(event_id):
         logging.error(f"Error during single event analysis for event {event_id}: {e}")
         return make_response(jsonify({"error": "Failed to analyze event"}), 500)
 
-# --- NEW SCAN ENDPOINT ---
 @app.route("/scan", methods=["POST"])
 def scan_host():
-    """Performs an Nmap scan on a target and reports vulnerabilities."""
     try:
-        # Check for service-to-service auth
         auth_header = request.headers.get("Authorization")
         if not auth_header or auth_header != f"Bearer {AI_SERVICE_TOKEN}":
             logging.warning("Unauthorized scan attempt")
@@ -171,7 +156,6 @@ def scan_host():
         
         try:
             nm = nmap.PortScanner()
-            # Scan common TCP ports
             nm.scan(target, '21-1024') 
             
             if target not in nm.all_hosts():
@@ -179,14 +163,12 @@ def scan_host():
                 return make_response(jsonify({"status": "Host is down or not responding"}), 200)
                 
             open_ports = []
-            # Check for 'tcp' key
             if 'tcp' in nm[target]:
                 for port in nm[target]['tcp']:
                     port_info = nm[target]['tcp'][port]
                     if port_info['state'] == 'open':
                         service_name = port_info.get('name', 'unknown')
                         open_ports.append({"port": port, "service": service_name})
-                        # Automatically create vulnerability in backend
                         create_vulnerability_in_backend(target, port, service_name)
             
             HOSTS_SCANNED.inc()
@@ -201,7 +183,6 @@ def scan_host():
         logging.error(f"Error during scan: {e}")
         return make_response(jsonify({"error": "Failed to perform scan"}), 500)
 
-# ... (other endpoints: /anomalies, /predict, /api-metrics are unchanged) ...
 @app.route("/anomalies", methods=["GET"])
 def get_batch_anomalies():
     try:

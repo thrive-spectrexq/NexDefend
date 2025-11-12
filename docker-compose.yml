@@ -8,7 +8,7 @@ services:
       - "8080:8080"
     depends_on:
       db:
-        condition: service_healthy # <-- UPDATED: Wait for healthcheck
+        condition: service_healthy
     environment:
       # Database
       DB_USER: nexdefend
@@ -22,12 +22,11 @@ services:
       JWT_SECRET_KEY: "default_user_secret_key_12345"
       AI_SERVICE_TOKEN: "default_secret_token"
       # Features
-      FIM_PATH: /etc # Path to monitor inside the container
+      FIM_PATH: /etc
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
     volumes:
-      # Mount the sample log and the shared log volume
       - ./sample_eve.json:/var/log/suricata/eve.json
       - suricata_logs:/var/log/suricata
-      # Mount /etc read-only for FIM to scan
       - /etc:/etc:ro
     networks:
       - nexdefend-net
@@ -40,7 +39,7 @@ services:
       - "5000:5000"
     depends_on:
       db:
-        condition: service_healthy # <-- UPDATED: Wait for healthcheck
+        condition: service_healthy
     environment:
       # Database
       DB_USER: nexdefend
@@ -52,6 +51,7 @@ services:
       GO_API_URL: http://api:8080/api/v1
       # Secrets (MUST match 'api' service)
       AI_SERVICE_TOKEN: "default_secret_token"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
     networks:
       - nexdefend-net
 
@@ -60,8 +60,7 @@ services:
       context: nexdefend-frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:5173" # Mapped to container port 5173
-    # --- ADDED VOLUME FOR LIVE RELOAD ---
+      - "3000:5173"
     volumes:
       - ./nexdefend-frontend:/app
       - /app/node_modules
@@ -86,7 +85,6 @@ services:
       - db_data:/var/lib/postgresql
     networks:
       - nexdefend-net
-    # --- ADDED HEALTHCHECK ---
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nexdefend -d nexdefend_db"]
       interval: 5s
@@ -140,7 +138,7 @@ services:
       - SYS_NICE
     volumes:
       - suricata_logs:/var/log/suricata
-    network_mode: "service:api" # Shares the network stack with the 'api'
+    network_mode: "service:api"
     depends_on:
       - api
 
@@ -177,7 +175,7 @@ services:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
-      - "DISABLE_SECURITY_PLUGIN=true" # For development only
+      - "DISABLE_SECURITY_PLUGIN=true"
     ulimits:
       memlock:
         soft: -1
@@ -207,7 +205,18 @@ services:
       - 5601:5601
     environment:
       OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
-      # DISABLE_SECURITY_DASHBOARDS_PLUGIN=true # For development only
+    networks:
+      - nexdefend-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.87.0
+    command: [--config /etc/otel-collector-config.yaml]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+    depends_on:
+      - opensearch
     networks:
       - nexdefend-net
 
@@ -215,7 +224,7 @@ volumes:
   db_data:
   prometheus_data:
   grafana_data:
-  suricata_logs: # Define the shared log volume
+  suricata_logs:
   opensearch_data:
 
 networks:
