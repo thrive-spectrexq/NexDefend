@@ -59,11 +59,10 @@ export interface Incident {
   description: string;
   severity: string;
   status: 'Open' | 'In Progress' | 'Resolved' | 'Escalated';
-  assigned_to: { String: string; Valid: boolean };
+  assignee: string;
   notes: string; // JSON string
   created_at: string;
   updated_at: string;
-  related_event_id: { Int64: number; Valid: boolean };
 }
 
 export interface Vulnerability {
@@ -82,4 +81,17 @@ export interface SystemMetric {
   metric_type: string;
   value: number;
   timestamp: string;
+}
+
+export interface Anomaly {
+  id: number;
+  type: string;
+  host: string;
+  source: string;
+}
+
+export interface Playbook {
+  id: string;
+  name: string;
+  description: string;
 }
