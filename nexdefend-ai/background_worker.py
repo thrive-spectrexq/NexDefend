@@ -5,8 +5,6 @@ import requests
 from confluent_kafka import Consumer, KafkaException
 import sys
 import time
-import psycopg2
-from psycopg2 import pool
 
 # --- Configuration ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -14,84 +12,25 @@ KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
 KAFKA_TOPIC = "nexdefend-events"
 GO_API_URL = os.getenv("GO_API_URL", "http://api:8080/api/v1")
 AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
-DB_CONN_STRING = os.getenv("DB_CONN_STRING", "postgresql://user:password@db:5432/nexdefend")
 
-# --- Database Connection Pool ---
-db_pool = None
+# --- In-memory state for UEBA ---
+suspicious_processes = {}  # pid -> timestamp
 
-def init_db_pool():
-    """Initializes the PostgreSQL connection pool."""
-    global db_pool
-    try:
-        logging.info("Initializing database connection pool...")
-        db_pool = psycopg2.pool.SimpleConnectionPool(1, 10, dsn=DB_CONN_STRING)
-        if db_pool:
-            logging.info("Database connection pool created successfully.")
-        else:
-            logging.error("Failed to create database connection pool.")
-    except psycopg2.OperationalError as e:
-        logging.error(f"Database connection failed: {e}")
-        sys.exit(1)
+def calculate_risk_score(severity, event_data):
+    """Calculates a risk score for an incident."""
+    base_score = 0
+    if severity == "High":
+        base_score = 70
+    elif severity == "Medium":
+        base_score = 40
+    elif severity == "Low":
+        base_score = 10
 
-def get_db_conn():
-    """Gets a connection from the pool."""
-    if db_pool:
-        return db_pool.getconn()
-    return None
+    # Add points for suspicious process activity
+    if "/tmp" in event_data.get("cmdline", ""):
+        base_score += 20
 
-def release_db_conn(conn):
-    """Releases a connection back to the pool."""
-    if db_pool and conn:
-        db_pool.putconn(conn)
-
-def update_risk_score(entity_id, entity_type, score_change, reasoning):
-    """Updates the risk score for an entity in the database."""
-    conn = get_db_conn()
-    if not conn:
-        logging.error("Database connection not available, cannot update risk score.")
-        return None
-    try:
-        with conn.cursor() as cur:
-            # Check if an entry for the entity already exists
-            cur.execute(
-                "SELECT score, reasoning_jsonb FROM entity_risk_scores WHERE entity_id = %s AND entity_type = %s",
-                (entity_id, entity_type)
-            )
-            result = cur.fetchone()
-
-            if result:
-                # Update existing score
-                current_score, reasoning_jsonb = result
-                new_score = current_score + score_change
-                reasoning_jsonb.append(reasoning)
-                cur.execute(
-                    """
-                    UPDATE entity_risk_scores
-                    SET score = %s, reasoning_jsonb = %s, last_updated = CURRENT_TIMESTAMP
-                    WHERE entity_id = %s AND entity_type = %s
-                    """,
-                    (new_score, json.dumps(reasoning_jsonb), entity_id, entity_type)
-                )
-            else:
-                # Insert new entry
-                new_score = score_change
-                reasoning_jsonb = [reasoning]
-                cur.execute(
-                    """
-                    INSERT INTO entity_risk_scores (entity_id, entity_type, score, reasoning_jsonb)
-                    VALUES (%s, %s, %s, %s)
-                    """,
-                    (entity_id, entity_type, new_score, json.dumps(reasoning_jsonb))
-                )
-            conn.commit()
-            logging.info(f"Updated risk score for {entity_type}:{entity_id} to {new_score}")
-            return new_score
-    except psycopg2.Error as e:
-        logging.error(f"Database error in update_risk_score: {e}")
-        conn.rollback()
-        return None
-    finally:
-        release_db_conn(conn)
+    return base_score
 
 def create_incident_in_backend(description, severity, source_ip=None, entity_name=None, risk_score=None, disposition=None):
     """Calls the Go backend to create a new incident."""
@@ -122,91 +61,38 @@ def create_incident_in_backend(description, severity, source_ip=None, entity_nam
         logging.error(f"Error calling create_incident_in_backend: {e}")
 
 def process_event(event):
-    """Processes a single event, applies UEBA rules, and updates risk scores."""
+    """Processes a single event and checks for behavioral anomalies."""
     event_type = event.get("event_type")
-    data = event.get("data", {})
-    hostname = data.get("hostname", "unknown_host")
-    user = data.get("user", "unknown_user")
 
-    rules = []
-
-    # Rule 1: Process execution from a suspicious path
     if event_type == "process":
-        cmdline = data.get("cmdline", "")
-        suspicious_paths = ["/tmp", "/var/tmp", "/dev/shm"]
-        if any(path in cmdline for path in suspicious_paths):
-            rules.append({
-                "entity_id": hostname, "entity_type": "asset", "score_change": 20,
-                "reasoning": f"Process '{cmdline}' executed from suspicious path."
-            })
-            # Add user context if available
-            if user != "unknown_user":
-                rules.append({
-                    "entity_id": user, "entity_type": "user", "score_change": 20,
-                    "reasoning": f"User '{user}' executed process '{cmdline}' from suspicious path on {hostname}."
-                })
+        process_data = event['data']
+        if "/tmp" in process_data.get("cmdline", ""):
+            logging.warning(f"Suspicious process detected: {process_data['cmdline']} (PID: {process_data['pid']})")
+            suspicious_processes[process_data['pid']] = time.time()
 
-    # Rule 2: Network connection to a known malicious IP (example)
     elif event_type == "net_connection":
-        remote_addr = data.get("remote_address", "")
-        # In a real system, this would be a lookup against a threat intel feed
-        malicious_ips = ["123.123.123.123", "198.51.100.1"]
-        if remote_addr in malicious_ips:
-            rules.append({
-                "entity_id": hostname, "entity_type": "asset", "score_change": 50,
-                "reasoning": f"Outbound connection to known malicious IP {remote_addr}."
-            })
+        net_data = event['data']
+        pid = net_data.get("pid")
+        if pid in suspicious_processes:
+            if time.time() - suspicious_processes[pid] < 60:
+                description = f"UEBA Anomaly: Process {pid} started from /tmp and made a network connection to {net_data['remote_address']}"
+                risk_score = calculate_risk_score("High", {"cmdline": "/tmp"})
+                create_incident_in_backend(
+                    description,
+                    "High",
+                    source_ip=net_data.get('local_address'),
+                    entity_name=net_data.get('local_address'),
+                    risk_score=risk_score,
+                    disposition="Not Reviewed",
+                )
+                del suspicious_processes[pid]
 
-    # Rule 3: Critical file modification
-    elif event_type == "fim":
-        file_path = data.get("file_path", "")
-        critical_files = ["/etc/passwd", "/etc/shadow", "/etc/sudoers"]
-        if file_path in critical_files:
-            rules.append({
-                "entity_id": hostname, "entity_type": "asset", "score_change": 80,
-                "reasoning": f"Critical file '{file_path}' was modified."
-            })
-            if user != "unknown_user":
-                rules.append({
-                    "entity_id": user, "entity_type": "user", "score_change": 80,
-                    "reasoning": f"User '{user}' modified critical file '{file_path}' on {hostname}."
-                })
-
-    # Apply all triggered rules and check for thresholds
-    for rule in rules:
-        new_score = update_risk_score(
-            rule["entity_id"], rule["entity_type"], rule["score_change"], rule["reasoning"]
-        )
-        if new_score:
-            check_risk_threshold(rule["entity_id"], rule["entity_type"], new_score)
-
-def check_risk_threshold(entity_id, entity_type, score):
-    """Checks if a risk score has crossed a threshold and creates an incident."""
-    thresholds = {
-        "High": 100,
-        "Medium": 60
-    }
-    incident_severity = None
-    if score >= thresholds["High"]:
-        incident_severity = "High"
-    elif score >= thresholds["Medium"]:
-        incident_severity = "Medium"
-
-    if incident_severity:
-        description = f"UEBA Alert: {entity_type.capitalize()} '{entity_id}' has reached a risk score of {score}."
-        create_incident_in_backend(
-            description,
-            incident_severity,
-            entity_name=entity_id,
-            risk_score=score,
-            disposition="Not Reviewed"
-        )
-        # Optionally, reset the score after an incident is created to avoid repeat alerts
-        # reset_risk_score(entity_id, entity_type)
+    for pid, timestamp in list(suspicious_processes.items()):
+        if time.time() - timestamp > 300:
+            del suspicious_processes[pid]
 
 def run_worker():
     """Initializes and runs the Kafka consumer worker."""
-    init_db_pool()
     logging.info("Starting background worker...")
 
     consumer_conf = {
@@ -242,9 +128,6 @@ def run_worker():
     finally:
         consumer.close()
         logging.info("Kafka consumer closed.")
-        if db_pool:
-            db_pool.closeall()
-            logging.info("Database connection pool closed.")
 
 if __name__ == "__main__":
     run_worker()

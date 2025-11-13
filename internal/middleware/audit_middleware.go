@@ -36,14 +36,14 @@ func AuditLogMiddleware(database *db.Database) func(http.Handler) http.Handler {
 				action := r.Method + " " + r.URL.Path
 				targetType := getTargetType(r.URL.Path)
 
-				_, err := database.GetDB().Exec(
-					"INSERT INTO user_audit_log (user_id, action, target_type, target_id, details_json) VALUES ($1, $2, $3, $4, $5)",
+				err := database.GetDB().Exec(
+					"INSERT INTO user_audit_log (user_id, action, target_type, target_id, details_json) VALUES (?, ?, ?, ?, ?)",
 					claims.UserID,
 					action,
 					targetType,
 					targetID,
 					string(details),
-				)
+				).Error
 				if err != nil {
 					// Log the error but don't block the request
 					// In a real application, you'd use a proper logger here
