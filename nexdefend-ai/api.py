@@ -1,3 +1,7 @@
+import os
+import logging
+import requests
+import nmap
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 from prometheus_client import Counter, make_wsgi_app, Gauge
@@ -118,7 +122,7 @@ def train():
 def analyze_single_event(event_id):
     try:
         auth_header = request.headers.get("Authorization")
-        if not auth_header or auth_header != f"Bearer {AI_SERVICE_TOKEN}":
+        if not auth_header or auth_header != f"Bearer {app.config['AI_SERVICE_TOKEN']}":
             logging.warning(f"Unauthorized analysis attempt for event {event_id}")
             return make_response(jsonify({"error": "Unauthorized"}), 401)
         event = fetch_suricata_event_by_id(event_id)
@@ -143,7 +147,7 @@ def analyze_single_event(event_id):
 def scan_host():
     try:
         auth_header = request.headers.get("Authorization")
-        if not auth_header or auth_header != f"Bearer {AI_SERVICE_TOKEN}":
+        if not auth_header or auth_header != f"Bearer {app.config['AI_SERVICE_TOKEN']}":
             logging.warning("Unauthorized scan attempt")
             return make_response(jsonify({"error": "Unauthorized"}), 401)
 
