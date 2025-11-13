@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import AppLayout from './layouts/AppLayout'
 import Alerts from './pages/Alerts'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Incidents from './pages/Incidents'
@@ -17,6 +16,7 @@ import SOARPlaybookEditor from './pages/SOARPlaybookEditor'
 import SecurityOverview from './pages/SecurityOverview'
 import NetworkDashboard from './pages/NetworkDashboard'
 import PlatformHealth from './pages/PlatformHealth'
+import DashboardIndex from './pages/Dashboard/DashboardIndex'
 
 function App() {
   return (
@@ -28,8 +28,8 @@ function App() {
           <Route path="/register" element={<Register />} />
         </Route>
         <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<AppLayout />}>
-            <Route index element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />}>
+            <Route index element={<DashboardIndex />} />
             <Route path="ai-dashboard" element={<AIDashboardPage />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="alert-triage" element={<AlertTriage />} />
