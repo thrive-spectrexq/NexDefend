@@ -8,9 +8,7 @@ from api import app
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
-    # Set dummy env vars for testing
-    os.environ['AI_SERVICE_TOKEN'] = 'test-service-token'
-    os.environ['GO_API_URL'] = 'http://test-go-api/api/v1'
+    app.config['AI_SERVICE_TOKEN'] = 'test-service-token'
     with app.test_client() as client:
         yield client
 
@@ -41,12 +39,14 @@ def test_get_api_metrics(client):
 def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     """Tests a successful scan that finds open ports and creates vulnerabilities."""
     # Mock the Nmap scan result
+    target = '127.0.0.1'
     mock_nm = MagicMock()
-    mock_nm.all_hosts.return_value = ['127.0.0.1']
-    mock_nm[target].__contains__.return_value = True
-    mock_nm['127.0.0.1']['tcp'] = {
-        22: {'state': 'open', 'name': 'ssh'},
-        80: {'state': 'open', 'name': 'http'}
+    mock_nm.all_hosts.return_value = [target]
+    mock_nm.__getitem__.return_value = {
+        'tcp': {
+            22: {'state': 'open', 'name': 'ssh'},
+            80: {'state': 'open', 'name': 'http'}
+        }
     }
     mock_port_scanner.return_value = mock_nm
     
@@ -54,7 +54,7 @@ def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     mock_requests_post.return_value.status_code = 201
 
     headers = {'Authorization': 'Bearer test-service-token'}
-    response = client.post('/scan', json={'target': '127.0.0.1'}, headers=headers)
+    response = client.post('/scan', json={'target': target}, headers=headers)
     
     data = response.get_json()
     assert response.status_code == 200
@@ -68,11 +68,12 @@ def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     assert first_call_args['severity'] == 'High'
 
 # --- Test /analyze-event Endpoint ---
+@patch('api.update_event_analysis_status')
 @patch('api.fetch_suricata_event_by_id')
 @patch('api.preprocess_events')
 @patch('api.detect_anomalies')
 @patch('api.requests.post')
-def test_analyze_event_creates_incident(mock_requests_post, mock_detect, mock_preprocess, mock_fetch, client):
+def test_analyze_event_creates_incident(mock_requests_post, mock_detect, mock_preprocess, mock_fetch, mock_update_status, client):
     """Tests that an anomalous event triggers an incident creation call."""
     # Mock the data
     mock_event = (1, '2025-11-11T20:00:00', 'alert', '1.2.3.4', '5.6.7.8', 80, 
