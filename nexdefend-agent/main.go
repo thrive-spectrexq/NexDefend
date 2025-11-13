@@ -12,9 +12,14 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/fsnotify/fsnotify"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 	"github.com/shirou/gopsutil/host"
 	psnet "github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
+
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/flow"
 )
 
 // Event is a generic wrapper for different types of security events.
@@ -71,7 +76,8 @@ func main() {
 	if kafkaBroker == "" {
 		kafkaBroker = "kafka:9092"
 	}
-	topic := "nexdefend-events"
+	eventsTopic := "nexdefend-events"
+	flowsTopic := "nexdefend-flows"
 
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
 	if err != nil {
@@ -90,9 +96,10 @@ func main() {
 		}
 	}()
 
-	go startFIMWatcher(producer, topic, config)
-	go startNetWatcher(producer, topic)
+	go startFIMWatcher(producer, eventsTopic, config)
+	go startNetWatcher(producer, eventsTopic)
 	go startHeartbeat()
+	go startFlowMonitor(producer, flowsTopic)
 
 	for {
 		processes, err := process.Processes()
@@ -131,7 +138,7 @@ func main() {
 			}
 
 			producer.Produce(&kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+				TopicPartition: kafka.TopicPartition{Topic: &eventsTopic, Partition: kafka.PartitionAny},
 				Value:          eventJSON,
 			}, nil)
 		}
@@ -339,4 +346,80 @@ func getAgentConfig() *AgentConfig {
 	}
 
 	return &config
+}
+
+func startFlowMonitor(producer *kafka.Producer, topic string) {
+	handle, err := pcap.OpenLive("eth0", 1600, true, pcap.BlockForever)
+	if err != nil {
+		log.Fatalf("Failed to open pcap handle: %v", err)
+	}
+	defer handle.Close()
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	flows := make(map[flow.Flow]flow.FlowMetrics)
+
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	go func() {
+		for range ticker.C {
+			for key, metrics := range flows {
+				if time.Since(metrics.EndTimestamp) > 30*time.Second {
+					event := Event{
+						EventType: "flow",
+						Timestamp: metrics.EndTimestamp,
+						Data: map[string]interface{}{
+							"flow":    key,
+							"metrics": metrics,
+						},
+					}
+
+					eventJSON, err := json.Marshal(event)
+					if err != nil {
+						log.Printf("Failed to marshal flow event to JSON: %v", err)
+						continue
+					}
+
+					producer.Produce(&kafka.Message{
+						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+						Value:          eventJSON,
+					}, nil)
+
+					delete(flows, key)
+				}
+			}
+		}
+	}()
+
+	for packet := range packetSource.Packets() {
+		ipLayer := packet.Layer(layers.LayerTypeIPv4)
+		if ipLayer == nil {
+			continue
+		}
+		ip, _ := ipLayer.(*layers.IPv4)
+
+		tcpLayer := packet.Layer(layers.LayerTypeTCP)
+		if tcpLayer == nil {
+			continue
+		}
+		tcp, _ := tcpLayer.(*layers.TCP)
+
+		flowKey := flow.Flow{
+			SrcIP:    ip.SrcIP.String(),
+			DstIP:    ip.DstIP.String(),
+			SrcPort:  tcp.SrcPort,
+			DstPort:  tcp.DstPort,
+			Protocol: ip.Protocol,
+		}
+
+		metrics := flows[flowKey]
+		metrics.PacketCount++
+		metrics.ByteCount += uint64(len(packet.Data()))
+		metrics.EndTimestamp = time.Now()
+		if metrics.StartTimestamp.IsZero() {
+			metrics.StartTimestamp = time.Now()
+		}
+
+		flows[flowKey] = metrics
+	}
 }
