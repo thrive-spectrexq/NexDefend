@@ -1,3 +1,4 @@
+
 package metrics
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
 // SystemMetrics holds the collected system metrics
@@ -43,7 +45,7 @@ func CollectMetrics(store MetricStore) {
 		// TODO: Pass a real organization ID to the StoreSystemMetric function.
 		organizationID := 1
 
-		metrics := SystemMetric{
+		metrics := models.SystemMetric{
 			MetricType: "cpu_load",
 			Value:      cpuLoad[0],
 			Timestamp:  time.Now(),
@@ -52,7 +54,7 @@ func CollectMetrics(store MetricStore) {
 			log.Printf("Error storing CPU metric: %v", err)
 		}
 
-		metrics = SystemMetric{
+		metrics = models.SystemMetric{
 			MetricType: "memory_usage",
 			Value:      memInfo.UsedPercent,
 			Timestamp:  time.Now(),
@@ -61,7 +63,7 @@ func CollectMetrics(store MetricStore) {
 			log.Printf("Error storing memory metric: %v", err)
 		}
 
-		metrics = SystemMetric{
+		metrics = models.SystemMetric{
 			MetricType: "disk_usage",
 			Value:      diskInfo.UsedPercent,
 			Timestamp:  time.Now(),

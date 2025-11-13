@@ -1,3 +1,4 @@
+
 package upload
 
 import (
@@ -14,7 +15,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/thrive-spectrexq/NexDefend/internal/incident"
 	"gorm.io/gorm"
 )
 
@@ -142,10 +142,10 @@ func (h *UploadHandler) UploadFileHandler(w http.ResponseWriter, r *http.Request
 		analysisResult = fmt.Sprintf("MALWARE DETECTED: %s", malwareName)
 		log.Printf("[UPLOAD] CRITICAL: Malware detected in file %s. Hash: %s, Name: %s", safeFilename, hash, malwareName)
 
-		incidentReq := incident.CreateIncidentRequest{
-			Description: fmt.Sprintf("Malware Detected in Upload: %s (File: %s)", malwareName, safeFilename),
-			Severity:    "Critical",
-		}
+		// incidentReq := incident.CreateIncidentRequest{
+		// 	Description: fmt.Sprintf("Malware Detected in Upload: %s (File: %s)", malwareName, safeFilename),
+		// 	Severity:    "Critical",
+		// }
 		// Assuming CreateIncident is also refactored to use GORM and a handler
 		// For now, this part might need adjustment based on how 'incident' package is structured.
 		// If 'incident' package is not yet refactored, this will be a blocker.

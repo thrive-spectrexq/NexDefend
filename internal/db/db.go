@@ -1,3 +1,4 @@
+
 package db
 
 import (
@@ -6,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -120,4 +122,19 @@ func getEnv(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+// GetSystemMetrics fetches system metrics from the database.
+func (d *Database) GetSystemMetrics(metricType string, from, to time.Time, organizationID int) ([]models.SystemMetric, error) {
+	var metrics []models.SystemMetric
+	if err := d.Where("metric_type = ? AND timestamp BETWEEN ? AND ? AND organization_id = ?", metricType, from, to, organizationID).Find(&metrics).Error; err != nil {
+		return nil, err
+	}
+	return metrics, nil
+}
+
+// StoreSystemMetric stores a system metric in the database.
+func (d *Database) StoreSystemMetric(metric models.SystemMetric, organizationID int) error {
+	// In a real implementation, you would store the metric in the database.
+	return nil
 }

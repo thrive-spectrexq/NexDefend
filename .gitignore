@@ -17,3 +17,8 @@ build
 
 # Go workspace file
 go.work
+
+# Environment variables
+.env
+nexdefend-ai/.env
+nexdefend-cloud-connector/.env

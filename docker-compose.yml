@@ -221,6 +221,17 @@ services:
     networks:
       - nexdefend-net
 
+  nexdefend-cloud-connector:
+    build:
+      context: nexdefend-cloud-connector
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    env_file:
+      - nexdefend-cloud-connector/.env
+    networks:
+      - nexdefend-net
+
 volumes:
   db_data:
   prometheus_data:
