@@ -1,0 +1,6 @@
+- id: rule-001
+  name: Brute Force Attack
+  conditions:
+    - "event_type == 'failed_login' && count(event.source_ip, 60) > 5"
+    - "event_type == 'successful_login' && event.source_ip == previous_event.source_ip"
+  action: "create_incident('Brute Force Attack', 'High')"

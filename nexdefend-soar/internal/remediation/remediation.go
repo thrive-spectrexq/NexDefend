@@ -1,7 +1,11 @@
 
 package remediation
 
-import "log"
+import (
+	"log"
+
+	"nexdefend/nexdefend-soar/internal/integrations/firewall"
+)
 
 // Scan triggers a scan on the target.
 func Scan(target string) {
@@ -18,5 +22,15 @@ func Isolate(target string) {
 // Block blocks the target at the firewall.
 func Block(target string) {
 	log.Printf("Blocking target: %s", target)
-	// In a real implementation, you would use a firewall to block the target.
+
+	fw := &firewall.MockFirewall{}
+	if err := fw.BlockIP(target); err != nil {
+		log.Printf("Failed to block IP address %s: %v", target, err)
+	}
+}
+
+// DisableUser disables a user in Active Directory.
+func DisableUser(username string) {
+	log.Printf("Disabling user: %s", username)
+	// In a real implementation, you would use the Active Directory API to disable the user.
 }

@@ -13,6 +13,7 @@ import (
 	"nexdefend/nexdefend-cloud-connector/internal/azure"
 	"nexdefend/nexdefend-cloud-connector/internal/config"
 	"nexdefend/nexdefend-cloud-connector/internal/gcp"
+	"nexdefend/nexdefend-cloud-connector/internal/saas"
 )
 
 func main() {
@@ -34,8 +35,9 @@ func main() {
 
 	// Start integrations
 	aws.StartAWSIntegration(producer, cfg.KafkaTopic)
-	azure.StartAzureIntegration(producer, cfg.KafkaTopic)
-	gcp.StartGCPIntegration(producer, cfg.KafkaTopic)
+	azure.StartAzureIntegration(producer, cfg.KafkaTopic, cfg.AZURE_CONNECTION_STRING, cfg.AZURE_EVENT_HUB_NAME)
+	gcp.StartGCPIntegration(producer, cfg.KafkaTopic, cfg.GCP_PROJECT_ID, cfg.GCP_SUBSCRIPTION_ID)
+	saas.StartOktaIntegration(producer, cfg.KafkaTopic, cfg.OKTA_DOMAIN, cfg.OKTA_API_KEY)
 
 	fmt.Println("NexDefend Cloud Connector is running.")
 	<-sigchan

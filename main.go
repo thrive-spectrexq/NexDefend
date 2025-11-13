@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -11,12 +12,16 @@ import (
 
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
+	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
+	"github.com/thrive-spectrexq/NexDefend/internal/enrichment"
 	"github.com/thrive-spectrexq/NexDefend/internal/ingestor"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
+	"github.com/thrive-spectrexq/NexDefend/internal/ndr"
 	"github.com/thrive-spectrexq/NexDefend/internal/routes"
 	"github.com/thrive-spectrexq/NexDefend/internal/telemetry"
+	"github.com/thrive-spectrexq/NexDefend/internal/tip"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
@@ -37,11 +42,25 @@ func main() {
 	database := db.InitDB()
 	defer db.CloseDB()
 
-	go ingestor.StartIngestor()
+	correlationEngine := &correlation.MockCorrelationEngine{}
+	go ingestor.StartIngestor(correlationEngine)
 	go metrics.CollectMetrics(database)
 
+	netflowCollector := &ndr.MockNetFlowCollector{}
+	if err := netflowCollector.StartCollector(); err != nil {
+		log.Fatalf("Failed to start NetFlow collector: %v", err)
+	}
+
+	suricataCollector := &ndr.MockSuricataCollector{}
+	if err := suricataCollector.StartCollector(); err != nil {
+		log.Fatalf("Failed to start Suricata collector: %v", err)
+	}
+
 	c := cache.NewCache()
-	router := routes.NewRouter(cfg, database, c)
+	tip := &tip.MockTIP{}
+	adConnector := &enrichment.MockActiveDirectoryConnector{}
+	snowConnector := &enrichment.MockServiceNowConnector{}
+	router := routes.NewRouter(cfg, database, c, tip, adConnector, snowConnector)
 
 	srv := &http.Server{
 		Addr:    ":8080",
@@ -59,7 +78,7 @@ func main() {
 	log.Println("Server exited gracefully")
 }
 
-func gracefulShutdown(srv *http.Server) {
+func gracefulShutdown(srv *http.server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit

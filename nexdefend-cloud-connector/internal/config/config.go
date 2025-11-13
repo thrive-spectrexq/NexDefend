@@ -19,6 +19,8 @@ type Config struct {
 	AZURE_EVENT_HUB_NAME    string
 	GCP_PROJECT_ID        string
 	GCP_SUBSCRIPTION_ID   string
+	OKTA_DOMAIN           string
+	OKTA_API_KEY          string
 }
 
 // LoadConfig loads the configuration from environment variables
@@ -38,6 +40,8 @@ func LoadConfig() *Config {
 		AZURE_EVENT_HUB_NAME:    getEnv("AZURE_EVENT_HUB_NAME", ""),
 		GCP_PROJECT_ID:        getEnv("GCP_PROJECT_ID", ""),
 		GCP_SUBSCRIPTION_ID:   getEnv("GCP_SUBSCRIPTION_ID", ""),
+		OKTA_DOMAIN:           getEnv("OKTA_DOMAIN", ""),
+		OKTA_API_KEY:          getEnv("OKTA_API_KEY", ""),
 	}
 }
 

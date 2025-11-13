@@ -19,6 +19,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/flow"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/kubernetes"
 )
 
 // Event is a generic wrapper for different types of security events.
@@ -98,6 +99,10 @@ func main() {
 	startPlatformSpecificModules(producer, eventsTopic, config)
 	go startHeartbeat()
 	go startFlowMonitor(producer, flowsTopic)
+
+	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" {
+		go kubernetes.StartKubernetesWatcher(producer, eventsTopic)
+	}
 
 	for {
 		processes, err := process.Processes()

@@ -31,6 +31,8 @@ func (p *Playbook) Execute() {
 			remediation.Isolate(action.Params["target"])
 		case "block":
 			remediation.Block(action.Params["target"])
+		case "disable_user":
+			remediation.DisableUser(action.Params["username"])
 		default:
 			log.Printf("Unknown action type: %s", action.Type)
 		}

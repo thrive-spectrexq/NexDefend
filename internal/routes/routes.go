@@ -11,13 +11,15 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/compliance"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
+	"github.com/thrive-spectrexq/NexDefend/internal/enrichment"
 	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
+	"github.com/thrive-spectrexq/NexDefend/internal/tip"
 )
 
 // NewRouter creates and configures a new router
-func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.Router {
+func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip tip.TIP, adConnector enrichment.ActiveDirectoryConnector, snowConnector enrichment.ServiceNowConnector) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(func(next http.Handler) http.Handler {
 		return middleware.RateLimiter(next, 100, 200)
@@ -40,6 +42,16 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 
 	// Agent Enrollment
 	api.HandleFunc("/agents/enroll", handlers.EnrollAgentHandler()).Methods("POST")
+
+	// TIP
+	api.HandleFunc("/tip/check", handlers.CheckIOCHandler(tip)).Methods("POST")
+
+	// Enrichment
+	api.HandleFunc("/enrichment/users/{username}", handlers.GetUserHandler(adConnector)).Methods("GET")
+	api.HandleFunc("/enrichment/assets/{hostname}", handlers.GetAssetHandler(snowConnector)).Methods("GET")
+
+	// Case Management
+	api.HandleFunc("/cases", handlers.CreateCaseHandler()).Methods("POST")
 
 	// Incident Management Routes (CRUD)
 	// incidentHandler := handlers.NewIncidentHandler(database.GetDB())
