@@ -62,26 +62,29 @@ NexDefend operates as a distributed system of specialized microservices communic
 
 ```mermaid
 graph TD
-    subgraph User & Endpoints
+    %% ========== USER & ENDPOINTS ==========
+    subgraph U[User & Endpoints]
         direction TB
         F[Browser - React UI]
         A[nexdefend-agent]
     end
 
-    subgraph Core Platform
+    %% ========== CORE PLATFORM ==========
+    subgraph C[Core Platform]
         direction LR
         K[Kafka Bus]
         DB[(PostgreSQL DB)]
         OS[(OpenSearch)]
     end
 
-    subgraph Services
+    %% ========== SERVICES ==========
+    subgraph SVC[Services]
         direction TB
         API[Go Core API]
         AI[Python AI Service]
         SOAR[Go SOAR Service]
         I[Go Ingestor]
-        S[Suricata]
+        SUR[Suricata]
         G[Grafana]
         P[Prometheus]
         CC[Cloud Connector]
@@ -90,50 +93,43 @@ graph TD
         NDR[Network Detection & Response]
     end
 
-    %% UI -> Backend
-    F -- HTTPS API --> API
+    %% ========== CONNECTIONS ==========
+    %% UI / Agent / Connectors
+    F -->|HTTPS API| API
+    A -->|Events| K
+    CC -->|Events| K
+    NDR -->|Events| K
 
-    %% Agent -> Backend
-    A -- Events --> K[Kafka - nexdefend-events]
-
-    %% Cloud Connector -> Backend
-    CC -- Events --> K[Kafka - nexdefend-events]
-
-    %% NDR -> Backend
-    NDR -- Events --> K[Kafka - nexdefend-events]
-
-    %% Ingestor -> Data Stores
-    I -- Consumes --> K
-    I -- Writes Agent Logs --> OS
+    %% Ingestor & Data Flow
+    I -->|Consumes| K
+    I -->|Writes Agent Logs| OS
 
     %% AI Service
-    AI -- Consumes --> K
-    AI -- Creates Incidents --> API
-    AI -- Reads Events --> DB
+    AI -->|Consumes| K
+    AI -->|Creates Incidents| API
+    AI -->|Reads Events| DB
 
     %% Core API
-    API -- Reads/Writes --> DB
-    API -- Produces --> K[Kafka - incidents]
-    API -- Proxies Scan --> AI
+    API -->|Reads/Writes| DB
+    API -->|Produces| K
+    API -->|Proxies Scan| AI
 
-    %% SOAR Service
-    SOAR -- Consumes --> K[Kafka - incidents]
-    SOAR -- Calls Scan --> AI
+    %% SOAR
+    SOAR -->|Consumes Incidents| K
+    SOAR -->|Calls Scan| AI
 
-    %% TIP -> Backend
-    TIP -- Feeds --> API
-
-    %% Correlation Engine -> Backend
-    CE -- Correlates --> API
+    %% TIP / CE
+    TIP -->|Feeds| API
+    CE -->|Correlates| API
 
     %% Observability
-    P -- Scrapes --> API
-    P -- Scrapes --> AI
-    G -- Reads --> P
+    P -->|Scrapes| API
+    P -->|Scrapes| AI
+    G -->|Reads| P
 
-    %% Suricata (File-based, as per docker-compose)
-    S -- Writes --> LogVol(eve.json Volume)
-    API -- Reads --> LogVol
+    %% Suricata
+    SUR -->|Writes Logs| OS
+    API -->|Reads Logs| OS
 ```
 
 ### Service Overview
