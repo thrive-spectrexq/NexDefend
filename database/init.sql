@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS fim_baseline CASCADE;
 DROP TABLE IF EXISTS malware_hash_registry CASCADE;
 DROP TABLE IF EXISTS agent_configs CASCADE;
 DROP TABLE IF EXISTS assets CASCADE;
+DROP TABLE IF EXISTS cloud_credentials CASCADE;
 
 -- Create 'organizations' table for multi-tenancy
 CREATE TABLE organizations (
@@ -253,6 +254,17 @@ CREATE TABLE dashboards (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
+);
+
+-- Create 'cloud_credentials' table
+CREATE TABLE cloud_credentials (
+    id SERIAL PRIMARY KEY,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    credentials_encrypted TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(organization_id, provider)
 );
 
 -- Add indexes for faster lookups

@@ -79,6 +79,7 @@ services:
       POSTGRES_USER: nexdefend
       POSTGRES_PASSWORD: password
       POSTGRES_DB: nexdefend_db
+      DB_HOST: localhost
     ports:
       - "5432:5432"
     volumes:
