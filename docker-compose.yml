@@ -248,7 +248,7 @@ services:
       - nexdefend-net
 
   pg_exporter:
-    image: prometheus/pg_exporter
+    image: quay.io/prometheuscommunity/postgres-exporter
     container_name: pg_exporter
     ports:
       - "9187:9187"
