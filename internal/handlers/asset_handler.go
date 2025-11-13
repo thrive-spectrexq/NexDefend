@@ -1,179 +1,110 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/thrive-spectrexq/NexDefend/internal/asset"
-	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"gorm.io/gorm"
 )
 
-func CreateAssetHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		var a asset.Asset
-		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
-
-		a.OrganizationID = orgID
-		if err := db.Create(&a).Error; err != nil {
-			http.Error(w, "Failed to create asset", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(a)
-	}
+type AssetHandler struct {
+	db *gorm.DB
 }
 
-func GetAssetsHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		var assets []asset.Asset
-		if err := db.Where("organization_id = ?", orgID).Find(&assets).Error; err != nil {
-			http.Error(w, "Failed to get assets", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(assets)
-	}
+func NewAssetHandler(db *gorm.DB) *AssetHandler {
+	return &AssetHandler{db: db}
 }
 
-func GetAssetHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			http.Error(w, "Invalid asset ID", http.StatusBadRequest)
-			return
-		}
-
-		var a asset.Asset
-		if err := db.Where("id = ? AND organization_id = ?", id, orgID).First(&a).Error; err != nil {
-			http.Error(w, "Asset not found", http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(a)
+func (h *AssetHandler) CreateAsset(w http.ResponseWriter, r *http.Request) {
+	var asset models.Asset
+	if err := json.NewDecoder(r.Body).Decode(&asset); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+
+	if err := h.db.Create(&asset).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(asset)
 }
 
-func UpdateAssetHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			http.Error(w, "Invalid asset ID", http.StatusBadRequest)
-			return
-		}
-
-		var a asset.Asset
-		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
-
-		if err := db.Model(&asset.Asset{}).Where("id = ? AND organization_id = ?", id, orgID).Updates(&a).Error; err != nil {
-			http.Error(w, "Failed to update asset", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusNoContent)
+func (h *AssetHandler) GetAssets(w http.ResponseWriter, r *http.Request) {
+	var assets []models.Asset
+	if err := h.db.Find(&assets).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	json.NewEncoder(w).Encode(assets)
 }
 
-func DeleteAssetHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			http.Error(w, "Invalid asset ID", http.StatusBadRequest)
-			return
-		}
-
-		if err := db.Where("id = ? AND organization_id = ?", id, orgID).Delete(&asset.Asset{}).Error; err != nil {
-			http.Error(w, "Failed to delete asset", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusNoContent)
+func (h *AssetHandler) GetAsset(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		return
 	}
+
+	var asset models.Asset
+	if err := h.db.First(&asset, id).Error; err != nil {
+		http.Error(w, "Asset not found", http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(asset)
 }
 
-func HeartbeatHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		var a asset.Asset
-		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
-
-		a.OrganizationID = orgID
-		a.LastHeartbeat = sql.NullTime{Time: time.Now(), Valid: true}
-		a.Status = sql.NullString{String: "online", Valid: true}
-
-		if err := db.Save(&a).Error; err != nil {
-			http.Error(w, "Failed to process heartbeat", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
+func (h *AssetHandler) UpdateAsset(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		return
 	}
+
+	var asset models.Asset
+	if err := h.db.First(&asset, id).Error; err != nil {
+		http.Error(w, "Asset not found", http.StatusNotFound)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&asset); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.db.Save(&asset).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(asset)
 }
 
-func StartActiveAgentCollector(db *gorm.DB) {
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		var count int64
-		if err := db.Model(&asset.Asset{}).Where("last_heartbeat > ?", time.Now().Add(-5*time.Minute)).Count(&count).Error; err != nil {
-			continue
-		}
-		metrics.ActiveAgents.Set(float64(count))
+func (h *AssetHandler) DeleteAsset(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		return
 	}
+
+	if err := h.db.Delete(&models.Asset{}, id).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AssetHandler) Heartbeat(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement heartbeat logic
+	w.WriteHeader(http.StatusOK)
 }

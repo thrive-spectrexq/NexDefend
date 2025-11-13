@@ -16,6 +16,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/tip"
+	"github.com/thrive-spectrexq/NexDefend/internal/upload"
 )
 
 // NewRouter creates and configures a new router
@@ -55,50 +56,51 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	api.HandleFunc("/cases", handlers.CreateCaseHandler()).Methods("POST")
 
 	// Incident Management Routes (CRUD)
-	// incidentHandler := handlers.NewIncidentHandler(database.GetDB())
-	// api.HandleFunc("/incidents", incidentHandler.CreateIncident).Methods("POST")
-	// api.HandleFunc("/incidents", incidentHandler.GetIncidents).Methods("GET")
-	// api.HandleFunc("/incidents/{id:[0-9]+}", incidentHandler.GetIncident).Methods("GET")
-	// api.HandleFunc("/incidents/{id:[0-9]+}", incidentHandler.UpdateIncident).Methods("PUT")
+	incidentHandler := handlers.NewIncidentHandler(database.GetDB())
+	api.HandleFunc("/incidents", incidentHandler.CreateIncident).Methods("POST")
+	api.HandleFunc("/incidents", incidentHandler.GetIncidents).Methods("GET")
+	api.HandleFunc("/incidents/{id:[0-9]+}", incidentHandler.GetIncident).Methods("GET")
+	api.HandleFunc("/incidents/{id:[0-9]+}", incidentHandler.UpdateIncident).Methods("PUT")
 
 	// Vulnerability Management Routes (CRUD)
-	// vulnerabilityHandler := handlers.NewVulnerabilityHandler(database.GetDB())
-	// api.HandleFunc("/vulnerabilities", vulnerabilityHandler.CreateVulnerability).Methods("POST")
-	// api.HandleFunc("/vulnerabilities", vulnerabilityHandler.GetVulnerabilities).Methods("GET")
-	// api.HandleFunc("/vulnerabilities/{id:[0-9]+}", vulnerabilityHandler.GetVulnerability).Methods("GET")
-	// api.HandleFunc("/vulnerabilities/{id:[0-9]+}", vulnerabilityHandler.UpdateVulnerability).Methods("PUT")
+	vulnerabilityHandler := handlers.NewVulnerabilityHandler(database.GetDB())
+	api.HandleFunc("/vulnerabilities", vulnerabilityHandler.CreateVulnerability).Methods("POST")
+	api.HandleFunc("/vulnerabilities", vulnerabilityHandler.GetVulnerabilities).Methods("GET")
+	api.HandleFunc("/vulnerabilities/{id:[0-9]+}", vulnerabilityHandler.GetVulnerability).Methods("GET")
+	api.HandleFunc("/vulnerabilities/{id:[0-9]+}", vulnerabilityHandler.UpdateVulnerability).Methods("PUT")
 
 	// Asset Management Routes (CRUD)
-	// assetHandler := handlers.NewAssetHandler(database.GetDB())
-	// api.HandleFunc("/assets", assetHandler.CreateAsset).Methods("POST")
-	// api.HandleFunc("/assets", assetHandler.GetAssets).Methods("GET")
-	// api.HandleFunc("/assets/{id:[0-9]+}", assetHandler.GetAsset).Methods("GET")
-	// api.HandleFunc("/assets/{id:[0-9]+}", assetHandler.UpdateAsset).Methods("PUT")
-	// api.HandleFunc("/assets/{id:[0-9]+}", assetHandler.DeleteAsset).Methods("DELETE")
-	// api.HandleFunc("/assets/heartbeat", assetHandler.Heartbeat).Methods("POST")
+	assetHandler := handlers.NewAssetHandler(database.GetDB())
+	api.HandleFunc("/assets", assetHandler.CreateAsset).Methods("POST")
+	api.HandleFunc("/assets", assetHandler.GetAssets).Methods("GET")
+	api.HandleFunc("/assets/{id:[0-9]+}", assetHandler.GetAsset).Methods("GET")
+	api.HandleFunc("/assets/{id:[0-9]+}", assetHandler.UpdateAsset).Methods("PUT")
+	api.HandleFunc("/assets/{id:[0-9]+}", assetHandler.DeleteAsset).Methods("DELETE")
+	api.HandleFunc("/assets/heartbeat", assetHandler.Heartbeat).Methods("POST")
 
 	// Agent Fleet Management
-	// agentHandler := handlers.NewAgentHandler(database.GetDB())
-	// api.HandleFunc("/agent/config/{hostname}", agentHandler.GetAgentConfig).Methods("GET")
+	agentHandler := handlers.NewAgentHandler(database.GetDB())
+	api.HandleFunc("/agent/config/{hostname}", agentHandler.GetAgentConfig).Methods("GET")
 
 	// File Upload & Analysis
-	// api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
+	uploadHandler := upload.NewUploadHandler(database.GetDB())
+	api.HandleFunc("/upload", uploadHandler.UploadFileHandler).Methods("POST")
 
 	// Compliance & Reporting
 	api.HandleFunc("/audit", compliance.AuditHandler).Methods("GET")
 	api.HandleFunc("/reports/compliance", compliance.GenerateComplianceReport).Methods("GET")
 
 	// System Metrics
-	// metricsHandler := handlers.NewMetricsHandler(database)
-	// api.HandleFunc("/metrics", metricsHandler.GetMetrics).Methods("GET")
+	metricsHandler := handlers.NewMetricsHandler(database)
+	api.HandleFunc("/metrics", metricsHandler.GetMetrics).Methods("GET")
 
 	// Handlers to query Python API
 	api.HandleFunc("/python-analysis", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
 	api.HandleFunc("/python-anomalies", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
 
 	// Cloud Credentials Management
-	// cloudCredentialHandler := handlers.NewCloudCredentialHandler(database.GetDB())
-	// api.HandleFunc("/cloud-credentials", cloudCredentialHandler.CreateCloudCredential).Methods("POST")
+	cloudCredentialHandler := handlers.NewCloudCredentialHandler(database.GetDB())
+	api.HandleFunc("/cloud-credentials", cloudCredentialHandler.CreateCloudCredential).Methods("POST")
 
 	// --- Admin Routes ---
 	adminRoutes := api.PathPrefix("").Subrouter()

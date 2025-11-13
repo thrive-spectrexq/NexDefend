@@ -11,6 +11,9 @@ import (
 	"github.com/opensearch-project/opensearch-go/v2"
 )
 
+type contextKey string
+const organizationIDKey = contextKey("organizationID")
+
 func GetEventsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
