@@ -1,3 +1,4 @@
+
 import logging
 import os
 import json
@@ -5,6 +6,8 @@ import requests
 from confluent_kafka import Consumer, KafkaException
 import sys
 import time
+from advanced_threat_detection import analyze_command_line
+from mitre_attack import get_mitre_technique
 
 # --- Configuration ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -30,9 +33,12 @@ def calculate_risk_score(severity, event_data):
     if "/tmp" in event_data.get("cmdline", ""):
         base_score += 20
 
+    if event_data.get("mitre_technique"):
+        base_score += 10
+
     return base_score
 
-def create_incident_in_backend(description, severity, source_ip=None, entity_name=None, risk_score=None, disposition=None):
+def create_incident_in_backend(description, severity, source_ip=None, entity_name=None, risk_score=None, disposition=None, mitre_technique=None):
     """Calls the Go backend to create a new incident."""
     try:
         payload = {
@@ -42,6 +48,7 @@ def create_incident_in_backend(description, severity, source_ip=None, entity_nam
             "risk_score": risk_score,
             "entity_name": entity_name,
             "disposition": disposition,
+            "mitre_technique": mitre_technique,
         }
         if source_ip:
             payload["source_ip"] = source_ip
@@ -66,8 +73,22 @@ def process_event(event):
 
     if event_type == "process":
         process_data = event['data']
-        if "/tmp" in process_data.get("cmdline", ""):
-            logging.warning(f"Suspicious process detected: {process_data['cmdline']} (PID: {process_data['pid']})")
+        cmdline = process_data.get("cmdline", "")
+
+        # Advanced threat detection
+        if analyze_command_line(cmdline):
+            description = f"Advanced Threat Detection: Suspicious command line detected: {cmdline}"
+            risk_score = calculate_risk_score("High", {"cmdline": cmdline})
+            create_incident_in_backend(
+                description,
+                "High",
+                entity_name=process_data.get("pid"),
+                risk_score=risk_score,
+                disposition="Not Reviewed",
+            )
+
+        if "/tmp" in cmdline:
+            logging.warning(f"Suspicious process detected: {cmdline} (PID: {process_data['pid']})")
             suspicious_processes[process_data['pid']] = time.time()
 
     elif event_type == "net_connection":
@@ -86,6 +107,24 @@ def process_event(event):
                     disposition="Not Reviewed",
                 )
                 del suspicious_processes[pid]
+
+    elif event_type == "alert":
+        alert_data = event.get("alert", {})
+        signature = alert_data.get("signature")
+        if signature:
+            mitre_technique = get_mitre_technique(signature)
+            if mitre_technique:
+                description = f"MITRE ATT&CK Detection: {signature}"
+                risk_score = calculate_risk_score("Medium", {"mitre_technique": mitre_technique})
+                create_incident_in_backend(
+                    description,
+                    "Medium",
+                    source_ip=event.get("src_ip"),
+                    entity_name=event.get("src_ip"),
+                    risk_score=risk_score,
+                    disposition="Not Reviewed",
+                    mitre_technique=mitre_technique,
+                )
 
     for pid, timestamp in list(suspicious_processes.items()):
         if time.time() - timestamp > 300:

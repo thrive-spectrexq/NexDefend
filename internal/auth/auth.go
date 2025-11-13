@@ -1,8 +1,8 @@
+
 package auth
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // Claims struct for storing the user ID, roles, and organization ID in the JWT token
@@ -66,7 +67,7 @@ func GenerateJWT(userId int, roles []string, organizationID int, jwtKey []byte) 
 }
 
 // RegisterHandler handles new user registrations
-func RegisterHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
+func RegisterHandler(db *gorm.DB, jwtKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var user User
 		err := json.NewDecoder(r.Body).Decode(&user)
@@ -86,8 +87,8 @@ func RegisterHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 			return
 		}
 
-		_, err = db.Exec("INSERT INTO users (username, password, email, organization_id) VALUES ($1, $2, $3, $4)", user.Username, hashedPassword, user.Email, user.OrganizationID)
-		if err != nil {
+		user.Password = hashedPassword
+		if err := db.Create(&user).Error; err != nil {
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
@@ -97,7 +98,7 @@ func RegisterHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 }
 
 // LoginHandler handles user login and returns JWT upon success
-func LoginHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
+func LoginHandler(db *gorm.DB, jwtKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var creds User
 		err := json.NewDecoder(r.Body).Decode(&creds)
@@ -107,13 +108,8 @@ func LoginHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 		}
 
 		var user User
-		err = db.QueryRow("SELECT id, username, password, email, organization_id FROM users WHERE username = $1", creds.Username).Scan(&user.ID, &user.Username, &user.Password, &user.Email, &user.OrganizationID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				http.Error(w, "Invalid username or password", http.StatusUnauthorized)
-				return
-			}
-			http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		if err := db.Where("username = ?", creds.Username).First(&user).Error; err != nil {
+			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
@@ -122,21 +118,10 @@ func LoginHandler(db *sql.DB, jwtKey []byte) http.HandlerFunc {
 			return
 		}
 
-		rows, err := db.Query("SELECT r.name FROM roles r JOIN user_roles ur ON r.id = ur.role_id WHERE ur.user_id = $1", user.ID)
-		if err != nil {
+		var roles []string
+		if err := db.Table("roles").Select("roles.name").Joins("join user_roles on roles.id = user_roles.role_id").Where("user_roles.user_id = ?", user.ID).Scan(&roles).Error; err != nil {
 			http.Error(w, "Failed to get user roles", http.StatusInternalServerError)
 			return
-		}
-		defer rows.Close()
-
-		var roles []string
-		for rows.Next() {
-			var role string
-			if err := rows.Scan(&role); err != nil {
-				http.Error(w, "Failed to scan role", http.StatusInternalServerError)
-				return
-			}
-			roles = append(roles, role)
 		}
 
 		token, err := GenerateJWT(user.ID, roles, user.OrganizationID, jwtKey)
