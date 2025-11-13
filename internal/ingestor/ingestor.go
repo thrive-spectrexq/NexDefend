@@ -52,7 +52,7 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine) {
 	topic := "nexdefend-events"
 	err = consumer.SubscribeTopics([]string{topic}, nil)
 	if err != nil {
-		log.Fatalf("Failed to subscribe to topic %s: %v", err)
+		log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
 	}
 
 	log.Println("Ingestor service started. Waiting for messages...")

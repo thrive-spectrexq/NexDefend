@@ -11,23 +11,26 @@ The platform is a collection of specialized services working in concert.
 ### 1. Detection & Data Collection
 
 *   **Endpoint Agent (nexdefend-agent)**: A lightweight Go agent that provides deep endpoint visibility. It streams security-relevant events to the Kafka pipeline.
-    *   **Cross-Platform Support**: The agent is designed to run on both Linux and Windows environments.
+    *   **Cross-Platform Support**: The agent is designed to run on both Linux, Windows and macOS environments.
     *   **Process Monitoring**: Captures process creation events, including PID, name, and command line arguments.
     *   **File Integrity Monitoring (FIM)**: Uses `fsnotify` to monitor critical files and directories (e.g., `/etc`) for unauthorized changes.
     *   **Network Connection Monitoring**: Tracks new network connections, linking them to specific processes.
     *   **Windows Event Log Collection**: On Windows, the agent collects and forwards security-relevant event logs.
-*   **Network Intrusion Detection (Suricata)**: The platform is configured to run Suricata, a high-performance Network IDS, to monitor network traffic for known threats.
+    *   **Container/Kubernetes Support**: The agent can be deployed as a DaemonSet in Kubernetes to monitor K8s audit logs and container runtime events.
+    *   **Osquery Integration**: Allows analysts to run live SQL queries against the fleet from the NexDefend UI.
+*   **Network Detection & Response (NDR)**: The platform ingests network data from sources like NetFlow, sFlow, Zeek, or Suricata.
 *   **Malware Hash Detection**: All file uploads are checked against a known malware hash registry stored in the database.
-*   **Cloud Connector (nexdefend-cloud-connector)**: A dedicated service for ingesting security logs and events from cloud providers (e.g., AWS CloudTrail, Azure Monitor, Google Cloud Logging).
+*   **Cloud Connector (nexdefend-cloud-connector)**: A dedicated service for ingesting security logs and events from cloud providers (e.g., AWS CloudTrail, Azure Monitor, Google Cloud Logging) and SaaS applications (e.g., Okta, Google Workspace, Microsoft 365).
 
 ### 2. AI & Analytics (nexdefend-ai)
 
 *   **ML Anomaly Detection**: Uses a pre-trained `IsolationForest` model to detect anomalies in Suricata event data. A dedicated `/train` endpoint allows for retraining the model.
 *   **Automated Incident Creation**: The AI service automatically creates "Critical" or "High" severity incidents in the backend when anomalies are detected.
 *   **Active Vulnerability Scanning**: Exposes a secure `/scan` endpoint that uses Nmap to perform on-demand port scanning, automatically creating vulnerability records for any open ports discovered.
-*   **User & Entity Behavior Analytics (UEBA)**: A background worker consumes agent events from Kafka to perform simple behavioral analysis, such as flagging a process that starts from `/tmp` and immediately makes a network connection.
+*   **User & Entity Behavior Analytics (UEBA)**: A background worker consumes agent events from Kafka to perform behavioral analysis and detect anomalies.
 *   **MITRE ATT&CK Mapping**: Detected threats and anomalies are automatically mapped to specific MITRE ATT&CK techniques.
-*   **Advanced Threat Detection**: The platform uses advanced threat detection models, such as those based on Natural Language Processing (NLP) for analyzing textual logs (e.g., PowerShell scripts, command-line arguments).
+*   **Advanced Threat Detection**: The platform uses advanced threat detection models, such as those based on Natural Language Processing (NLP) for analyzing textual logs (e.g., PowerShell scripts, command-line arguments) and detecting DGA domains.
+*   **Threat Intelligence Platform (TIP)**: Ingests threat intelligence feeds (e.g., MISP, Abuse.ch, OTX) and correlates all incoming data against these IOCs in real-time.
 
 ### 3. Response & Orchestration (nexdefend-soar)
 
@@ -48,6 +51,7 @@ The platform is a collection of specialized services working in concert.
     *   **Prometheus**: Scrapes metrics from the Go API and Python AI service.
     *   **Grafana**: Provides pre-built dashboards for monitoring the AI service's performance (e.g., events processed, anomalies detected).
 *   **Agent Management**: A dedicated API for agent registration and configuration management.
+*   **Asset & Identity Enrichment**: Connectors to Active Directory / Okta / Azure AD and CMDBs (like ServiceNow) to enrich asset and identity data.
 
 ## Architecture
 
@@ -78,6 +82,9 @@ graph TD
         G[Grafana]
         P[Prometheus]
         CC[Cloud Connector]
+        TIP[Threat Intelligence Platform]
+        CE[Correlation Engine]
+        NDR[Network Detection & Response]
     end
 
     %% UI -> Backend
@@ -88,6 +95,9 @@ graph TD
 
     %% Cloud Connector -> Backend
     CC -- Events --> K[Kafka - nexdefend-events]
+
+    %% NDR -> Backend
+    NDR -- Events --> K[Kafka - nexdefend-events]
 
     %% Ingestor -> Data Stores
     I -- Consumes --> K
@@ -106,6 +116,12 @@ graph TD
     %% SOAR Service
     SOAR -- Consumes --> K[Kafka - incidents]
     SOAR -- Calls Scan --> AI
+
+    %% TIP -> Backend
+    TIP -- Feeds --> API
+
+    %% Correlation Engine -> Backend
+    CE -- Correlates --> API
 
     %% Observability
     P -- Scrapes --> API
@@ -132,6 +148,9 @@ graph TD
 | `kafka`/`zookeeper` | N/A        | The central event bus for decoupling services and handling high-throughput event data. |
 | `suricata`        | N/A        | Network IDS. Shares its log volume with the `api` service for ingestion.                 |
 | `prometheus`/`grafana` | N/A        | Provides platform-level monitoring and metrics visualization.                          |
+| `tip`             | Go         | Ingests threat intelligence feeds and correlates IOCs.                               |
+| `correlation-engine` | Go      | Links events and creates high-fidelity alerts.                                       |
+| `ndr`             | Go         | Ingests network data from sources like NetFlow, sFlow, Zeek, or Suricata.            |
 
 ## Getting Started
 

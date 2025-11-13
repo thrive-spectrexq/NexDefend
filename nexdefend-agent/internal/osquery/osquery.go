@@ -1,12 +1,7 @@
 
 package osquery
 
-import (
-	"log"
-
-	"github.com/osquery/osquery-go"
-	"github.com/osquery/osquery-go/plugin/logger"
-)
+import "log"
 
 // Query performs a query on Osquery.
 func Query(query string) ([]map[string]string, error) {

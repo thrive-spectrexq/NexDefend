@@ -2,4 +2,7 @@ module github.com/thrive-spectrexq/NexDefend/nexdefend-soar
 
 go 1.24.3
 
-require github.com/confluentinc/confluent-kafka-go/v2 v2.12.0
+require (
+	github.com/confluentinc/confluent-kafka-go/v2 v2.12.0
+	gopkg.in/yaml.v2 v2.4.0
+)
