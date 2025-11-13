@@ -8,7 +8,7 @@ const Settings = () => {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await fetch('/api/v1/cloud-credentials', {
