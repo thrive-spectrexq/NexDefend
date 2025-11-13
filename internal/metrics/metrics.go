@@ -40,12 +40,15 @@ func CollectMetrics(store MetricStore) {
 			continue
 		}
 
+		// TODO: Pass a real organization ID to the StoreSystemMetric function.
+		organizationID := 1
+
 		metrics := SystemMetric{
 			MetricType: "cpu_load",
 			Value:      cpuLoad[0],
 			Timestamp:  time.Now(),
 		}
-		if err := store.StoreSystemMetric(metrics); err != nil {
+		if err := store.StoreSystemMetric(metrics, organizationID); err != nil {
 			log.Printf("Error storing CPU metric: %v", err)
 		}
 
@@ -54,7 +57,7 @@ func CollectMetrics(store MetricStore) {
 			Value:      memInfo.UsedPercent,
 			Timestamp:  time.Now(),
 		}
-		if err := store.StoreSystemMetric(metrics); err != nil {
+		if err := store.StoreSystemMetric(metrics, organizationID); err != nil {
 			log.Printf("Error storing memory metric: %v", err)
 		}
 
@@ -63,7 +66,7 @@ func CollectMetrics(store MetricStore) {
 			Value:      diskInfo.UsedPercent,
 			Timestamp:  time.Now(),
 		}
-		if err := store.StoreSystemMetric(metrics); err != nil {
+		if err := store.StoreSystemMetric(metrics, organizationID); err != nil {
 			log.Printf("Error storing disk metric: %v", err)
 		}
 	}

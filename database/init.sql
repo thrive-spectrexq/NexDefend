@@ -20,6 +20,8 @@ DROP TABLE IF EXISTS suricata_events CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS fim_baseline CASCADE;
 DROP TABLE IF EXISTS malware_hash_registry CASCADE;
+DROP TABLE IF EXISTS agent_configs CASCADE;
+DROP TABLE IF EXISTS assets CASCADE;
 
 -- Create 'organizations' table for multi-tenancy
 CREATE TABLE organizations (
@@ -51,6 +53,28 @@ CREATE TABLE user_roles (
     PRIMARY KEY (user_id, role_id)
 );
 
+-- Create 'assets' table
+CREATE TABLE assets (
+    id SERIAL PRIMARY KEY,
+    hostname VARCHAR(255) UNIQUE NOT NULL,
+    ip_address VARCHAR(255),
+    os_version VARCHAR(255),
+    mac_address VARCHAR(255),
+    agent_version VARCHAR(50),
+    status VARCHAR(50),
+    last_heartbeat TIMESTAMP,
+    criticality VARCHAR(50),
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
+);
+
+-- Create 'agent_configs' table
+CREATE TABLE agent_configs (
+    id SERIAL PRIMARY KEY,
+    asset_id INT REFERENCES assets(id) ON DELETE CASCADE,
+    config_jsonb JSONB,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
+);
+
 -- Create 'suricata_events' table to store all Suricata logs
 CREATE TABLE suricata_events (
     id SERIAL PRIMARY KEY,
@@ -78,16 +102,18 @@ CREATE TABLE threats (
     destination_ip INET,
     destination_port INT,
     event_type VARCHAR(50),
-    related_event_id INT REFERENCES suricata_events(id) ON DELETE SET NULL
+    related_event_id INT REFERENCES suricata_events(id) ON DELETE SET NULL,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'alerts' table to store alert data
 CREATE TABLE alerts (
     id SERIAL PRIMARY KEY,
-    threat_id INT REFERENCES threats(id) ON DELETE CASCADE, -- Link to threats table
+    threat_id INT REFERENCES threats(id) ON DELETE CASCADE,
     alert_message TEXT NOT NULL,
-    alert_level VARCHAR(10) NOT NULL CHECK (alert_level IN ('low', 'medium', 'high')), -- e.g., "low", "medium", "high"
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    alert_level VARCHAR(10) NOT NULL CHECK (alert_level IN ('low', 'medium', 'high')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'vulnerabilities' table
@@ -130,7 +156,7 @@ CREATE TABLE uploaded_files (
     file_path VARCHAR(255) NOT NULL,
     upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     file_size BIGINT,
-    hash VARCHAR(64) NOT NULL, -- SHA-256 hash
+    hash VARCHAR(64) NOT NULL,
     analysis_result TEXT,
     alert BOOLEAN DEFAULT FALSE,
     organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
@@ -150,13 +176,14 @@ CREATE TABLE fim_baseline (
     id SERIAL PRIMARY KEY,
     file_path TEXT UNIQUE NOT NULL,
     hash VARCHAR(64) NOT NULL,
-    last_checked TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_checked TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'malware_hash_registry' table for known malware hashes
 CREATE TABLE malware_hash_registry (
     id SERIAL PRIMARY KEY,
-    hash VARCHAR(64) UNIQUE NOT NULL, -- SHA-256 hash
+    hash VARCHAR(64) UNIQUE NOT NULL,
     malware_name TEXT NOT NULL,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -169,7 +196,8 @@ CREATE TABLE user_audit_log (
     action VARCHAR(255) NOT NULL,
     target_type VARCHAR(50),
     target_id INT,
-    details_json JSONB
+    details_json JSONB,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'entity_risk_scores' table for UEBA
@@ -180,7 +208,8 @@ CREATE TABLE entity_risk_scores (
     score INT NOT NULL,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reasoning_jsonb JSONB,
-    UNIQUE(entity_id, entity_type)
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE,
+    UNIQUE(entity_id, entity_type, organization_id)
 );
 
 -- Create 'soar_playbooks' table
@@ -190,7 +219,8 @@ CREATE TABLE soar_playbooks (
     trigger_conditions_json JSONB NOT NULL,
     steps_yaml TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'cases' table for case management
@@ -200,7 +230,8 @@ CREATE TABLE cases (
     status VARCHAR(50) NOT NULL,
     assignee_id INT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'case_artifacts' linking table
@@ -209,7 +240,8 @@ CREATE TABLE case_artifacts (
     case_id INT REFERENCES cases(id) ON DELETE CASCADE,
     artifact_type VARCHAR(50) NOT NULL,
     artifact_id INT NOT NULL,
-    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Create 'dashboards' table for customizable dashboards
@@ -219,7 +251,8 @@ CREATE TABLE dashboards (
     name VARCHAR(255) NOT NULL,
     layout_jsonb JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 -- Add indexes for faster lookups
@@ -242,3 +275,5 @@ CREATE INDEX idx_entity_risk_scores_entity ON entity_risk_scores (entity_id, ent
 CREATE INDEX idx_cases_assignee_id ON cases (assignee_id);
 CREATE INDEX idx_case_artifacts_case_id ON case_artifacts (case_id);
 CREATE INDEX idx_dashboards_user_id ON dashboards (user_id);
+CREATE INDEX idx_assets_hostname ON assets (hostname);
+CREATE INDEX idx_agent_configs_asset_id ON agent_configs (asset_id);

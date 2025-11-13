@@ -51,6 +51,17 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 	api.HandleFunc("/vulnerabilities/{id:[0-9]+}", handlers.GetVulnerabilityHandler(database.GetDB())).Methods("GET")
 	api.HandleFunc("/vulnerabilities/{id:[0-9]+}", handlers.UpdateVulnerabilityHandler(database.GetDB())).Methods("PUT")
 
+	// Asset Management Routes (CRUD)
+	api.HandleFunc("/assets", handlers.CreateAssetHandler(database.GetDB())).Methods("POST")
+	api.HandleFunc("/assets", handlers.GetAssetsHandler(database.GetDB())).Methods("GET")
+	api.HandleFunc("/assets/{id:[0-9]+}", handlers.GetAssetHandler(database.GetDB())).Methods("GET")
+	api.HandleFunc("/assets/{id:[0-9]+}", handlers.UpdateAssetHandler(database.GetDB())).Methods("PUT")
+	api.HandleFunc("/assets/{id:[0-9]+}", handlers.DeleteAssetHandler(database.GetDB())).Methods("DELETE")
+	api.HandleFunc("/assets/heartbeat", handlers.HeartbeatHandler(database.GetDB())).Methods("POST")
+
+	// Agent Fleet Management
+	api.HandleFunc("/agent/config/{hostname}", handlers.GetAgentConfigHandler(database.GetDB())).Methods("GET")
+
 	// File Upload & Analysis
 	api.HandleFunc("/upload", upload.UploadFileHandler).Methods("POST")
 
