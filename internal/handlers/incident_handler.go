@@ -1,182 +1,89 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gorilla/mux"
-	"github.com/thrive-spectrexq/NexDefend/internal/incident"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
+	"gorm.io/gorm"
 )
 
-var kafkaProducer *kafka.Producer
+type IncidentHandler struct {
+	db *gorm.DB
+}
 
-type contextKey string
+func NewIncidentHandler(db *gorm.DB) *IncidentHandler {
+	return &IncidentHandler{db: db}
+}
 
-const organizationIDKey contextKey = "organizationID"
-
-func init() {
-	kafkaBroker := os.Getenv("KAFKA_BROKER")
-	if kafkaBroker == "" {
-		kafkaBroker = "kafka:9092"
+func (h *IncidentHandler) CreateIncident(w http.ResponseWriter, r *http.Request) {
+	var incident models.Incident
+	if err := json.NewDecoder(r.Body).Decode(&incident); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	var err error
-	kafkaProducer, err = kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+
+	if err := h.db.Create(&incident).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(incident)
+}
+
+func (h *IncidentHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
+	var incidents []models.Incident
+	if err := h.db.Find(&incidents).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(incidents)
+}
+
+func (h *IncidentHandler) GetIncident(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		log.Fatalf("Failed to create Kafka producer: %v", err)
+		http.Error(w, "Invalid incident ID", http.StatusBadRequest)
+		return
 	}
 
-	go func() {
-		for e := range kafkaProducer.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				if ev.TopicPartition.Error != nil {
-					log.Printf("Delivery failed: %v\n", ev.TopicPartition)
-				}
-			}
-		}
-	}()
+	var incident models.Incident
+	if err := h.db.First(&incident, id).Error; err != nil {
+		http.Error(w, "Incident not found", http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(incident)
 }
 
-func CreateIncidentHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		var req incident.CreateIncidentRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
-
-		if req.Description == "" || req.Severity == "" {
-			http.Error(w, "Description and severity are required", http.StatusBadRequest)
-			return
-		}
-
-		newIncident, err := incident.CreateIncident(db, req, orgID)
-		if err != nil {
-			log.Printf("Error creating incident: %v", err)
-			http.Error(w, "Failed to create incident", http.StatusInternalServerError)
-			return
-		}
-
-		topic := "incidents"
-		incidentJSON, err := json.Marshal(newIncident)
-		if err != nil {
-			log.Printf("Failed to marshal incident to JSON: %v", err)
-		} else {
-			kafkaProducer.Produce(&kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-				Value:          incidentJSON,
-			}, nil)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(newIncident)
+func (h *IncidentHandler) UpdateIncident(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid incident ID", http.StatusBadRequest)
+		return
 	}
-}
 
-func GetIncidentHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			http.Error(w, "Invalid incident ID", http.StatusBadRequest)
-			return
-		}
-
-		inc, err := incident.GetIncident(db, id, orgID)
-		if err != nil {
-			log.Printf("Error getting incident: %v", err)
-			http.Error(w, "Failed to retrieve incident", http.StatusInternalServerError)
-			return
-		}
-		if inc == nil {
-			http.Error(w, "Incident not found", http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(inc)
+	var incident models.Incident
+	if err := h.db.First(&incident, id).Error; err != nil {
+		http.Error(w, "Incident not found", http.StatusNotFound)
+		return
 	}
-}
 
-func ListIncidentsHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		statusQuery := r.URL.Query().Get("status")
-		var status *incident.Status
-
-		if statusQuery != "" {
-			s := incident.Status(statusQuery)
-			status = &s
-		}
-
-		incidents, err := incident.ListIncidents(db, status, orgID)
-		if err != nil {
-			log.Printf("Error listing incidents: %v", err)
-			http.Error(w, "Failed to retrieve incidents", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(incidents)
+	if err := json.NewDecoder(r.Body).Decode(&incident); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-}
 
-func UpdateIncidentHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			http.Error(w, "Invalid incident ID", http.StatusBadRequest)
-			return
-		}
-
-		var req incident.UpdateIncidentRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
-
-		updatedIncident, err := incident.UpdateIncident(db, id, req, orgID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				http.Error(w, "Incident not found", http.StatusNotFound)
-				return
-			}
-			log.Printf("Error updating incident: %v", err)
-			http.Error(w, "Failed to update incident", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(updatedIncident)
+	if err := h.db.Save(&incident).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	json.NewEncoder(w).Encode(incident)
 }
