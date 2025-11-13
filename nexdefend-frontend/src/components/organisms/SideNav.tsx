@@ -7,6 +7,9 @@ import {
   BarChart,
   BrainCircuit,
   ShieldAlert,
+  Server,
+  Network,
+  Activity,
 } from 'lucide-react'
 
 // Define the nav items
@@ -17,6 +20,12 @@ const navItems = [
   { to: "/dashboard/incidents", icon: <ShieldAlert size={20} />, text: "Incidents" },
   { to: "/dashboard/reports", icon: <FileText size={20} />, text: "Reports" },
   { to: "/dashboard/vulnerabilities", icon: <Shield size={20} />, text: "Vulnerabilities" },
+];
+
+const dashboardItems = [
+  { to: "/dashboard/security-overview", icon: <Activity size={20} />, text: "Security Overview" },
+  { to: "/dashboard/network-dashboard", icon: <Network size={20} />, text: "Network Dashboard" },
+  { to: "/dashboard/platform-health", icon: <Server size={20} />, text: "Platform Health" },
 ];
 
 const SideNav = () => {
@@ -45,6 +54,22 @@ const SideNav = () => {
           </li>
         ))}
       </ul>
+      <div className="mt-8">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Dashboards</h2>
+        <ul className="space-y-2">
+          {dashboardItems.map((item) => (
+            <li key={item.to}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) => (isActive ? activeClass : inactiveClass)}
+              >
+                {item.icon}
+                <span>{item.text}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </div>
       <div className="mt-auto">
         <NavLink
           to="/dashboard/settings"

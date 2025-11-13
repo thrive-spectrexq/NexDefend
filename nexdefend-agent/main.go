@@ -15,6 +15,9 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/process"
 
@@ -65,10 +68,20 @@ type AgentConfig struct {
 
 var (
 	startPlatformSpecificModules func(producer *kafka.Producer, eventsTopic string, config *AgentConfig)
+	EventsSent                   = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "nexdefend_agent_events_sent_total",
+		Help: "Total number of events sent by the agent.",
+	}, []string{"type"})
 )
 
 func main() {
 	log.Println("Starting nexdefend-agent...")
+
+	// Expose the a /metrics endpoint for Prometheus
+	http.Handle("/metrics", promhttp.Handler())
+	go func() {
+		log.Fatal(http.ListenAndServe(":8082", nil))
+	}()
 
 	config := getAgentConfig()
 
@@ -144,6 +157,7 @@ func main() {
 				TopicPartition: kafka.TopicPartition{Topic: &eventsTopic, Partition: kafka.PartitionAny},
 				Value:          eventJSON,
 			}, nil)
+			EventsSent.WithLabelValues("process").Inc()
 		}
 
 		producer.Flush(15 * 1000)
@@ -287,6 +301,7 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 						Value:          eventJSON,
 					}, nil)
+					EventsSent.WithLabelValues("flow").Inc()
 
 					delete(flows, key)
 				}

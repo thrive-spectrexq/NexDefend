@@ -10,11 +10,13 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"github.com/thrive-spectrexq/NexDefend/internal/enrichment"
+	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
 	"github.com/thrive-spectrexq/NexDefend/internal/ingestor"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
@@ -45,6 +47,7 @@ func main() {
 	correlationEngine := &correlation.MockCorrelationEngine{}
 	go ingestor.StartIngestor(correlationEngine)
 	go metrics.CollectMetrics(database)
+	go handlers.StartActiveAgentCollector(database.GetDB())
 
 	netflowCollector := &ndr.MockNetFlowCollector{}
 	if err := netflowCollector.StartCollector(); err != nil {
@@ -61,6 +64,9 @@ func main() {
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
 	router := routes.NewRouter(cfg, database, c, tip, adConnector, snowConnector)
+
+	// Add Prometheus metrics endpoint
+	router.Handle("/metrics", promhttp.Handler())
 
 	srv := &http.Server{
 		Addr:    ":8080",

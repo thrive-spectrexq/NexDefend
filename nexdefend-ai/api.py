@@ -2,9 +2,10 @@ import os
 import logging
 import requests
 import nmap
+import time
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
-from prometheus_client import Counter, make_wsgi_app, Gauge
+from prometheus_client import Counter, make_wsgi_app, Gauge, Histogram
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
@@ -35,12 +36,29 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 GO_API_URL = os.getenv("GO_API_URL", "http://localhost:8080/api/v1")
 AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
 
+# Existing Metrics
 EVENTS_PROCESSED = Counter('events_processed_total', 'Total number of events processed')
 ANOMALIES_DETECTED = Counter('anomalies_detected_total', 'Total number of anomalies detected')
 INCIDENTS_CREATED = Counter('incidents_created_total', 'Total number of incidents automatically created')
 HOSTS_SCANNED = Counter('hosts_scanned_total', 'Total number of hosts scanned')
 VULNS_DISCOVERED = Counter('vulnerabilities_discovered_total', 'Total vulnerabilities discovered by scanning')
 
+# New Metrics
+REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'HTTP request latency', ['method', 'endpoint'])
+REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status_code'])
+ANOMALIES_DETECTED_CUSTOM = Counter('nexdefend_ai_anomalies_detected_total', 'Total number of anomalies detected', ['model', 'host'])
+MODEL_INFERENCE_DURATION = Histogram('nexdefend_ai_model_inference_duration_seconds', 'Model inference duration', ['model'])
+
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    latency = time.time() - request.start_time
+    REQUEST_LATENCY.labels(request.method, request.path).observe(latency)
+    REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
+    return response
 
 def create_incident_in_backend(event_dict):
     try:
@@ -108,11 +126,13 @@ def create_vulnerability_in_backend(host, port, service_name):
 @app.route("/train", methods=["POST"])
 def train():
     try:
+        start_time = time.time()
         events = fetch_all_suricata_events()
         if not events:
             return make_response(jsonify({"message": "No events found to train on."}), 404)
         features = preprocess_events(events, is_training=True)
         train_model(features)
+        MODEL_INFERENCE_DURATION.labels(model="isolation_forest").observe(time.time() - start_time)
         return make_response(jsonify({"message": f"Model training successful on {len(events)} events."}), 200)
     except Exception as e:
         logging.error(f"Error during model training: {e}")
@@ -129,7 +149,9 @@ def analyze_single_event(event_id):
         if not event:
             return make_response(jsonify({"error": "Event not found"}), 404)
         features = preprocess_events([event], is_training=False)
+        start_time = time.time()
         anomaly_result = detect_anomalies(features)
+        MODEL_INFERENCE_DURATION.labels(model="isolation_forest").observe(time.time() - start_time)
         update_event_analysis_status(event_id, True)
         EVENTS_PROCESSED.inc()
         is_anomaly = False
@@ -137,6 +159,7 @@ def analyze_single_event(event_id):
             is_anomaly = True
             ANOMALIES_DETECTED.inc()
             event_dict = dict(zip(EVENT_COLUMNS, event))
+            ANOMALIES_DETECTED_CUSTOM.labels(model="isolation_forest", host=event_dict.get("src_ip", "unknown")).inc()
             create_incident_in_backend(event_dict)
         return make_response(jsonify({"event_id": event_id, "is_anomaly": is_anomaly}), 200)
     except Exception as e:
@@ -194,7 +217,9 @@ def get_batch_anomalies():
         if not events:
             return make_response(jsonify({"anomalies": []}), 200)
         features = preprocess_events(events, is_training=False)
+        start_time = time.time()
         anomalies = detect_anomalies(features)
+        MODEL_INFERENCE_DURATION.labels(model="isolation_forest").observe(time.time() - start_time)
         event_ids = [event[0] for event in events]
         anomaly_map = [
             {"event_id": event_ids[i], "is_anomaly": True if anomaly == -1 else False}
@@ -209,7 +234,9 @@ def get_batch_anomalies():
 def predict():
     try:
         data = request.get_json()
+        start_time = time.time()
         prediction = predict_real_time(data)
+        MODEL_INFERENCE_DURATION.labels(model="isolation_forest").observe(time.time() - start_time)
         return make_response(jsonify(prediction), 200)
     except Exception as e:
         logging.error(f"Error during real-time prediction: {e}")

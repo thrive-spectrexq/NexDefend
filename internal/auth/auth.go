@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
+	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -103,33 +104,39 @@ func LoginHandler(db *gorm.DB, jwtKey []byte) http.HandlerFunc {
 		var creds User
 		err := json.NewDecoder(r.Body).Decode(&creds)
 		if err != nil {
+			metrics.UserLogins.WithLabelValues("failed").Inc()
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
 			return
 		}
 
 		var user User
 		if err := db.Where("username = ?", creds.Username).First(&user).Error; err != nil {
+			metrics.UserLogins.WithLabelValues("failed").Inc()
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
 		if !checkPasswordHash(creds.Password, user.Password) {
+			metrics.UserLogins.WithLabelValues("failed").Inc()
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
 		var roles []string
 		if err := db.Table("roles").Select("roles.name").Joins("join user_roles on roles.id = user_roles.role_id").Where("user_roles.user_id = ?", user.ID).Scan(&roles).Error; err != nil {
+			metrics.UserLogins.WithLabelValues("failed").Inc()
 			http.Error(w, "Failed to get user roles", http.StatusInternalServerError)
 			return
 		}
 
 		token, err := GenerateJWT(user.ID, roles, user.OrganizationID, jwtKey)
 		if err != nil {
+			metrics.UserLogins.WithLabelValues("failed").Inc()
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 			return
 		}
 
+		metrics.UserLogins.WithLabelValues("success").Inc()
 		json.NewEncoder(w).Encode(map[string]string{
 			"token": token,
 		})

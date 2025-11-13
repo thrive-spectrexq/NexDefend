@@ -26,6 +26,7 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	})
 	router.Use(logging.LogRequest)
 	router.Use(middleware.ErrorHandler)
+	router.Use(middleware.PrometheusMiddleware)
 
 	// --- Public Routes ---
 	router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
