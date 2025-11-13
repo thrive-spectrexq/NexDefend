@@ -62,70 +62,70 @@ NexDefend operates as a distributed system of specialized microservices communic
 
 ```mermaid
 graph TD
-    %% ========== USER & ENDPOINTS ==========
-    subgraph U[User & Endpoints]
+    %% ========= USER & ENDPOINTS =========
+    subgraph U["User & Endpoints"]
         direction TB
-        F[Browser - React UI]
-        A[nexdefend-agent]
+        F["Browser (React UI)"]
+        A["nexdefend-agent"]
     end
 
-    %% ========== CORE PLATFORM ==========
-    subgraph C[Core Platform]
+    %% ========= CORE PLATFORM =========
+    subgraph C["Core Platform"]
         direction LR
-        K[Kafka Bus]
-        DB[(PostgreSQL DB)]
-        OS[(OpenSearch)]
+        K["Kafka Bus"]
+        DB["PostgreSQL DB"]
+        OS["OpenSearch"]
     end
 
-    %% ========== SERVICES ==========
-    subgraph SVC[Services]
+    %% ========= SERVICES =========
+    subgraph SVC["Services Layer"]
         direction TB
-        API[Go Core API]
-        AI[Python AI Service]
-        SOAR[Go SOAR Service]
-        I[Go Ingestor]
-        SUR[Suricata]
-        G[Grafana]
-        P[Prometheus]
-        CC[Cloud Connector]
-        TIP[Threat Intelligence Platform]
-        CE[Correlation Engine]
-        NDR[Network Detection & Response]
+        API["Go Core API"]
+        AI["Python AI Service"]
+        SOAR["Go SOAR Service"]
+        I["Go Ingestor"]
+        SUR["Suricata IDS"]
+        CC["Cloud Connector"]
+        TIP["Threat Intelligence Platform"]
+        CE["Correlation Engine"]
+        NDR["Network Detection & Response"]
+        P["Prometheus"]
+        G["Grafana"]
     end
 
-    %% ========== CONNECTIONS ==========
-    %% UI / Agent / Connectors
+    %% ========= CONNECTIONS =========
+    %% Frontend and Agents
     F -->|HTTPS API| API
-    A -->|Events| K
-    CC -->|Events| K
-    NDR -->|Events| K
+    A -->|Event Stream| K
+    CC -->|Cloud Events| K
+    NDR -->|Network Events| K
 
     %% Ingestor & Data Flow
     I -->|Consumes| K
-    I -->|Writes Agent Logs| OS
+    I -->|Agent Logs| OS
 
     %% AI Service
     AI -->|Consumes| K
     AI -->|Creates Incidents| API
-    AI -->|Reads Events| DB
+    AI -->|Reads| DB
 
     %% Core API
     API -->|Reads/Writes| DB
-    API -->|Produces| K
-    API -->|Proxies Scan| AI
+    API -->|Publishes| K
+    API -->|Proxies Scans| AI
 
     %% SOAR
     SOAR -->|Consumes Incidents| K
-    SOAR -->|Calls Scan| AI
+    SOAR -->|Triggers AI Scans| AI
 
-    %% TIP / CE
+    %% TIP & CE
     TIP -->|Feeds| API
     CE -->|Correlates| API
 
     %% Observability
-    P -->|Scrapes| API
-    P -->|Scrapes| AI
-    G -->|Reads| P
+    P -->|Scrapes Metrics| API
+    P -->|Scrapes Metrics| AI
+    G -->|Visualizes| P
 
     %% Suricata
     SUR -->|Writes Logs| OS
