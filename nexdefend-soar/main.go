@@ -4,10 +4,15 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"nexdefend/nexdefend-soar/internal/alert"
 	"nexdefend/nexdefend-soar/internal/playbook"
 	"nexdefend/nexdefend-soar/internal/playbook_editor"
 )
@@ -22,6 +27,13 @@ type Incident struct {
 	SourceIP    string `json:"source_ip,omitempty"`
 }
 
+var (
+	PlaybooksRun = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "nexdefend_soar_playbooks_run_total",
+		Help: "Total number of SOAR playbooks run.",
+	}, []string{"playbook", "status"})
+)
+
 func main() {
 	log.Println("Starting nexdefend-soar service...")
 
@@ -30,6 +42,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load playbooks: %v", err)
 	}
+
+	// Expose the a /metrics endpoint for Prometheus
+	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/api/v1/alerts", alert.WebhookHandler(playbooks))
+	go func() {
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	}()
 
 	// --- Kafka Consumer ---
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
@@ -75,7 +94,12 @@ func main() {
 							pb.Actions[i].Params[k] = strings.Replace(v, "{source_ip}", incident.SourceIP, -1)
 						}
 					}
-					pb.Execute()
+					err := pb.Execute()
+					if err != nil {
+						PlaybooksRun.WithLabelValues(pb.ID, "failed").Inc()
+					} else {
+						PlaybooksRun.WithLabelValues(pb.ID, "success").Inc()
+					}
 				}
 			}
 

@@ -41,17 +41,20 @@ The platform is a collection of specialized services working in concert.
 
 ### 4. Platform & UI (api & nexdefend-frontend)
 
-*   **Full Incident Management**: A complete case management system for analysts to create, read, update, and resolve security incidents. Includes features for adding notes and changing status.
+*   **Full Incident Management**: A complete case management system for analysts to create, read, update, and resolve security incidents. Includes features for adding notes, assigning users, and changing status.
+*   **Alert Triage**: A dedicated UI to review new anomalies from the AI service and decide whether to escalate them into an incident.
+*   **SOAR Playbook Editor**: A new UI page for users to build or view SOAR playbooks.
 *   **Vulnerability Management**: A dedicated UI to view all discovered vulnerabilities, filter by status, and triage them from "Detected" to "Resolved".
 *   **Secure Authentication**: Employs JWT-based authentication for the frontend, with separate public and private routes.
 *   **Centralized Data Storage**:
     *   **PostgreSQL**: Serves as the primary database for structured, relational data (incidents, vulnerabilities, users, metrics, etc.).
     *   **OpenSearch**: Used as the high-throughput data store for all raw agent events (processes, FIM, net connections) ingested from Kafka.
 *   **Observability**:
-    *   **Prometheus**: Scrapes metrics from the Go API and Python AI service.
-    *   **Grafana**: Provides pre-built dashboards for monitoring the AI service's performance (e.g., events processed, anomalies detected).
+    *   **Prometheus**: Scrapes metrics from the Go API, Python AI service, and other services.
+    *   **Grafana**: Provides pre-built dashboards for monitoring the AI service's performance, Kafka health, and container overview.
 *   **Agent Management**: A dedicated API for agent registration and configuration management.
 *   **Asset & Identity Enrichment**: Connectors to Active Directory / Okta / Azure AD and CMDBs (like ServiceNow) to enrich asset and identity data.
+*   **Embedded Dashboards**: The UI now includes embedded Grafana panels for a seamless user experience.
 
 ## Architecture
 

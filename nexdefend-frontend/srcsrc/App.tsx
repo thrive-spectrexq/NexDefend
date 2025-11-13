@@ -13,10 +13,6 @@ import PublicRoute from './layouts/PublicRoute'
 import HomePage from './pages/HomePage'
 import AIDashboardPage from './pages/AIDashboardPage'
 import AlertTriage from './pages/AlertTriage'
-import SOARPlaybookEditor from './pages/SOARPlaybookEditor'
-import SecurityOverview from './pages/SecurityOverview'
-import NetworkDashboard from './pages/NetworkDashboard'
-import PlatformHealth from './pages/PlatformHealth'
 
 function App() {
   return (
@@ -37,10 +33,6 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="vulnerabilities" element={<Vulnerabilities />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="soar" element={<SOARPlaybookEditor />} />
-            <Route path="security-overview" element={<SecurityOverview />} />
-            <Route path="network-dashboard" element={<NetworkDashboard />} />
-            <Route path="platform-health" element={<PlatformHealth />} />
           </Route>
         </Route>
       </Routes>

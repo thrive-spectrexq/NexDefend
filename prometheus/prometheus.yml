@@ -1,6 +1,14 @@
 global:
   scrape_interval: 15s
 
+rule_files:
+  - "nexdefend.rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
@@ -11,3 +19,25 @@ scrape_configs:
   - job_name: 'nexdefend-ai'
     static_configs:
       - targets: ['ai:5000']
+  - job_name: 'nexdefend-soar'
+    static_configs:
+      - targets: ['nexdefend-soar:8081']
+  - job_name: 'nexdefend-agent'
+    static_configs:
+      - targets: ['nexdefend-agent:8082']
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['pg_exporter:9187']
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka_exporter:9308']
+  - job_name: 'opensearch'
+    metrics_path: /_plugins/_prometheus/metrics
+    static_configs:
+      - targets: ['opensearch:9200']
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']

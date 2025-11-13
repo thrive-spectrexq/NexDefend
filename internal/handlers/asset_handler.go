@@ -9,9 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/thrive-spectrexq/NexDefend/internal/asset"
+	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
+	"gorm.io/gorm"
 )
 
-func CreateAssetHandler(db *sql.DB) http.HandlerFunc {
+func CreateAssetHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
 		if !ok {
@@ -26,12 +28,7 @@ func CreateAssetHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		a.OrganizationID = orgID
-		query := `
-			INSERT INTO assets (hostname, ip_address, os_version, mac_address, agent_version, status, last_heartbeat, criticality, organization_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			RETURNING id`
-		err := db.QueryRow(query, a.Hostname, a.IPAddress, a.OSVersion, a.MACAddress, a.AgentVersion, a.Status, a.LastHeartbeat, a.Criticality, a.OrganizationID).Scan(&a.ID)
-		if err != nil {
+		if err := db.Create(&a).Error; err != nil {
 			http.Error(w, "Failed to create asset", http.StatusInternalServerError)
 			return
 		}
@@ -42,7 +39,7 @@ func CreateAssetHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func GetAssetsHandler(db *sql.DB) http.HandlerFunc {
+func GetAssetsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
 		if !ok {
@@ -50,21 +47,10 @@ func GetAssetsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		rows, err := db.Query("SELECT id, hostname, ip_address, os_version, mac_address, agent_version, status, last_heartbeat, criticality, organization_id FROM assets WHERE organization_id = $1", orgID)
-		if err != nil {
+		var assets []asset.Asset
+		if err := db.Where("organization_id = ?", orgID).Find(&assets).Error; err != nil {
 			http.Error(w, "Failed to get assets", http.StatusInternalServerError)
 			return
-		}
-		defer rows.Close()
-
-		var assets []asset.Asset
-		for rows.Next() {
-			var a asset.Asset
-			if err := rows.Scan(&a.ID, &a.Hostname, &a.IPAddress, &a.OSVersion, &a.MACAddress, &a.AgentVersion, &a.Status, &a.LastHeartbeat, &a.Criticality, &a.OrganizationID); err != nil {
-				http.Error(w, "Failed to scan asset", http.StatusInternalServerError)
-				return
-			}
-			assets = append(assets, a)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -72,7 +58,7 @@ func GetAssetsHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func GetAssetHandler(db *sql.DB) http.HandlerFunc {
+func GetAssetHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
 		if !ok {
@@ -88,14 +74,8 @@ func GetAssetHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		var a asset.Asset
-		query := "SELECT id, hostname, ip_address, os_version, mac_address, agent_version, status, last_heartbeat, criticality, organization_id FROM assets WHERE id = $1 AND organization_id = $2"
-		err = db.QueryRow(query, id, orgID).Scan(&a.ID, &a.Hostname, &a.IPAddress, &a.OSVersion, &a.MACAddress, &a.AgentVersion, &a.Status, &a.LastHeartbeat, &a.Criticality, &a.OrganizationID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				http.Error(w, "Asset not found", http.StatusNotFound)
-				return
-			}
-			http.Error(w, "Failed to get asset", http.StatusInternalServerError)
+		if err := db.Where("id = ? AND organization_id = ?", id, orgID).First(&a).Error; err != nil {
+			http.Error(w, "Asset not found", http.StatusNotFound)
 			return
 		}
 
@@ -104,7 +84,7 @@ func GetAssetHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateAssetHandler(db *sql.DB) http.HandlerFunc {
+func UpdateAssetHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
 		if !ok {
@@ -125,12 +105,7 @@ func UpdateAssetHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		query := `
-			UPDATE assets
-			SET hostname = $1, ip_address = $2, os_version = $3, mac_address = $4, agent_version = $5, status = $6, last_heartbeat = $7, criticality = $8
-			WHERE id = $9 AND organization_id = $10`
-		_, err = db.Exec(query, a.Hostname, a.IPAddress, a.OSVersion, a.MACAddress, a.AgentVersion, a.Status, a.LastHeartbeat, a.Criticality, id, orgID)
-		if err != nil {
+		if err := db.Model(&asset.Asset{}).Where("id = ? AND organization_id = ?", id, orgID).Updates(&a).Error; err != nil {
 			http.Error(w, "Failed to update asset", http.StatusInternalServerError)
 			return
 		}
@@ -139,7 +114,7 @@ func UpdateAssetHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func DeleteAssetHandler(db *sql.DB) http.HandlerFunc {
+func DeleteAssetHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
 		if !ok {
@@ -154,8 +129,7 @@ func DeleteAssetHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		_, err = db.Exec("DELETE FROM assets WHERE id = $1 AND organization_id = $2", id, orgID)
-		if err != nil {
+		if err := db.Where("id = ? AND organization_id = ?", id, orgID).Delete(&asset.Asset{}).Error; err != nil {
 			http.Error(w, "Failed to delete asset", http.StatusInternalServerError)
 			return
 		}
@@ -164,7 +138,7 @@ func DeleteAssetHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func HeartbeatHandler(db *sql.DB) http.HandlerFunc {
+func HeartbeatHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID, ok := r.Context().Value(organizationIDKey).(int)
 		if !ok {
@@ -182,17 +156,24 @@ func HeartbeatHandler(db *sql.DB) http.HandlerFunc {
 		a.LastHeartbeat = sql.NullTime{Time: time.Now(), Valid: true}
 		a.Status = sql.NullString{String: "online", Valid: true}
 
-		query := `
-			INSERT INTO assets (hostname, ip_address, os_version, mac_address, agent_version, status, last_heartbeat, criticality, organization_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			ON CONFLICT (hostname) DO UPDATE
-			SET ip_address = $2, os_version = $3, mac_address = $4, agent_version = $5, status = $6, last_heartbeat = $7, criticality = $8, organization_id = $9`
-		_, err := db.Exec(query, a.Hostname, a.IPAddress, a.OSVersion, a.MACAddress, a.AgentVersion, a.Status, a.LastHeartbeat, a.Criticality, a.OrganizationID)
-		if err != nil {
+		if err := db.Save(&a).Error; err != nil {
 			http.Error(w, "Failed to process heartbeat", http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func StartActiveAgentCollector(db *gorm.DB) {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		var count int64
+		if err := db.Model(&asset.Asset{}).Where("last_heartbeat > ?", time.Now().Add(-5*time.Minute)).Count(&count).Error; err != nil {
+			continue
+		}
+		metrics.ActiveAgents.Set(float64(count))
 	}
 }

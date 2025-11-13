@@ -1,0 +1,20 @@
+groups:
+  - name: nexdefend
+    rules:
+      - alert: HighKafkaLag
+        expr: kafka_consumergroup_lag > 1000
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: High Kafka Lag
+          description: "Kafka consumer group {{ $labels.consumergroup }} has a high lag."
+
+      - alert: ApiHighErrorRate
+        expr: (sum(rate(http_requests_total{job="api", status=~"5.."}[5m])) / sum(rate(http_requests_total{job="api"}[5m]))) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: API High Error Rate
+          description: "The API has a high error rate."

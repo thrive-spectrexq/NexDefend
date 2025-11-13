@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/apiClient';
-import type { Incident } from '../../api/apiClient'; // <-- FIX
+import type { Incident } from '../../api/apiClient';
 import { X } from 'lucide-react';
 
 interface IncidentModalProps {
@@ -11,12 +11,16 @@ interface IncidentModalProps {
 
 type UpdatePayload = {
   status?: Incident['status'];
+  assignee?: string;
   add_note?: string;
 };
+
+const users = ['Alice', 'Bob', 'Charlie'];
 
 const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose }) => {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState(incident.status);
+  const [assignee, setAssignee] = useState(incident.assignee || '');
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +42,9 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose }) => {
     if (status !== incident.status) {
       payload.status = status;
     }
+    if (assignee !== incident.assignee) {
+      payload.assignee = assignee;
+    }
     if (note.trim() !== '') {
       payload.add_note = note.trim();
     }
@@ -47,6 +54,14 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose }) => {
     } else {
       onClose();
     }
+  };
+
+  const handleCloseIncident = () => {
+    setError(null);
+    const payload: UpdatePayload = {
+      status: 'Resolved',
+    };
+    mutation.mutate(payload);
   };
   
   const notes = JSON.parse(incident.notes || '[]') as { time: string, text: string }[];
@@ -84,6 +99,20 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose }) => {
               <option value="Resolved">Resolved</option>
             </select>
           </div>
+          <div>
+            <label htmlFor="assignee" className="text-sm text-gray-400">Assignee</label>
+            <select
+              id="assignee"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded p-2"
+            >
+              <option value="">Unassigned</option>
+              {users.map((user) => (
+                <option key={user} value={user}>{user}</option>
+              ))}
+            </select>
+          </div>
         </div>
         
         <div className="mb-6">
@@ -114,17 +143,26 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose }) => {
           </div>
         </div>
         
-        <div className="flex justify-end gap-4">
-          <button onClick={onClose} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded">
-            Cancel
-          </button>
+        <div className="flex justify-between">
           <button
-            onClick={handleSubmit}
+            onClick={handleCloseIncident}
             disabled={mutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
           >
-            {mutation.isPending ? 'Saving...' : 'Save Changes'}
+            {mutation.isPending ? 'Closing...' : 'Close Incident'}
           </button>
+          <div className="flex justify-end gap-4">
+            <button onClick={onClose} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={mutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              {mutation.isPending ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

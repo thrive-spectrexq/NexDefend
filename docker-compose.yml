@@ -110,6 +110,7 @@ services:
       - "3001:3000"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
       - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -147,7 +148,7 @@ services:
     image: confluentinc/cp-zookeeper:7.2.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKeeper_TICK_TIME: 2000
     networks:
       - nexdefend-net
 
@@ -196,6 +197,8 @@ services:
     build:
       context: nexdefend-soar
       dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
     networks:
       - nexdefend-net
 
@@ -229,6 +232,49 @@ services:
       - kafka
     env_file:
       - nexdefend-cloud-connector/.env
+    networks:
+      - nexdefend-net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - nexdefend-net
+
+  pg_exporter:
+    image: prometheus/pg_exporter
+    container_name: pg_exporter
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://nexdefend:password@db:5432/nexdefend_db?sslmode=disable
+    networks:
+      - nexdefend-net
+
+  kafka_exporter:
+    image: danielqsj/kafka-exporter
+    container_name: kafka_exporter
+    ports:
+      - "9308:9308"
+    command: --kafka.server=kafka:9092
+    networks:
+      - nexdefend-net
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command: --config.file=/etc/alertmanager/alertmanager.yml
     networks:
       - nexdefend-net
 
