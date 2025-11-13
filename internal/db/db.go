@@ -35,9 +35,9 @@ func InitDB() *Database {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
-	conn.SetMaxOpenConns(25)                 // Set maximum number of open connections
-	conn.SetMaxIdleConns(25)                 // Set maximum number of idle connections
-	conn.SetConnMaxLifetime(5 * time.Minute) // Limit connection lifetime
+	conn.SetMaxOpenConns(25)
+	conn.SetMaxIdleConns(25)
+	conn.SetConnMaxLifetime(5 * time.Minute)
 
 	if err = conn.Ping(); err != nil {
 		log.Fatalf("Database connection failed: %v", err)
@@ -87,8 +87,8 @@ func executeSQLScript(filepath string, db *sql.DB) error {
 func tablesExist(conn *sql.DB) bool {
 	var exists bool
 	query := `SELECT EXISTS (
-		SELECT FROM information_schema.tables 
-		WHERE table_schema = 'public' 
+		SELECT FROM information_schema.tables
+		WHERE table_schema = 'public'
 		AND table_name = 'suricata_events'
 	);`
 	if err := conn.QueryRow(query).Scan(&exists); err != nil {
@@ -140,13 +140,14 @@ func getEnv(key, fallback string) string {
 }
 
 // StoreSystemMetric stores a single system metric in the database
-func (db *Database) StoreSystemMetric(metric metrics.SystemMetric) error {
+func (db *Database) StoreSystemMetric(metric metrics.SystemMetric, organizationID int) error {
 	_, err := db.conn.Exec(
-		`INSERT INTO system_metrics (metric_type, value, timestamp)
-         VALUES ($1, $2, $3)`,
+		`INSERT INTO system_metrics (metric_type, value, timestamp, organization_id)
+         VALUES ($1, $2, $3, $4)`,
 		metric.MetricType,
 		metric.Value,
 		metric.Timestamp,
+		organizationID,
 	)
 	if err != nil {
 		return fmt.Errorf("error storing system metric: %v", err)
@@ -155,15 +156,16 @@ func (db *Database) StoreSystemMetric(metric metrics.SystemMetric) error {
 }
 
 // GetSystemMetrics retrieves system metrics from the database for a given type and time range
-func (db *Database) GetSystemMetrics(metricType string, from, to time.Time) ([]metrics.SystemMetric, error) {
+func (db *Database) GetSystemMetrics(metricType string, from, to time.Time, organizationID int) ([]metrics.SystemMetric, error) {
 	rows, err := db.conn.Query(
 		`SELECT id, metric_type, value, timestamp
          FROM system_metrics
-         WHERE metric_type = $1 AND timestamp >= $2 AND timestamp <= $3
+         WHERE metric_type = $1 AND timestamp >= $2 AND timestamp <= $3 AND organization_id = $4
          ORDER BY timestamp ASC`,
 		metricType,
 		from,
 		to,
+		organizationID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error querying system metrics: %v", err)

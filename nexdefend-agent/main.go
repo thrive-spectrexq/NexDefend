@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/fsnotify/fsnotify"
-	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/host"
+	psnet "github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -40,15 +45,28 @@ type NetConnectionEvent struct {
 	Status string `json:"status"`
 }
 
+type Asset struct {
+	Hostname      string `json:"hostname"`
+	IPAddress     string `json:"ip_address"`
+	OSVersion     string `json:"os_version"`
+	MACAddress    string `json:"mac_address"`
+	AgentVersion  string `json:"agent_version"`
+}
+
+type AgentConfig struct {
+	FIMPaths             []string `json:"fim_paths"`
+	CollectionIntervalSec int      `json:"collection_interval_sec"`
+}
+
 var (
-	// Keep track of seen connections to only report new ones.
 	seenConnections = make(map[string]struct{})
 )
 
 func main() {
 	log.Println("Starting nexdefend-agent...")
 
-	// --- Kafka Producer ---
+	config := getAgentConfig()
+
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
 	if kafkaBroker == "" {
 		kafkaBroker = "kafka:9092"
@@ -61,7 +79,6 @@ func main() {
 	}
 	defer producer.Close()
 
-	// Go-routine to handle delivery reports
 	go func() {
 		for e := range producer.Events() {
 			switch ev := e.(type) {
@@ -73,12 +90,10 @@ func main() {
 		}
 	}()
 
-	// --- FIM Watcher ---
-	go startFIMWatcher(producer, topic)
-	// --- Network Connection Monitoring ---
+	go startFIMWatcher(producer, topic, config)
 	go startNetWatcher(producer, topic)
+	go startHeartbeat()
 
-	// --- Process Monitoring Loop ---
 	for {
 		processes, err := process.Processes()
 		if err != nil {
@@ -122,12 +137,11 @@ func main() {
 		}
 
 		producer.Flush(15 * 1000)
-		time.Sleep(10 * time.Second)
+		time.Sleep(time.Duration(config.CollectionIntervalSec) * time.Second)
 	}
 }
 
-// startFIMWatcher initializes and runs the file integrity monitoring watcher.
-func startFIMWatcher(producer *kafka.Producer, topic string) {
+func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatalf("Failed to create FIM watcher: %v", err)
@@ -173,25 +187,20 @@ func startFIMWatcher(producer *kafka.Producer, topic string) {
 		}
 	}()
 
-	fimPath := os.Getenv("FIM_PATH")
-	if fimPath == "" {
-		fimPath = "/etc" // Default to /etc
-		log.Println("INFO: FIM_PATH not set, monitoring default directory '/etc'")
+	for _, path := range config.FIMPaths {
+		err = watcher.Add(path)
+		if err != nil {
+			log.Printf("Failed to add path to FIM watcher: %v", err)
+		}
+		log.Printf("FIM watcher started on path: %s", path)
 	}
-	err = watcher.Add(fimPath)
-	if err != nil {
-		log.Fatalf("Failed to add path to FIM watcher: %v", err)
-	}
-	log.Printf("FIM watcher started on path: %s", fimPath)
 
-	// Block forever to keep the watcher alive
 	<-make(chan struct{})
 }
 
-// startNetWatcher periodically polls for new network connections.
 func startNetWatcher(producer *kafka.Producer, topic string) {
 	for {
-		connections, err := net.Connections("all")
+		connections, err := psnet.Connections("all")
 		if err != nil {
 			log.Printf("Failed to get network connections: %v", err)
 			time.Sleep(15 * time.Second)
@@ -230,4 +239,104 @@ func startNetWatcher(producer *kafka.Producer, topic string) {
 		}
 		time.Sleep(15 * time.Second)
 	}
+}
+
+func startHeartbeat() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		hostInfo, err := host.Info()
+		if err != nil {
+			log.Printf("Failed to get host info: %v", err)
+			continue
+		}
+
+		interfaces, err := net.Interfaces()
+		if err != nil {
+			log.Printf("Failed to get network interfaces: %v", err)
+			continue
+		}
+
+		var ipAddress, macAddress string
+		for _, i := range interfaces {
+			if i.Flags&net.FlagUp != 0 && i.Flags&net.FlagLoopback == 0 {
+				addrs, err := i.Addrs()
+				if err != nil {
+					continue
+				}
+				for _, addr := range addrs {
+					if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+						if ipnet.IP.To4() != nil {
+							ipAddress = ipnet.IP.String()
+							break
+						}
+					}
+				}
+				macAddress = i.HardwareAddr.String()
+				break
+			}
+		}
+
+		asset := Asset{
+			Hostname:      hostInfo.Hostname,
+			IPAddress:     ipAddress,
+			OSVersion:     hostInfo.OS,
+			MACAddress:    macAddress,
+			AgentVersion:  "1.0.0",
+		}
+
+		assetJSON, err := json.Marshal(asset)
+		if err != nil {
+			log.Printf("Failed to marshal asset to JSON: %v", err)
+			continue
+		}
+
+		resp, err := http.Post("http://api:8080/api/v1/assets/heartbeat", "application/json", bytes.NewBuffer(assetJSON))
+		if err != nil {
+			log.Printf("Failed to send heartbeat: %v", err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Failed to send heartbeat, status code: %d", resp.StatusCode)
+		}
+	}
+}
+
+func getAgentConfig() *AgentConfig {
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("Failed to get hostname: %v", err)
+	}
+
+	resp, err := http.Get(fmt.Sprintf("http://api:8080/api/v1/agent/config/%s", hostname))
+	if err != nil {
+		log.Printf("Failed to get agent config: %v", err)
+		return &AgentConfig{
+			FIMPaths:             []string{"/etc"},
+			CollectionIntervalSec: 10,
+		}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Failed to get agent config, status code: %d", resp.StatusCode)
+		return &AgentConfig{
+			FIMPaths:             []string{"/etc"},
+			CollectionIntervalSec: 10,
+		}
+	}
+
+	var config AgentConfig
+	if err := json.NewDecoder(resp.Body).Decode(&config); err != nil {
+		log.Printf("Failed to decode agent config: %v", err)
+		return &AgentConfig{
+			FIMPaths:             []string{"/etc"},
+			CollectionIntervalSec: 10,
+		}
+	}
+
+	return &config
 }
