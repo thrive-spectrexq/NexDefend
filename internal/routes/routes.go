@@ -38,6 +38,9 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache) *mux.R
 	// Event Viewing Route
 	api.HandleFunc("/events", handlers.GetEventsHandler()).Methods("GET")
 
+	// Agent Enrollment
+	api.HandleFunc("/agents/enroll", handlers.EnrollAgentHandler()).Methods("POST")
+
 	// Incident Management Routes (CRUD)
 	// incidentHandler := handlers.NewIncidentHandler(database.GetDB())
 	// api.HandleFunc("/incidents", incidentHandler.CreateIncident).Methods("POST")

@@ -1,41 +1,30 @@
+
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/thrive-spectrexq/NexDefend/internal/agent"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
-func GetAgentConfigHandler(db *sql.DB) http.HandlerFunc {
+func EnrollAgentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
+		var enrollmentRequest models.AgentEnrollmentRequest
+		if err := json.NewDecoder(r.Body).Decode(&enrollmentRequest); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
 			return
 		}
 
-		vars := mux.Vars(r)
-		hostname := vars["hostname"]
-
-		var config json.RawMessage
-		query := `
-			SELECT ac.config_jsonb
-			FROM agent_configs ac
-			JOIN assets a ON ac.asset_id = a.id
-			WHERE a.hostname = $1 AND a.organization_id = $2`
-		err := db.QueryRow(query, hostname, orgID).Scan(&config)
+		newAgent, err := agent.EnrollAgent(enrollmentRequest)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				http.Error(w, "Agent config not found", http.StatusNotFound)
-				return
-			}
-			http.Error(w, "Failed to get agent config", http.StatusInternalServerError)
+			http.Error(w, "Failed to enroll agent", http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(config)
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(newAgent)
 	}
 }

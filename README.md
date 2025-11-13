@@ -11,11 +11,14 @@ The platform is a collection of specialized services working in concert.
 ### 1. Detection & Data Collection
 
 *   **Endpoint Agent (nexdefend-agent)**: A lightweight Go agent that provides deep endpoint visibility. It streams security-relevant events to the Kafka pipeline.
+    *   **Cross-Platform Support**: The agent is designed to run on both Linux and Windows environments.
     *   **Process Monitoring**: Captures process creation events, including PID, name, and command line arguments.
     *   **File Integrity Monitoring (FIM)**: Uses `fsnotify` to monitor critical files and directories (e.g., `/etc`) for unauthorized changes.
     *   **Network Connection Monitoring**: Tracks new network connections, linking them to specific processes.
+    *   **Windows Event Log Collection**: On Windows, the agent collects and forwards security-relevant event logs.
 *   **Network Intrusion Detection (Suricata)**: The platform is configured to run Suricata, a high-performance Network IDS, to monitor network traffic for known threats.
 *   **Malware Hash Detection**: All file uploads are checked against a known malware hash registry stored in the database.
+*   **Cloud Connector (nexdefend-cloud-connector)**: A dedicated service for ingesting security logs and events from cloud providers (e.g., AWS CloudTrail, Azure Monitor, Google Cloud Logging).
 
 ### 2. AI & Analytics (nexdefend-ai)
 
@@ -23,11 +26,15 @@ The platform is a collection of specialized services working in concert.
 *   **Automated Incident Creation**: The AI service automatically creates "Critical" or "High" severity incidents in the backend when anomalies are detected.
 *   **Active Vulnerability Scanning**: Exposes a secure `/scan` endpoint that uses Nmap to perform on-demand port scanning, automatically creating vulnerability records for any open ports discovered.
 *   **User & Entity Behavior Analytics (UEBA)**: A background worker consumes agent events from Kafka to perform simple behavioral analysis, such as flagging a process that starts from `/tmp` and immediately makes a network connection.
+*   **MITRE ATT&CK Mapping**: Detected threats and anomalies are automatically mapped to specific MITRE ATT&CK techniques.
+*   **Advanced Threat Detection**: The platform uses advanced threat detection models, such as those based on Natural Language Processing (NLP) for analyzing textual logs (e.g., PowerShell scripts, command-line arguments).
 
 ### 3. Response & Orchestration (nexdefend-soar)
 
 *   **Automated SOAR Playbooks**: A Go-based SOAR (Security Orchestration, Automation, and Response) service consumes from the `incidents` Kafka topic.
 *   **Incident-Driven Response**: When a "High" or "Critical" incident is detected, the SOAR service automatically triggers a playbook, such as initiating an Nmap scan on the incident's source IP.
+*   **Robust Playbook Engine**: The platform includes a robust playbook engine that allows for the creation of complex, multi-step automation workflows.
+*   **Automated Response Actions**: The platform supports a wide range of automated response actions, such as isolating an endpoint from the network, terminating a malicious process, or blocking an IP address at the firewall.
 
 ### 4. Platform & UI (api & nexdefend-frontend)
 
@@ -40,6 +47,7 @@ The platform is a collection of specialized services working in concert.
 *   **Observability**:
     *   **Prometheus**: Scrapes metrics from the Go API and Python AI service.
     *   **Grafana**: Provides pre-built dashboards for monitoring the AI service's performance (e.g., events processed, anomalies detected).
+*   **Agent Management**: A dedicated API for agent registration and configuration management.
 
 ## Architecture
 
@@ -69,6 +77,7 @@ graph TD
         S[Suricata]
         G[Grafana]
         P[Prometheus]
+        CC[Cloud Connector]
     end
 
     %% UI -> Backend
@@ -76,6 +85,9 @@ graph TD
 
     %% Agent -> Backend
     A -- Events --> K[Kafka - nexdefend-events]
+
+    %% Cloud Connector -> Backend
+    CC -- Events --> K[Kafka - nexdefend-events]
 
     %% Ingestor -> Data Stores
     I -- Consumes --> K
@@ -114,6 +126,7 @@ graph TD
 | `ai`              | Python     | Handles all compute-heavy and specialized tasks: ML/AI, Nmap scanning, and UEBA.       |
 | `nexdefend-agent` | Go         | Endpoint agent for collecting and streaming telemetry (FIM, process, network).         |
 | `nexdefend-soar`  | Go         | Listens for high-severity incidents on Kafka and runs automated response playbooks.      |
+| `nexdefend-cloud-connector` | Go | Ingests security logs and events from cloud providers.                               |
 | `db`              | N/A        | PostgreSQL database for storing state (incidents, users, vulnerabilities, etc.).       |
 | `opensearch`      | N/A        | Searchable log store for all raw endpoint events.                                      |
 | `kafka`/`zookeeper` | N/A        | The central event bus for decoupling services and handling high-throughput event data. |
