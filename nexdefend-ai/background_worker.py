@@ -8,6 +8,8 @@ import sys
 import time
 from advanced_threat_detection import analyze_command_line
 from mitre_attack import get_mitre_technique
+from specialized_models.dga_detector import is_dga
+from ueba.behavior_model import BehaviorModel
 
 # --- Configuration ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -18,6 +20,7 @@ AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
 
 # --- In-memory state for UEBA ---
 suspicious_processes = {}  # pid -> timestamp
+behavior_models = {} # user -> BehaviorModel
 
 def calculate_risk_score(severity, event_data):
     """Calculates a risk score for an incident."""
@@ -70,6 +73,21 @@ def create_incident_in_backend(description, severity, source_ip=None, entity_nam
 def process_event(event):
     """Processes a single event and checks for behavioral anomalies."""
     event_type = event.get("event_type")
+    user = event.get("user", "unknown")
+
+    if user not in behavior_models:
+        behavior_models[user] = BehaviorModel(user)
+
+    if behavior_models[user].detect_anomalies(event):
+        description = f"UEBA Anomaly: Unusual behavior detected for user {user}"
+        risk_score = calculate_risk_score("Medium", {})
+        create_incident_in_backend(
+            description,
+            "Medium",
+            entity_name=user,
+            risk_score=risk_score,
+            disposition="Not Reviewed",
+        )
 
     if event_type == "process":
         process_data = event['data']
@@ -125,6 +143,21 @@ def process_event(event):
                     disposition="Not Reviewed",
                     mitre_technique=mitre_technique,
                 )
+
+    elif event_type == "dns":
+        dns_data = event.get("dns", {})
+        domain = dns_data.get("rrname")
+        if domain and is_dga(domain):
+            description = f"DGA Domain Detected: {domain}"
+            risk_score = calculate_risk_score("High", {})
+            create_incident_in_backend(
+                description,
+                "High",
+                source_ip=event.get("src_ip"),
+                entity_name=domain,
+                risk_score=risk_score,
+                disposition="Not Reviewed",
+            )
 
     for pid, timestamp in list(suspicious_processes.items()):
         if time.time() - timestamp > 300:

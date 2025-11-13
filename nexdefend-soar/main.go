@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"nexdefend/nexdefend-soar/internal/playbook"
+	"nexdefend/nexdefend-soar/internal/playbook_editor"
 )
 
 // Incident represents the data for a security incident.
@@ -22,6 +24,12 @@ type Incident struct {
 
 func main() {
 	log.Println("Starting nexdefend-soar service...")
+
+	// Load playbooks
+	playbooks, err := playbook_editor.LoadPlaybooks("playbooks.yml")
+	if err != nil {
+		log.Fatalf("Failed to load playbooks: %v", err)
+	}
 
 	// --- Kafka Consumer ---
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
@@ -58,31 +66,17 @@ func main() {
 			}
 
 			// --- SOAR Playbook ---
-			if incident.Severity == "High" || incident.Severity == "Critical" {
-				log.Printf("High-severity incident #%d received. Triggering playbook.", incident.ID)
-
-				// Define a simple playbook
-				pb := &playbook.Playbook{
-					ID:   "pb-001",
-					Name: "High-Severity Incident Playbook",
-					Actions: []playbook.Action{
-						{
-							Type: "scan",
-							Params: map[string]string{
-								"target": incident.SourceIP,
-							},
-						},
-						{
-							Type: "isolate",
-							Params: map[string]string{
-								"target": incident.SourceIP,
-							},
-						},
-					},
+			for _, pb := range playbooks {
+				if (incident.Severity == "High" || incident.Severity == "Critical") && pb.ID == "pb-001" {
+					log.Printf("High-severity incident #%d received. Triggering playbook.", incident.ID)
+					// Replace placeholders in playbook params
+					for i, action := range pb.Actions {
+						for k, v := range action.Params {
+							pb.Actions[i].Params[k] = strings.Replace(v, "{source_ip}", incident.SourceIP, -1)
+						}
+					}
+					pb.Execute()
 				}
-
-				// Execute the playbook
-				pb.Execute()
 			}
 
 		} else {

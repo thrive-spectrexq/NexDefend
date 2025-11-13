@@ -11,11 +11,12 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
 	"github.com/thrive-spectrexq/NexDefend/internal/normalizer"
 )
 
 // StartIngestor initializes and starts the ingestor service.
-func StartIngestor() {
+func StartIngestor(correlationEngine correlation.CorrelationEngine) {
 	log.Println("Initializing ingestor service...")
 
 	// --- Kafka Consumer ---
@@ -51,7 +52,7 @@ func StartIngestor() {
 	topic := "nexdefend-events"
 	err = consumer.SubscribeTopics([]string{topic}, nil)
 	if err != nil {
-		log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
+		log.Fatalf("Failed to subscribe to topic %s: %v", err)
 	}
 
 	log.Println("Ingestor service started. Waiting for messages...")
@@ -63,6 +64,17 @@ func StartIngestor() {
 			if err != nil {
 				log.Printf("Failed to normalize event: %v", err)
 				continue
+			}
+
+			// Send the event to the correlation engine
+			incident, err := correlationEngine.Correlate(*normalizedEvent)
+			if err != nil {
+				log.Printf("Failed to correlate event: %v", err)
+				continue
+			}
+
+			if incident != nil {
+				log.Printf("Incident created: %v", incident)
 			}
 
 			eventJSON, err := json.Marshal(normalizedEvent)

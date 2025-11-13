@@ -2,9 +2,12 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -12,25 +15,31 @@ import (
 func StartAWSIntegration(producer *kafka.Producer, topic string) {
 	fmt.Println("Starting AWS integration...")
 
-	// Placeholder for AWS S3 integration logic
-	// In a real implementation, you would use the AWS SDK for Go to:
-	// 1. Connect to the specified S3 bucket.
-	// 2. List and read log files.
-	// 3. Process the logs and send them to the Kafka topic.
-
 	go func() {
 		for {
-			// Example log message
-			logMessage := `{"source": "aws", "log": "example AWS log entry"}`
-
-			// Produce the message to Kafka
-			err := producer.Produce(&kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-				Value:          []byte(logMessage),
-			}, nil)
-
+			// Load the Shared AWS Configuration (~/.aws/config)
+			cfg, err := config.LoadDefaultConfig(context.TODO())
 			if err != nil {
-				fmt.Printf("Failed to produce message to Kafka: %v\n", err)
+				fmt.Printf("Failed to load AWS config: %v\n", err)
+				time.Sleep(10 * time.Second)
+				continue
+			}
+
+			// Create an Amazon S3 service client
+			client := s3.NewFromConfig(cfg)
+
+			// Get the first page of results for ListObjectsV2 for a bucket
+			output, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+				Bucket: &topic,
+			})
+			if err != nil {
+				fmt.Printf("Failed to list objects in bucket %s: %v\n", topic, err)
+				time.Sleep(10 * time.Second)
+				continue
+			}
+
+			for _, object := range output.Contents {
+				fmt.Printf("Key: %s\n", *object.Key)
 			}
 
 			time.Sleep(10 * time.Second) // Poll for new logs every 10 seconds

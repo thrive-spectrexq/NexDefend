@@ -1,0 +1,15 @@
+- id: pb-001
+  name: High-Severity Incident Playbook
+  actions:
+    - type: scan
+      params:
+        target: "{source_ip}"
+    - type: isolate
+      params:
+        target: "{source_ip}"
+- id: pb-002
+  name: User Compromise Playbook
+  actions:
+    - type: disable_user
+      params:
+        username: "{username}"
