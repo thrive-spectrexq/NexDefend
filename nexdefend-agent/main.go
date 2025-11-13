@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -11,12 +12,10 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/fsnotify/fsnotify"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/shirou/gopsutil/host"
-	psnet "github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/flow"
@@ -64,7 +63,7 @@ type AgentConfig struct {
 }
 
 var (
-	seenConnections = make(map[string]struct{})
+	startPlatformSpecificModules func(producer *kafka.Producer, eventsTopic string, config *AgentConfig)
 )
 
 func main() {
@@ -96,8 +95,7 @@ func main() {
 		}
 	}()
 
-	go startFIMWatcher(producer, eventsTopic, config)
-	go startNetWatcher(producer, eventsTopic)
+	startPlatformSpecificModules(producer, eventsTopic, config)
 	go startHeartbeat()
 	go startFlowMonitor(producer, flowsTopic)
 
@@ -145,106 +143,6 @@ func main() {
 
 		producer.Flush(15 * 1000)
 		time.Sleep(time.Duration(config.CollectionIntervalSec) * time.Second)
-	}
-}
-
-func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatalf("Failed to create FIM watcher: %v", err)
-	}
-	defer watcher.Close()
-
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-
-				fimEvent := FIMEvent{
-					Path:      event.Name,
-					Operation: event.Op.String(),
-				}
-
-				wrappedEvent := Event{
-					EventType: "fim",
-					Timestamp: time.Now(),
-					Data:      fimEvent,
-				}
-
-				eventJSON, err := json.Marshal(wrappedEvent)
-				if err != nil {
-					log.Printf("Failed to marshal FIM event to JSON: %v", err)
-					continue
-				}
-
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          eventJSON,
-				}, nil)
-
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("FIM watcher error:", err)
-			}
-		}
-	}()
-
-	for _, path := range config.FIMPaths {
-		err = watcher.Add(path)
-		if err != nil {
-			log.Printf("Failed to add path to FIM watcher: %v", err)
-		}
-		log.Printf("FIM watcher started on path: %s", path)
-	}
-
-	<-make(chan struct{})
-}
-
-func startNetWatcher(producer *kafka.Producer, topic string) {
-	for {
-		connections, err := psnet.Connections("all")
-		if err != nil {
-			log.Printf("Failed to get network connections: %v", err)
-			time.Sleep(15 * time.Second)
-			continue
-		}
-
-		for _, conn := range connections {
-			connID := conn.Laddr.IP + ":" + string(conn.Laddr.Port) + "->" + conn.Raddr.IP + ":" + string(conn.Raddr.Port)
-			if _, exists := seenConnections[connID]; !exists {
-				seenConnections[connID] = struct{}{}
-
-				netEvent := NetConnectionEvent{
-					PID:    conn.Pid,
-					Local:  conn.Laddr.IP + ":" + string(conn.Laddr.Port),
-					Remote: conn.Raddr.IP + ":" + string(conn.Raddr.Port),
-					Status: conn.Status,
-				}
-
-				wrappedEvent := Event{
-					EventType: "net_connection",
-					Timestamp: time.Now(),
-					Data:      netEvent,
-				}
-
-				eventJSON, err := json.Marshal(wrappedEvent)
-				if err != nil {
-					log.Printf("Failed to marshal network event to JSON: %v", err)
-					continue
-				}
-
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          eventJSON,
-				}, nil)
-			}
-		}
-		time.Sleep(15 * time.Second)
 	}
 }
 

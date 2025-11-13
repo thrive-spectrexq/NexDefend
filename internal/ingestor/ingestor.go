@@ -1,3 +1,4 @@
+
 package ingestor
 
 import (
@@ -10,14 +11,8 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"github.com/thrive-spectrexq/NexDefend/internal/normalizer"
 )
-
-// ProcessEvent represents the data received from the agent.
-type ProcessEvent struct {
-	PID     int32  `json:"pid"`
-	Name    string `json:"name"`
-	Cmdline string `json:"cmdline"`
-}
 
 // StartIngestor initializes and starts the ingestor service.
 func StartIngestor() {
@@ -64,17 +59,22 @@ func StartIngestor() {
 	for {
 		msg, err := consumer.ReadMessage(-1)
 		if err == nil {
-			var event ProcessEvent
-			err := json.Unmarshal(msg.Value, &event)
+			normalizedEvent, err := normalizer.NormalizeEvent(msg.Value)
 			if err != nil {
-				log.Printf("Failed to unmarshal message: %v", err)
+				log.Printf("Failed to normalize event: %v", err)
+				continue
+			}
+
+			eventJSON, err := json.Marshal(normalizedEvent)
+			if err != nil {
+				log.Printf("Failed to marshal normalized event to JSON: %v", err)
 				continue
 			}
 
 			// Index the event into OpenSearch
 			indexReq := opensearchapi.IndexRequest{
 				Index: "events",
-				Body:  strings.NewReader(string(msg.Value)),
+				Body:  strings.NewReader(string(eventJSON)),
 			}
 
 			res, err := indexReq.Do(context.Background(), osClient)
