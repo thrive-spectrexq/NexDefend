@@ -48,7 +48,7 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 
 	// Enrichment
 	api.HandleFunc("/enrichment/users/{username}", handlers.GetUserHandler(adConnector)).Methods("GET")
-	api.HandleFunc("/enrichment/assets/{hostname}", handlers.GetAssetHandler(snowConnector)).Methods("GET")
+	api.HandleFunc("/enrichment/assets/{hostname}", handlers.GetEnrichedAssetHandler(snowConnector)).Methods("GET")
 
 	// Case Management
 	api.HandleFunc("/cases", handlers.CreateCaseHandler()).Methods("POST")

@@ -78,7 +78,7 @@ func main() {
 	log.Println("Server exited gracefully")
 }
 
-func gracefulShutdown(srv *http.server) {
+func gracefulShutdown(srv *http.Server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit

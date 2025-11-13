@@ -25,7 +25,7 @@ func GetUserHandler(adConnector enrichment.ActiveDirectoryConnector) http.Handle
 	}
 }
 
-func GetAssetHandler(snowConnector enrichment.ServiceNowConnector) http.HandlerFunc {
+func GetEnrichedAssetHandler(snowConnector enrichment.ServiceNowConnector) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		hostname := vars["hostname"]

@@ -1,7 +1,20 @@
 
 package enrichment
 
-import "github.com/thrive-spectrexq/NexDefend/internal/models"
+import (
+	"time"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
+)
+
+// Asset represents an asset in the system.
+type Asset struct {
+	ID        int
+	Hostname  string
+	IPAddress string
+	OSVersion string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
 
 // ServiceNowConnector defines the interface for a ServiceNow connector.
 type ServiceNowConnector interface {
