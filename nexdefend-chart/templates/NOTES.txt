@@ -1,0 +1,40 @@
+{{- define "nexdefend.notes" }}
+Your NexDefend chart has been deployed.
+
+Next Steps:
+
+1. IMPORTANT - Handle Secrets:
+   This chart expects a Kubernetes Secret named 'nexdefend-secrets' to exist in the same namespace.
+   This secret should contain all sensitive data, such as database credentials and API keys.
+
+   If you have not already created this secret, you can create a 'my-secrets.yaml' file like this:
+
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: nexdefend-secrets
+   type: Opaque
+   stringData:
+     dbUser: "your-db-user"
+     dbPassword: "your-db-password"
+     dbName: "nexdefend"
+     jwtSecretKey: "your-super-secret-jwt-key"
+     aiServiceToken: "your-secure-ai-service-token"
+
+   Apply it to your cluster BEFORE the pods can start successfully:
+   kubectl apply -f my-secrets.yaml
+
+2. Check Pod Status:
+   To check the status of your deployed services, run:
+   kubectl get pods --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+3. Continue the Pattern:
+   You have successfully deployed the 'api' and 'ai' services. Now, you can follow the same pattern to create deployment and service YAML files for the other services in the NexDefend platform (e.g., frontend, soar, agent).
+
+   - Add new sections to your `values.yaml` file for each service.
+   - Create `[service]-deployment.yaml` and `[service]-service.yaml` in the `templates/` directory.
+   - Remember to configure environment variables and secrets appropriately for each service.
+
+4. Stateful Services (Database, Kafka, etc.):
+   For stateful services like PostgreSQL, Kafka, and OpenSearch, it is strongly recommended to use managed services from your cloud provider (e.g., AWS RDS, Amazon MSK, Amazon OpenSearch Service). This will be more reliable and scalable than running them in Kubernetes. Update your `values.yaml` and `nexdefend-secrets` with the connection details for these managed services.
+{{- end }}

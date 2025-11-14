@@ -1,0 +1,5 @@
+apiVersion: v2
+name: nexdefend
+description: A Helm chart for deploying the NexDefend platform on Kubernetes.
+version: 0.1.0
+appVersion: "1.0.0"
