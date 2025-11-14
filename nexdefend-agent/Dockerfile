@@ -22,8 +22,8 @@ FROM alpine:latest
 RUN apk add --no-cache wget tar && \
     wget https://github.com/osquery/osquery/releases/download/5.11.0/osquery-5.11.0_1.linux_x86_64.tar.gz && \
     tar -xzf osquery-5.11.0_1.linux_x86_64.tar.gz && \
-    mv osquery-5.11.0_1.linux_x86_64/osqueryd /usr/bin/osqueryd && \
-    mv osquery-5.11.0_1.linux_x86_64/osqueryi /usr/bin/osqueryi && \
+    mv osquery-5.11.0_1.linux_x86_64/usr/bin/osqueryd /usr/bin/osqueryd && \
+    mv osquery-5.11.0_1.linux_x86_64/usr/bin/osqueryi /usr/bin/osqueryi && \
     chmod +x /usr/bin/osqueryd && \
     chmod +x /usr/bin/osqueryi
 
