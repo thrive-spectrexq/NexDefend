@@ -6,7 +6,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"nexdefend/nexdefend-soar/internal/playbook"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/playbook"
 )
 
 // LoadPlaybooks loads playbooks from a YAML file.

@@ -26,6 +26,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/flow"
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/kubernetes"
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/queue"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/response"
 )
 
 // Event is a generic wrapper for different types of security events.
@@ -136,6 +137,8 @@ func main() {
 	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" {
 		go kubernetes.StartKubernetesWatcher(producer, eventsTopic)
 	}
+
+	go startResponseConsumer()
 
 	for {
 		processes, err := process.Processes()
@@ -382,5 +385,58 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 		}
 
 		flows[flowKey] = metrics
+	}
+}
+
+func startResponseConsumer() {
+	kafkaBroker := os.Getenv("KAFKA_BROKER")
+	if kafkaBroker == "" {
+		kafkaBroker = "kafka:9092"
+	}
+
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": kafkaBroker,
+		"group.id":          "nexdefend-agent-responses",
+		"auto.offset.reset": "earliest",
+	})
+	if err != nil {
+		log.Fatalf("Failed to create Kafka consumer for responses: %v", err)
+	}
+	defer consumer.Close()
+
+	topic := "nexdefend-agent-responses"
+	err = consumer.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
+	}
+
+	log.Println("Response consumer started. Waiting for commands...")
+
+	for {
+		msg, err := consumer.ReadMessage(-1)
+		if err == nil {
+			var cmd response.Command
+			err := json.Unmarshal(msg.Value, &cmd)
+			if err != nil {
+				log.Printf("Failed to unmarshal command: %v", err)
+				continue
+			}
+
+			switch cmd.Action {
+			case "kill_process":
+				pid, ok := cmd.Parameters["pid"]
+				if !ok {
+					log.Println("Missing 'pid' parameter for 'kill_process' action")
+					continue
+				}
+				if err := response.KillProcess(pid); err != nil {
+					log.Printf("Failed to kill process %s: %v", pid, err)
+				}
+			default:
+				log.Printf("Unknown action received: %s", cmd.Action)
+			}
+		} else {
+			log.Printf("Consumer error: %v (%v)\n", err, msg)
+		}
 	}
 }

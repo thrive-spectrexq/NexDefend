@@ -4,7 +4,7 @@ package remediation
 import (
 	"log"
 
-	"nexdefend/nexdefend-soar/internal/integrations/firewall"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/integrations/firewall"
 )
 
 // Scan triggers a scan on the target.
