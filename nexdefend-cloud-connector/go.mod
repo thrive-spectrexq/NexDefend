@@ -1,4 +1,4 @@
-module github.com/thrive-spectrexq/NexDefend/nexdefend-cloud-connector
+module nexdefend/nexdefend-cloud-connector
 
 go 1.24.3
 
