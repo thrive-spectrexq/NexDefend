@@ -1,24 +1,32 @@
-# Use the official Golang image to create a build artifact.
-FROM golang:1.24.3 as builder
+# Build stage
+# Assumes you are using a Go 1.24+ alpine image
+FROM golang:1.24.3-alpine AS builder
 
-# Set the working directory inside the container
+# 1. ADD THIS LINE to install C build tools and librdkafka-dev
+RUN apk add --no-cache gcc musl-dev librdkafka-dev
+
 WORKDIR /app
 
-# Copy the Go module files and download dependencies.
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code.
 COPY . .
 
-# Build the application.
-RUN CGO_ENABLED=0 GOOS=linux go build -o /nexdefend-soar
+# 2. MODIFY THIS LINE: Remove CGO_ENABLED=0
+# Old: RUN CGO_ENABLED=0 GOOS=linux go build -o /nexdefend-soar
+# New:
+RUN GOOS=linux go build -o /nexdefend-soar
 
-# Use a minimal image for the final stage.
+# Final stage
 FROM alpine:latest
 
-# Copy the binary from the builder stage.
+# 3. ADD THIS LINE to install the runtime library
+RUN apk add --no-cache librdkafka
+
+WORKDIR /
+
 COPY --from=builder /nexdefend-soar /nexdefend-soar
 
-# Set the command to run the application.
+# Assuming it has an EXPOSE and CMD line, leave them as-is
+# EXPOSE 8082 
 CMD ["/nexdefend-soar"]
