@@ -2,8 +2,11 @@
 package playbook
 
 import (
+	"encoding/json"
 	"log"
-	"nexdefend/nexdefend-soar/internal/remediation"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/remediation"
+
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 // Action represents a single action to be taken in a playbook.
@@ -16,11 +19,18 @@ type Action struct {
 type Playbook struct {
 	ID      string   `json:"id"`
 	Name    string   `json:"name"`
+	Trigger string   `json:"trigger"`
 	Actions []Action `json:"actions"`
 }
 
+// Command represents a command sent to an agent.
+type Command struct {
+	Action     string            `json:"action"`
+	Parameters map[string]string `json:"parameters"`
+}
+
 // Execute runs the actions in a playbook.
-func (p *Playbook) Execute() {
+func (p *Playbook) Execute(producer *kafka.Producer) error {
 	log.Printf("Executing playbook: %s", p.Name)
 
 	for _, action := range p.Actions {
@@ -33,8 +43,24 @@ func (p *Playbook) Execute() {
 			remediation.Block(action.Params["target"])
 		case "disable_user":
 			remediation.DisableUser(action.Params["username"])
+		case "kill_process":
+			command := Command{
+				Action:     "kill_process",
+				Parameters: map[string]string{"pid": action.Params["pid"]},
+			}
+			cmdJSON, err := json.Marshal(command)
+			if err != nil {
+				log.Printf("Failed to marshal command to JSON: %v", err)
+				return err
+			}
+			topic := "nexdefend-agent-responses"
+			producer.Produce(&kafka.Message{
+				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+				Value:          cmdJSON,
+			}, nil)
 		default:
 			log.Printf("Unknown action type: %s", action.Type)
 		}
 	}
+	return nil
 }

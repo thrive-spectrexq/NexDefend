@@ -12,9 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"nexdefend/nexdefend-soar/internal/alert"
-	"nexdefend/nexdefend-soar/internal/playbook"
-	"nexdefend/nexdefend-soar/internal/playbook_editor"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/alert"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/playbook_editor"
 )
 
 // Incident represents the data for a security incident.
@@ -25,6 +24,7 @@ type Incident struct {
 	Status      string `json:"status"`
 	// This would need to be populated in a real scenario
 	SourceIP    string `json:"source_ip,omitempty"`
+	PID         string `json:"pid,omitempty"`
 }
 
 var (
@@ -43,19 +43,27 @@ func main() {
 		log.Fatalf("Failed to load playbooks: %v", err)
 	}
 
-	// Expose the a /metrics endpoint for Prometheus
-	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/api/v1/alerts", alert.WebhookHandler(playbooks))
-	go func() {
-		log.Fatal(http.ListenAndServe(":8080", nil))
-	}()
-
-	// --- Kafka Consumer ---
+	// --- Kafka ---
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
 	if kafkaBroker == "" {
 		kafkaBroker = "kafka:9092"
 	}
 
+	// Producer
+	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+	if err != nil {
+		log.Fatalf("Failed to create Kafka producer: %v", err)
+	}
+	defer producer.Close()
+
+	// Expose the a /metrics endpoint for Prometheus
+	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/api/v1/alerts", alert.WebhookHandler(playbooks, producer))
+	go func() {
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	}()
+
+	// Consumer
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": kafkaBroker,
 		"group.id":          "nexdefend-soar",
@@ -86,15 +94,17 @@ func main() {
 
 			// --- SOAR Playbook ---
 			for _, pb := range playbooks {
-				if (incident.Severity == "High" || incident.Severity == "Critical") && pb.ID == "pb-001" {
+				if (incident.Severity == "High" || incident.Severity == "Critical") && (pb.ID == "pb-001" || pb.ID == "pb-003") {
 					log.Printf("High-severity incident #%d received. Triggering playbook.", incident.ID)
 					// Replace placeholders in playbook params
 					for i, action := range pb.Actions {
 						for k, v := range action.Params {
-							pb.Actions[i].Params[k] = strings.Replace(v, "{source_ip}", incident.SourceIP, -1)
+							updatedVal := strings.Replace(v, "{source_ip}", incident.SourceIP, -1)
+							updatedVal = strings.Replace(updatedVal, "{pid}", incident.PID, -1)
+							pb.Actions[i].Params[k] = updatedVal
 						}
 					}
-					err := pb.Execute()
+					err := pb.Execute(producer)
 					if err != nil {
 						PlaybooksRun.WithLabelValues(pb.ID, "failed").Inc()
 					} else {

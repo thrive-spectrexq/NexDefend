@@ -13,3 +13,9 @@
     - type: disable_user
       params:
         username: "{username}"
+- id: pb-003
+  name: Malicious Process Playbook
+  actions:
+    - type: kill_process
+      params:
+        pid: "{pid}"
