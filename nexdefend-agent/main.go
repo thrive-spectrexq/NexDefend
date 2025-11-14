@@ -16,6 +16,8 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/prometheus/client_golang/prometheus"
+	"crypto/rand"
+
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/shirou/gopsutil/host"
@@ -23,6 +25,7 @@ import (
 
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/flow"
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/kubernetes"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-agent/internal/queue"
 )
 
 // Event is a generic wrapper for different types of security events.
@@ -85,6 +88,17 @@ func main() {
 
 	config := getAgentConfig()
 
+	encryptionKey := make([]byte, 32)
+	_, err := rand.Read(encryptionKey)
+	if err != nil {
+		log.Fatalf("Failed to generate encryption key: %v", err)
+	}
+
+	secureQueue, err := queue.NewSecureQueue("./event_queue", encryptionKey)
+	if err != nil {
+		log.Fatalf("Failed to create secure queue: %v", err)
+	}
+
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
 	if kafkaBroker == "" {
 		kafkaBroker = "kafka:9092"
@@ -104,10 +118,16 @@ func main() {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
 					log.Printf("Delivery failed: %v\n", ev.TopicPartition)
+					// Enqueue the message on failure
+					if err := secureQueue.Enqueue(ev.Value); err != nil {
+						log.Printf("Failed to enqueue message: %v", err)
+					}
 				}
 			}
 		}
 	}()
+
+	go processQueue(producer, eventsTopic, secureQueue)
 
 	startPlatformSpecificModules(producer, eventsTopic, config)
 	go startHeartbeat()
@@ -162,6 +182,29 @@ func main() {
 
 		producer.Flush(15 * 1000)
 		time.Sleep(time.Duration(config.CollectionIntervalSec) * time.Second)
+	}
+}
+
+func processQueue(producer *kafka.Producer, topic string, q *queue.SecureQueue) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		for {
+			data, err := q.Dequeue()
+			if err != nil {
+				log.Printf("Failed to dequeue message: %v", err)
+				break
+			}
+			if data == nil {
+				break // Queue is empty
+			}
+
+			producer.Produce(&kafka.Message{
+				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+				Value:          data,
+			}, nil)
+		}
 	}
 }
 
