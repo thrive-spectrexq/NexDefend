@@ -1,25 +1,25 @@
 # Build stage
 FROM golang:1.24.3-alpine AS builder
 
-# --- 1. ADD THIS LINE ---
 # Install C build tools and librdkafka development headers
 RUN apk add --no-cache gcc musl-dev librdkafka-dev
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN go mod download
+
+# --- THIS IS THE CHANGED LINE ---
+# Use 'go mod tidy' to sync go.sum with go.mod
+RUN go mod tidy
 
 COPY . .
 
-# --- 2. MODIFY THIS LINE ---
-# Add the 'libkafka musl' tags to build against the system library
+# Build the application
 RUN go build -tags "libkafka musl" -o /nexdefend-cloud-connector .
 
 # Final stage
 FROM alpine:latest
 
-# --- 3. ADD THIS LINE ---
 # Install the runtime C library
 RUN apk add --no-cache librdkafka
 
