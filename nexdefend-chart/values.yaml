@@ -1,0 +1,142 @@
+# Default values for nexdefend-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+# -- Image settings for all services.
+# Important: You must build and push your service images to a container registry.
+# Replace 'your-registry' with your actual container registry (e.g., docker.io/yourusername).
+image:
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+# -- Service account configuration.
+serviceAccount:
+  # -- Specifies whether a service account should be created.
+  create: true
+  # -- Annotations to add to the service account.
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""
+
+# -- Pod security context.
+podSecurityContext: {}
+  # fsGroup: 2000
+
+# -- Security context for containers.
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# ==============================================================================
+# Service-specific configurations
+# ==============================================================================
+
+# -- Configuration for the main Go API service.
+api:
+  name: nexdefend-api
+  image:
+    repository: your-registry/nexdefend-api
+  service:
+    type: ClusterIP
+    port: 8080
+  environment:
+    PYTHON_API: "http://nexdefend-ai:5000"
+    CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://nexdefend.vercel.app"
+    FIM_PATH: "/etc"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  # -- Environment variables sourced from the global configmap
+  configMapEnv:
+    - name: DB_HOST
+      key: dbHost
+  # -- Environment variables sourced from the global secret
+  secretEnv:
+    - name: DB_USER
+      key: dbUser
+    - name: DB_PASSWORD
+      key: dbPassword
+    - name: DB_NAME
+      key: dbName
+    - name: JWT_SECRET_KEY
+      key: jwtSecretKey
+    - name: AI_SERVICE_TOKEN
+      key: aiServiceToken
+
+# -- Configuration for the Python AI/ML service.
+ai:
+  name: nexdefend-ai
+  image:
+    repository: your-registry/nexdefend-ai
+  service:
+    type: ClusterIP
+    port: 5000
+  environment:
+    GO_API_URL: "http://nexdefend-api:8080/api/v1"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  # -- Environment variables sourced from the global configmap
+  configMapEnv:
+    - name: DB_HOST
+      key: dbHost
+    - name: DB_PORT
+      key: dbPort
+  # -- Environment variables sourced from the global secret
+  secretEnv:
+    - name: DB_USER
+      key: dbUser
+    - name: DB_PASSWORD
+      key: dbPassword
+    - name: DB_NAME
+      key: dbName
+    - name: AI_SERVICE_TOKEN
+      key: aiServiceToken
+
+# -- Configuration for the React Frontend service.
+frontend:
+  name: nexdefend-frontend
+  image:
+    repository: your-registry/nexdefend-frontend
+  service:
+    type: ClusterIP
+    port: 5173
+  environment:
+    REACT_APP_API_URL: "http://nexdefend-api:8080/api/v1"
+    REACT_APP_AI_API_URL: "http://nexdefend-ai:5000"
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: chart-example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+# ==============================================================================
+# External service configurations (placeholders)
+# ==============================================================================
+
+# -- Global environment variables (non-secret)
+# These will be placed in a ConfigMap and shared across services.
+config:
+  dbHost: "db" # For internal K8s service, use the service name. For external, use the full URL.
+  dbPort: "5432"
+
+# -- External database configuration
+# IMPORTANT: For production, use a managed database service (e.g., AWS RDS, Google Cloud SQL).
+# The connection details should be stored in a Kubernetes Secret, not here.
+database:
+  host: "nexdefend-postgresql" # Example if running Postgres in-cluster
+  port: 5432
