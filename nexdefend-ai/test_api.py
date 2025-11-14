@@ -97,3 +97,22 @@ def test_analyze_event_creates_incident(mock_requests_post, mock_detect, mock_pr
     assert call_args['description'] == 'AI Anomaly Detected: Test Attack'
     assert call_args['severity'] == 'Critical'
     assert call_args['related_event_id'] == 1
+
+# --- Test /score Endpoint ---
+@patch('api.preprocess_events')
+@patch('api.score_anomalies')
+def test_score_endpoint(mock_score_anomalies, mock_preprocess, client):
+    """Tests the /score endpoint."""
+    # Mock the data
+    mock_event_data = {'event_type': 'alert', 'src_ip': '10.0.0.1', 'dest_ip': '8.8.8.8'}
+    mock_preprocess.return_value = MagicMock()
+    mock_score_anomalies.return_value = [-0.123]
+
+    response = client.post('/score', json=mock_event_data)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'score' in data
+    assert data['score'] == -0.123
+    mock_preprocess.assert_called_once()
+    mock_score_anomalies.assert_called_once()

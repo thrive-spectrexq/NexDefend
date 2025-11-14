@@ -21,6 +21,7 @@ from ml_anomaly_detection import (
     detect_anomalies,
     preprocess_events,
     predict_real_time,
+    score_anomalies,
     train_model,
 )
 
@@ -241,6 +242,19 @@ def predict():
     except Exception as e:
         logging.error(f"Error during real-time prediction: {e}")
         return make_response(jsonify({"error": "Failed to make real-time prediction"}), 500)
+
+@app.route("/score", methods=["POST"])
+def score():
+    try:
+        data = request.get_json()
+        features = preprocess_events([data], is_training=False)
+        start_time = time.time()
+        score = score_anomalies(features)
+        MODEL_INFERENCE_DURATION.labels(model="isolation_forest").observe(time.time() - start_time)
+        return make_response(jsonify({"score": score[0]}), 200)
+    except Exception as e:
+        logging.error(f"Error during real-time scoring: {e}")
+        return make_response(jsonify({"error": "Failed to make real-time score"}), 500)
 
 @app.route("/api-metrics", methods=["GET"])
 def get_api_metrics():

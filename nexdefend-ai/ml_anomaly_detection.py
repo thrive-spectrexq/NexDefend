@@ -109,6 +109,20 @@ def predict_real_time(data):
     features = preprocess_events([data], is_training=False)
     return detect_anomalies(features).tolist()
 
+def score_anomalies(features):
+    """Scores anomalies using the pre-trained Isolation Forest model."""
+    if features.shape[0] == 0:
+        return np.array([])
+    try:
+        model = joblib.load(MODEL_PATH)
+    except FileNotFoundError:
+        print("Warning: Model file not found. Training a new model.")
+        # Train a dummy model to avoid crashing
+        train_model(features)
+        model = joblib.load(MODEL_PATH)
+
+    return model.score_samples(features)
+
 if __name__ == "__main__":
     # Example training workflow (replace with actual data loading)
     from data_ingestion import fetch_all_suricata_events
