@@ -8,11 +8,16 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 
-# --- THIS IS THE CHANGED LINE ---
-# Use 'go mod tidy' to sync go.sum with go.mod
+# Run tidy once to get most dependencies (good for caching)
 RUN go mod tidy
 
+# Copy ALL source code
 COPY . .
+
+# --- 1. ADD THIS LINE ---
+# Run tidy AGAIN to find dependencies in the source code (like azeventhubs)
+# and add them to go.sum before building.
+RUN go mod tidy
 
 # Build the application
 RUN go build -tags "libkafka musl" -o /nexdefend-cloud-connector .
