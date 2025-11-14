@@ -15,7 +15,7 @@ COPY . .
 # 2. MODIFY THIS LINE: Remove CGO_ENABLED=0
 # Old: RUN CGO_ENABLED=0 GOOS=linux go build -o /nexdefend-soar
 # New:
-RUN GOOS=linux go build -o /nexdefend-soar
+RUN GOOS=linux go build -tags libkafka -o /nexdefend-soar
 
 # Final stage
 FROM alpine:latest
