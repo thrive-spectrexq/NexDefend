@@ -19,7 +19,7 @@ COPY . .
 # Build the application.
 # <--- CHANGED ---
 # Removed CGO_ENABLED=0 to allow C dependencies to build
-RUN GOOS=linux go build -o /nexdefend-agent
+RUN GOOS=linux go build -tags libkafka -o /nexdefend-agent
 
 # Use a minimal image for the final stage.
 FROM alpine:latest
