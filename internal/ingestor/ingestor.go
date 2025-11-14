@@ -31,7 +31,7 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine) {
 	// --- Kafka Consumer ---
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
 	if kafkaBroker == "" {
-		kafkaBroker = "kafka:9292"
+		kafkaBroker = "kafka:9092"
 	}
 
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
