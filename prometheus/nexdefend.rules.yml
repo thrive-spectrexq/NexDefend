@@ -1,14 +1,23 @@
 groups:
   - name: nexdefend
     rules:
-      - alert: HighKafkaLag
+      - alert: HighKafkaLagCritical
         expr: kafka_consumergroup_lag > 1000
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: High Kafka Lag
-          description: "Kafka consumer group {{ $labels.consumergroup }} has a high lag."
+          summary: High Kafka Lag (Critical)
+          description: "Kafka consumer group {{ $labels.consumergroup }} has a critical lag of {{ $value }}."
+
+      - alert: HighKafkaLagWarning
+        expr: kafka_consumergroup_lag > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Kafka Lag (Warning)
+          description: "Kafka consumer group {{ $labels.consumergroup }} has a high lag of {{ $value }}."
 
       - alert: ApiHighErrorRate
         expr: (sum(rate(http_requests_total{job="api", status=~"5.."}[5m])) / sum(rate(http_requests_total{job="api"}[5m]))) > 0.05
@@ -18,3 +27,12 @@ groups:
         annotations:
           summary: API High Error Rate
           description: "The API has a high error rate."
+
+      - alert: HighAnomalyDetectionLatency
+        expr: histogram_quantile(0.95, sum(rate(anomaly_detection_latency_seconds_bucket[5m])) by (le)) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High anomaly detection latency
+          description: "The 95th percentile for anomaly detection latency is over 1 second."

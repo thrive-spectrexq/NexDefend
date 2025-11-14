@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/opensearch-project/opensearch-go/v2"
@@ -15,14 +14,6 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
 	"github.com/thrive-spectrexq/NexDefend/internal/normalizer"
 )
-
-// KafkaConsumer is an interface for the methods we use from kafka.Consumer.
-type KafkaConsumer interface {
-	ReadMessage(timeout time.Duration) (*kafka.Message, error)
-	SubscribeTopics(topics []string, rebalanceCb kafka.RebalanceCb) error
-	Close() error
-}
-
 
 // StartIngestor initializes and starts the ingestor service.
 func StartIngestor(correlationEngine correlation.CorrelationEngine) {
@@ -66,26 +57,9 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine) {
 
 	log.Println("Ingestor service started. Waiting for messages...")
 
-	ingestorLoop(context.Background(), consumer, osClient, correlationEngine)
-}
-
-func ingestorLoop(ctx context.Context, consumer KafkaConsumer, osClient *opensearch.Client, correlationEngine correlation.CorrelationEngine) {
 	for {
-		select {
-		case <-ctx.Done():
-			log.Println("Ingestor loop stopping.")
-			return
-		default:
-			msg, err := consumer.ReadMessage(1 * time.Second)
-			if err != nil {
-				if kerr, ok := err.(kafka.Error); ok && kerr.Code() == kafka.ErrTimedOut {
-					// Timed out, continue loop
-				} else {
-					log.Printf("Consumer error: %v\n", err)
-				}
-				continue
-			}
-
+		msg, err := consumer.ReadMessage(-1)
+		if err == nil {
 			normalizedEvent, err := normalizer.NormalizeEvent(msg.Value)
 			if err != nil {
 				log.Printf("Failed to normalize event: %v", err)
@@ -125,6 +99,10 @@ func ingestorLoop(ctx context.Context, consumer KafkaConsumer, osClient *opensea
 			if res.IsError() {
 				log.Printf("Error indexing document: %s", res.String())
 			}
+
+		} else {
+			// The client will automatically try to recover from all errors.
+			log.Printf("Consumer error: %v (%v)\n", err, msg)
 		}
 	}
 }
