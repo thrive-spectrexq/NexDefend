@@ -19,7 +19,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /nexdefend-agent
 FROM alpine:latest
 
 # Install Osquery.
-RUN apk add --no-cache osquery
+RUN apk add --no-cache wget tar && \
+    wget https://github.com/osquery/osquery/releases/download/5.11.0/osquery-5.11.0_1.linux_x86_64.tar.gz && \
+    tar -xzf osquery-5.11.0_1.linux_x86_64.tar.gz && \
+    mv osquery-5.11.0_1.linux_x86_64/osqueryd /usr/bin/osqueryd && \
+    mv osquery-5.11.0_1.linux_x86_64/osqueryi /usr/bin/osqueryi && \
+    chmod +x /usr/bin/osqueryd && \
+    chmod +x /usr/bin/osqueryi
 
 # Copy the binary from the builder stage.
 COPY --from=builder /nexdefend-agent /nexdefend-agent
