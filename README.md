@@ -62,14 +62,19 @@ NexDefend operates as a distributed system of specialized microservices communic
 
 ```mermaid
 graph TD
-    %% ========= USER & ENDPOINTS =========
+
+%% ======== GLOBAL DIRECTION ========
+%% Forces a stable top-down layout
+    direction TB
+
+%% ========= USER & ENDPOINTS =========
     subgraph U["User & Endpoints"]
         direction TB
         F["Browser (React UI)"]
         A["nexdefend-agent"]
     end
 
-    %% ========= CORE PLATFORM =========
+%% ========= CORE PLATFORM =========
     subgraph C["Core Platform"]
         direction LR
         K["Kafka Bus"]
@@ -77,7 +82,7 @@ graph TD
         OS["OpenSearch"]
     end
 
-    %% ========= SERVICES =========
+%% ========= SERVICES LAYER =========
     subgraph SVC["Services Layer"]
         direction TB
         API["Go Core API"]
@@ -93,41 +98,48 @@ graph TD
         G["Grafana"]
     end
 
-    %% ========= CONNECTIONS =========
-    %% Frontend and Agents
+%% Spacer to force clean vertical alignment
+    X1[ ]:::invisible
+    X2[ ]:::invisible
+
+    classDef invisible fill=transparent,stroke=transparent;
+
+%% ========= CONNECTIONS =========
+
+%% Frontend and Agents
     F -->|HTTPS API| API
     A -->|Event Stream| K
     CC -->|Cloud Events| K
     NDR -->|Network Events| K
 
-    %% Ingestor & Data Flow
+%% Ingestor Flow
     I -->|Consumes| K
     I -->|Agent Logs| OS
 
-    %% AI Service
+%% AI Service
     AI -->|Consumes| K
     AI -->|Creates Incidents| API
     AI -->|Reads| DB
 
-    %% Core API
+%% Core API
     API -->|Reads/Writes| DB
     API -->|Publishes| K
     API -->|Proxies Scans| AI
 
-    %% SOAR
+%% SOAR
     SOAR -->|Consumes Incidents| K
     SOAR -->|Triggers AI Scans| AI
 
-    %% TIP & CE
+%% TIP & CE
     TIP -->|Feeds| API
     CE -->|Correlates| API
 
-    %% Observability
+%% Observability
     P -->|Scrapes Metrics| API
     P -->|Scrapes Metrics| AI
     G -->|Visualizes| P
 
-    %% Suricata
+%% Suricata
     SUR -->|Writes Logs| OS
     API -->|Reads Logs| OS
 ```
