@@ -12,7 +12,7 @@ require (
 	cloud.google.com/go/pubsub/v2 v2.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v1.4.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v1.1.0
 	github.com/Azure/go-amqp v1.4.0 // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.39.6 // indirect
