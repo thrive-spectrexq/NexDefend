@@ -63,8 +63,7 @@ NexDefend operates as a distributed system of specialized microservices communic
 ```mermaid
 graph TD
 
-%% ======== GLOBAL DIRECTION ========
-%% Forces a stable top-down layout
+%% Global direction
     direction TB
 
 %% ========= USER & ENDPOINTS =========
@@ -97,12 +96,6 @@ graph TD
         P["Prometheus"]
         G["Grafana"]
     end
-
-%% Spacer to force clean vertical alignment
-    X1[ ]:::invisible
-    X2[ ]:::invisible
-
-    classDef invisible fill=transparent,stroke=transparent;
 
 %% ========= CONNECTIONS =========
 
