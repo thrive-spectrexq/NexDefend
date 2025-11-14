@@ -1,6 +1,10 @@
 import os
 import logging
 import requests
+import os
+import re
+import logging
+import requests
 import nmap
 import time
 from flask import Flask, jsonify, make_response, request
@@ -179,6 +183,12 @@ def scan_host():
         target = data.get('target')
         if not target:
             return make_response(jsonify({"error": "Target IP is required"}), 400)
+
+        # Sanitize target to prevent command injection.
+        # This regex allows IPv4, IPv6, and valid hostnames.
+        if not re.match(r"^[a-zA-Z0-9\.\-:]{1,253}$", target):
+            logging.warning(f"Invalid target format: {target}")
+            return make_response(jsonify({"error": "Invalid target format"}), 400)
         
         logging.info(f"Starting Nmap scan on target: {target}")
         

@@ -67,6 +67,22 @@ def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     assert first_call_args['description'] == 'Open port discovered: 22/ssh'
     assert first_call_args['severity'] == 'High'
 
+@patch('api.nmap.PortScanner')
+def test_scan_host_command_injection(mock_port_scanner, client):
+    """Tests for command injection vulnerability in the /scan endpoint."""
+    target = '127.0.0.1; ls -la'
+
+    headers = {'Authorization': 'Bearer test-service-token'}
+    response = client.post('/scan', json={'target': target}, headers=headers)
+
+    # The application should return a 400 Bad Request due to the invalid target.
+    assert response.status_code == 400
+    assert 'Invalid target format' in response.get_json()['error']
+
+    # Ensure nmap.scan was not called
+    mock_port_scanner.return_value.scan.assert_not_called()
+
+
 # --- Test /analyze-event Endpoint ---
 @patch('api.update_event_analysis_status')
 @patch('api.fetch_suricata_event_by_id')
