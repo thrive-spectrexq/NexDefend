@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import DataTable from './DataTable';
-import { Threat } from '../../api/apiClient';
+import type { Threat } from '../../api/apiClient';
 
 const mockThreats: Threat[] = [
   {

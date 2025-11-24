@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import RecentIncidents from './RecentIncidents';
-import { Incident } from '../../api/apiClient';
+import type { Incident } from '../../api/apiClient';
 
 const mockIncidents: Incident[] = [
   {
