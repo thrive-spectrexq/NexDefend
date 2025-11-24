@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
-import { Incident } from '../../api/apiClient';
+import type { Incident } from '../../api/apiClient';
 
 interface RecentIncidentsProps {
   incidents: Incident[];
