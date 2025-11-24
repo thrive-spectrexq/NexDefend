@@ -1,0 +1,14 @@
+{
+  "name": "nexdefend-desktop",
+  "version": "1.0.0",
+  "author": {
+    "name": "NexDefend",
+    "email": "support@nexdefend.com"
+  },
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dir": "frontend",
+  "wailsjsdir": "./frontend/src",
+  "outputfilename": "nexdefend-desktop"
+}

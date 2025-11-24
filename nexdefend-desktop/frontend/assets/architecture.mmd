@@ -1,0 +1,7 @@
+graph TD
+    A[Suricata IDS/IPS] --> B(Go Data Ingestion)
+    B --> C{Python Analysis}
+    C --> D[Machine Learning]
+    C --> E[PostgreSQL]
+    E --> F[Grafana Dashboards]
+    C --> G[Alerts & Response]

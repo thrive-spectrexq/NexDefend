@@ -1,0 +1,14 @@
+.metrics-display {
+  margin-top: 2rem;
+}
+
+.metrics-container {
+  display: flex;
+  gap: 1rem;
+}
+
+.metric {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  text-align: center;
+}
