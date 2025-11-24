@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -312,20 +313,28 @@ func getAgentConfig() *AgentConfig {
 }
 
 func startFlowMonitor(producer *kafka.Producer, topic string) {
-	handle, err := pcap.OpenLive("eth0", 1600, true, pcap.BlockForever)
+	iface := os.Getenv("NETWORK_INTERFACE")
+	if iface == "" {
+		iface = "eth0"
+	}
+
+	handle, err := pcap.OpenLive(iface, 1600, true, pcap.BlockForever)
 	if err != nil {
-		log.Fatalf("Failed to open pcap handle: %v", err)
+		log.Printf("Failed to open pcap handle on %s: %v. Flow monitoring disabled.", iface, err)
+		return
 	}
 	defer handle.Close()
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	flows := make(map[flow.Flow]flow.FlowMetrics)
+	var flowsMutex sync.Mutex
 
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
 	go func() {
 		for range ticker.C {
+			flowsMutex.Lock()
 			for key, metrics := range flows {
 				if time.Since(metrics.EndTimestamp) > 30*time.Second {
 					event := Event{
@@ -352,6 +361,7 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 					delete(flows, key)
 				}
 			}
+			flowsMutex.Unlock()
 		}
 	}()
 
@@ -376,6 +386,7 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 			Protocol: ip.Protocol,
 		}
 
+		flowsMutex.Lock()
 		metrics := flows[flowKey]
 		metrics.PacketCount++
 		metrics.ByteCount += uint64(len(packet.Data()))
@@ -385,6 +396,7 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 		}
 
 		flows[flowKey] = metrics
+		flowsMutex.Unlock()
 	}
 }
 
