@@ -1,0 +1,10 @@
+.incidents-page {
+  padding: 2rem; /* Tailwind p-8 */
+  color: #ffffff; /* White text */
+}
+
+.incidents-page h1 {
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 700;
+  margin-bottom: 1.5rem; /* mb-6 */
+}
