@@ -13,15 +13,19 @@ func StartAPIServer() {
 	r := mux.NewRouter()
 
 	// Auth
-	r.HandleFunc("/api/v1/auth/login", LoginHandler).Methods("POST")
+	r.HandleFunc("/api/v1/auth/login", LoginHandler).Methods("POST", "OPTIONS")
 
 	// Dashboard
-	r.HandleFunc("/api/v1/metrics/dashboard", DashboardMetricsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/incidents", IncidentsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/assets/heartbeat", HeartbeatHandler).Methods("POST")
+	r.HandleFunc("/api/v1/metrics/dashboard", DashboardMetricsHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/v1/incidents", IncidentsHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/v1/assets/heartbeat", HeartbeatHandler).Methods("POST", "OPTIONS")
 
 	// AI Service Mock (so frontend doesn't crash)
-	r.HandleFunc("/score", AIHandler).Methods("POST")
+	r.HandleFunc("/score", AIHandler).Methods("POST", "OPTIONS")
+
+	// Add CORS middleware
+	r.Use(mux.CORSMethodMiddleware(r))
+	r.Use(corsMiddleware)
 
 	// Start server in background
 	go func() {
@@ -34,6 +38,21 @@ func StartAPIServer() {
 	}()
 }
 
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Mock login - accept anything
 	json.NewEncoder(w).Encode(map[string]string{
@@ -44,13 +63,28 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func DashboardMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	var processCount db.Metric
+	var cpuUsage db.Metric
+	var openIncidents int64
+
+	// Get latest metrics
 	db.DB.Where("type = ?", "process_count").Last(&processCount)
+	db.DB.Where("type = ?", "cpu_usage").Last(&cpuUsage)
+
+	// Count open incidents
+	db.DB.Model(&db.Incident{}).Where("status = ?", "Open").Count(&openIncidents)
+
+	// Calculate a mock security score based on incidents
+	securityScore := 100 - (int(openIncidents) * 10)
+	if securityScore < 0 {
+		securityScore = 0
+	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"active_threats": 0,
-		"monitored_assets": 1,
+		"active_threats": openIncidents,
+		"monitored_assets": 1, // Localhost
 		"process_count": processCount.Value,
-		"security_score": 95,
+		"cpu_usage": cpuUsage.Value,
+		"security_score": securityScore,
 	})
 }
 
