@@ -1,22 +1,13 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import Alerts from './pages/Alerts'
-import Dashboard from './pages/Dashboard/Dashboard'
-import Incidents from './pages/Incidents'
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Reports from './pages/Reports'
-import Settings from './pages/Settings'
-import Vulnerabilities from './pages/Vulnerabilities'
-import PrivateRoute from './layouts/PrivateRoute'
 import PublicRoute from './layouts/PublicRoute'
 import HomePage from './pages/HomePage'
-import AIDashboardPage from './pages/AIDashboardPage'
-import AlertTriage from './pages/AlertTriage'
-import SOARPlaybookEditor from './pages/SOARPlaybookEditor'
-import SecurityOverview from './pages/SecurityOverview'
-import NetworkDashboard from './pages/NetworkDashboard'
-import PlatformHealth from './pages/PlatformHealth'
-import DashboardIndex from './pages/Dashboard/DashboardIndex'
+import { ConsoleLayout } from './layouts/ConsoleLayout'
+import CommandDashboard from './pages/console/CommandDashboard'
+import DetectionsQueue from './pages/console/DetectionsQueue'
+import HostManagement from './pages/console/HostManagement'
+import InvestigationView from './pages/console/InvestigationView'
 
 function App() {
   return (
@@ -27,22 +18,21 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
-        <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<Dashboard />}>
-            <Route index element={<DashboardIndex />} />
-            <Route path="ai-dashboard" element={<AIDashboardPage />} />
-            <Route path="alerts" element={<Alerts />} />
-            <Route path="alert-triage" element={<AlertTriage />} />
-            <Route path="incidents" element={<Incidents />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="vulnerabilities" element={<Vulnerabilities />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="soar" element={<SOARPlaybookEditor />} />
-            <Route path="security-overview" element={<SecurityOverview />} />
-            <Route path="network-dashboard" element={<NetworkDashboard />} />
-            <Route path="platform-health" element={<PlatformHealth />} />
-          </Route>
+
+        {/* New Console Routes - Replacing old Dashboard */}
+        {/* We can treat this as PrivateRoute eventually, but for now hooking it up directly to visualize */}
+        <Route path="/dashboard" element={<ConsoleLayout />}>
+            <Route index element={<CommandDashboard />} />
+            <Route path="detections" element={<DetectionsQueue />} />
+            <Route path="hosts" element={<HostManagement />} />
+            <Route path="investigate" element={<InvestigationView />} />
+            {/* Fallbacks or placeholders for other links */}
+            <Route path="config" element={<div className="p-4 text-text">Configuration View Coming Soon</div>} />
+            <Route path="support" element={<div className="p-4 text-text">Support View Coming Soon</div>} />
         </Route>
+
+        {/* Redirect legacy routes if necessary or just let 404s happen for now */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   )
