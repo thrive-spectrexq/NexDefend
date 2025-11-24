@@ -6,6 +6,7 @@ import ChartCard from './ChartCard';
 import AlertsBarChart from './AlertsBarChart';
 import ProtocolsPieChart from './ProtocolsPieChart';
 import DataTable from './DataTable';
+import RecentIncidents from './RecentIncidents';
 import { ShieldCheck, AlertTriangle, Server, ShieldAlert, Loader2 } from 'lucide-react';
 
 // Fetch functions
@@ -82,11 +83,14 @@ const DashboardIndex = () => {
             />
           </section>
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               <ChartCard title="Alerts Over Time" data={threatsQuery.data || []} isLoading={false} />
+              <div className="h-96">
+                <DataTable threats={threatsQuery.data || []} isLoading={false} />
+              </div>
             </div>
             <div className="h-full">
-              <DataTable threats={threatsQuery.data || []} isLoading={false} />
+               <RecentIncidents incidents={incidentsQuery.data || []} />
             </div>
           </section>
         </>

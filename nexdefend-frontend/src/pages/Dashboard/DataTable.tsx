@@ -43,13 +43,13 @@ const DataTable = ({ threats, isLoading }: DataTableProps) => {
               </tr>
             )}
             {!isLoading &&
-              threats.slice(0, 10).map((event) => ( // Show top 10
-                <tr key={event.id} className="hover:bg-gray-700">
-                  <td className="px-4 py-3 text-gray-400">{new Date(event.timestamp).toLocaleString()}</td>
-                  <td className="px-4 py-3 font-mono">{event.source_ip}</td>
-                  <td className="px-4 py-3">{event.description}</td>
+              threats.map((event) => (
+                <tr key={event.id} className="hover:bg-gray-700 transition">
+                  <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{new Date(event.timestamp).toLocaleString()}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{event.source_ip}</td>
+                  <td className="px-4 py-3 text-sm truncate max-w-xs" title={event.description}>{event.description}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${severityClasses[event.severity.toLowerCase()] || 'bg-gray-600'}`}>
+                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${severityClasses[event.severity.toLowerCase()] || 'bg-gray-600 text-white'}`}>
                       {event.severity}
                     </span>
                   </td>
