@@ -109,8 +109,8 @@ const initialEdges: Edge[] = [
 ];
 
 export default function InvestigationView() {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, , onNodesChange] = useNodesState(initialNodes);
+    const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
     return (
         <div className="h-full flex flex-col">
