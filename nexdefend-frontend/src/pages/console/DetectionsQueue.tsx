@@ -7,61 +7,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { useState } from 'react';
-
-// Mock Data
-const detections = [
-    {
-        id: 'DET-1024',
-        severity: 'Critical',
-        tactic: 'Ransomware',
-        technique: 'T1486',
-        host: 'FIN-WS-004',
-        user: 'j.doe',
-        timestamp: '2023-10-24 14:32:01',
-        status: 'New'
-    },
-    {
-        id: 'DET-1023',
-        severity: 'High',
-        tactic: 'Credential Access',
-        technique: 'T1003',
-        host: 'HR-LAPTOP-02',
-        user: 'SYSTEM',
-        timestamp: '2023-10-24 14:15:22',
-        status: 'Investigating'
-    },
-    {
-        id: 'DET-1022',
-        severity: 'Medium',
-        tactic: 'Execution',
-        technique: 'T1059',
-        host: 'DEV-SRV-01',
-        user: 'admin',
-        timestamp: '2023-10-24 13:45:10',
-        status: 'Resolved'
-    },
-    {
-        id: 'DET-1021',
-        severity: 'Low',
-        tactic: 'Discovery',
-        technique: 'T1082',
-        host: 'MKT-MAC-05',
-        user: 's.smith',
-        timestamp: '2023-10-24 12:10:05',
-        status: 'Resolved'
-    },
-    {
-        id: 'DET-1020',
-        severity: 'Critical',
-        tactic: 'Exfiltration',
-        technique: 'T1041',
-        host: 'DB-PROD-01',
-        user: 'postgres',
-        timestamp: '2023-10-24 11:55:00',
-        status: 'Active'
-    },
-];
+import { useState, useEffect } from 'react';
+import { useDetectionStore } from '../../stores/detectionStore';
+import { wsService } from '../../lib/websocket';
 
 const severityColors: Record<string, string> = {
     'Critical': 'text-brand-red bg-brand-red/10 border-brand-red/20',
@@ -72,9 +20,16 @@ const severityColors: Record<string, string> = {
 
 export default function DetectionsQueue() {
     const navigate = useNavigate();
+    const detections = useDetectionStore((state) => state.detections);
     const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
     const [filterStatus, setFilterStatus] = useState<string | null>(null);
     const [showFilters, setShowFilters] = useState(false);
+
+    // Initialize Websocket simulation
+    useEffect(() => {
+        wsService.start();
+        return () => wsService.stop();
+    }, []);
 
     const filteredDetections = detections.filter(det => {
         if (filterSeverity && det.severity !== filterSeverity) return false;
@@ -174,7 +129,7 @@ export default function DetectionsQueue() {
                         {filteredDetections.length > 0 ? filteredDetections.map((det) => (
                             <tr
                                 key={det.id}
-                                className="group hover:bg-surface-highlight/30 transition-colors cursor-pointer"
+                                className="group hover:bg-surface-highlight/30 transition-colors cursor-pointer animate-in fade-in duration-300"
                                 onClick={() => navigate('/dashboard/investigate')}
                             >
                                 <td className="px-4 py-3">
@@ -203,7 +158,7 @@ export default function DetectionsQueue() {
                                 <td className="px-4 py-3">
                                     <div className="flex items-center gap-2 text-text-muted font-mono text-xs">
                                         <Clock size={14} />
-                                        <span>{det.timestamp}</span>
+                                        <span>{new Date(det.timestamp).toLocaleString()}</span>
                                     </div>
                                 </td>
                                 <td className="px-4 py-3">

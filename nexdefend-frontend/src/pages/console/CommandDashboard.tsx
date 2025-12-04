@@ -6,15 +6,9 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { cn } from '../../lib/utils';
+import { useDetectionStore } from '../../stores/detectionStore';
 
-// Mock Data
-const severityData = [
-  { name: 'Critical', value: 12, color: '#F87171' }, // brand-red
-  { name: 'High', value: 25, color: '#FB923C' },     // brand-orange
-  { name: 'Medium', value: 45, color: '#38BDF8' },   // brand-blue
-  { name: 'Low', value: 18, color: '#4ADE80' },      // brand-green
-];
-
+// Mock Timeline (keeping static for now as store doesn't have history trend yet)
 const timelineData = Array.from({ length: 24 }, (_, i) => ({
   time: `${i}:00`,
   value: Math.floor(Math.random() * 50) + 10
@@ -36,20 +30,31 @@ function StatCard({ label, value, subtext, icon: Icon, colorClass }: any) {
 }
 
 export default function CommandDashboard() {
+  const stats = useDetectionStore((state) => state.stats);
+
+  const severityData = [
+    { name: 'Critical', value: stats.critical, color: '#F87171' }, // brand-red
+    { name: 'High', value: stats.high, color: '#FB923C' },     // brand-orange
+    { name: 'Medium', value: stats.medium, color: '#38BDF8' },   // brand-blue
+    { name: 'Low', value: stats.low, color: '#4ADE80' },      // brand-green
+  ];
+
+  const activeThreats = stats.critical + stats.high;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
             label="Security Score"
-            value="84/100"
-            subtext="+2.4% from last week"
+            value={`${Math.max(0, 100 - (activeThreats * 2))}/100`}
+            subtext="Real-time calculation"
             icon={ShieldCheck}
             colorClass="text-brand-green"
         />
         <StatCard
             label="Active Threats"
-            value="12"
-            subtext="3 Critical, 9 High"
+            value={activeThreats}
+            subtext={`${stats.critical} Critical, ${stats.high} High`}
             icon={AlertTriangle}
             colorClass="text-brand-red"
         />
@@ -99,7 +104,7 @@ export default function CommandDashboard() {
                 {severityData.map((item) => (
                     <div key={item.name} className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span>{item.name}</span>
+                        <span>{item.name} ({item.value})</span>
                     </div>
                 ))}
             </div>
