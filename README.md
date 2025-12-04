@@ -41,11 +41,16 @@ The platform is a collection of specialized services working in concert.
 
 ### 4. Platform & UI (api & nexdefend-frontend)
 
-*   **Full Incident Management**: A complete case management system for analysts to create, read, update, and resolve security incidents. Includes features for adding notes, assigning users, and changing status.
-*   **Alert Triage**: A dedicated UI to review new anomalies from the AI service and decide whether to escalate them into an incident.
-*   **SOAR Playbook Editor**: A new UI page for users to build or view SOAR playbooks.
-*   **Vulnerability Management**: A dedicated UI to view all discovered vulnerabilities, filter by status, and triage them from "Detected" to "Resolved".
-*   **Secure Authentication**: Employs JWT-based authentication for the frontend, with separate public and private routes.
+*   **Cyber-Tactical Console Interface**: A dark-themed, high-density console designed for SOC analysts, featuring neon accents and real-time data visualization.
+    *   **Command Dashboard**: A high-level HUD showing security scores, active threats, and detection volume timelines.
+    *   **Detections Queue**: A real-time, sortable, and filterable view of all security alerts with status tracking.
+    *   **Investigation Graph**: Interactive process tree visualization using `@xyflow/react` to map attack lineages (e.g., Process spawning Process -> Network Connection).
+    *   **Host Management**: Inventory view of all monitored endpoints with status and policy group filtering.
+*   **Global Omnibar**: Instant search capability to jump to specific hosts, IP addresses, or detection records.
+*   **Real-Time Interactions**: WebSocket integration for live alert streaming and immediate dashboard updates.
+*   **Full Incident Management**: A complete case management system for analysts to create, read, update, and resolve security incidents.
+*   **SOAR Playbook Editor**: A dedicated UI for building and managing automated response playbooks.
+*   **Secure Authentication**: Employs JWT-based authentication with a secure, public-facing landing page and a protected console environment.
 *   **Centralized Data Storage**:
     *   **PostgreSQL**: Serves as the primary database for structured, relational data (incidents, vulnerabilities, users, metrics, etc.).
     *   **OpenSearch**: Used as the high-throughput data store for all raw agent events (processes, FIM, net connections) ingested from Kafka.
