@@ -13,14 +13,9 @@ const Hero: React.FC = () => {
           <p className="hero-subtitle">NexDefend provides a unified AI-powered XDR platform to protect your organization from evolving threats.</p>
 
           <div className="hero-buttons">
-            {/* Changed to a Link */}
             <Link to="/register" className="btn btn-primary" aria-label="Get started free">
               Get started free
             </Link>
-            {/* Changed to a placeholder link */}
-            <a href="#demo" className="btn btn-ghost" aria-label="Request a demo">
-              Request a demo
-            </a>
           </div>
 
           <ul className="hero-features" aria-hidden>
