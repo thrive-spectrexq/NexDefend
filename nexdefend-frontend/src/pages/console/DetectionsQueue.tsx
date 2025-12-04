@@ -2,10 +2,12 @@ import {
     MoreHorizontal,
     User,
     Clock,
-    Monitor
+    Monitor,
+    Filter
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
+import { useState } from 'react';
 
 // Mock Data
 const detections = [
@@ -70,6 +72,15 @@ const severityColors: Record<string, string> = {
 
 export default function DetectionsQueue() {
     const navigate = useNavigate();
+    const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
+    const [filterStatus, setFilterStatus] = useState<string | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
+
+    const filteredDetections = detections.filter(det => {
+        if (filterSeverity && det.severity !== filterSeverity) return false;
+        if (filterStatus && det.status !== filterStatus) return false;
+        return true;
+    });
 
     return (
         <div className="space-y-4">
@@ -79,11 +90,72 @@ export default function DetectionsQueue() {
                     <button className="px-3 py-1.5 bg-brand-blue/10 text-brand-blue border border-brand-blue/20 rounded hover:bg-brand-blue/20 text-sm font-medium transition-colors">
                         Export CSV
                     </button>
-                    <button className="px-3 py-1.5 bg-surface text-text border border-surface-highlight rounded hover:bg-surface-highlight text-sm font-medium transition-colors">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={cn(
+                            "px-3 py-1.5 border rounded text-sm font-medium transition-colors flex items-center gap-2",
+                            showFilters || filterSeverity || filterStatus
+                                ? "bg-surface-highlight text-text border-brand-blue/50"
+                                : "bg-surface text-text border-surface-highlight hover:bg-surface-highlight"
+                        )}
+                    >
+                        <Filter size={16} />
                         Filter View
                     </button>
                 </div>
             </div>
+
+            {/* Filter Panel */}
+            {showFilters && (
+                <div className="bg-surface border border-surface-highlight rounded-lg p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-2">
+                    <div>
+                        <label className="block text-xs font-semibold text-text-muted mb-2 uppercase">Severity</label>
+                        <div className="flex flex-wrap gap-2">
+                            {['Critical', 'High', 'Medium', 'Low'].map(sev => (
+                                <button
+                                    key={sev}
+                                    onClick={() => setFilterSeverity(filterSeverity === sev ? null : sev)}
+                                    className={cn(
+                                        "px-2 py-1 rounded text-xs border transition-colors",
+                                        filterSeverity === sev
+                                            ? severityColors[sev]
+                                            : "bg-background border-surface-highlight text-text-muted hover:text-text"
+                                    )}
+                                >
+                                    {sev}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-text-muted mb-2 uppercase">Status</label>
+                        <div className="flex flex-wrap gap-2">
+                            {['New', 'Active', 'Investigating', 'Resolved'].map(stat => (
+                                <button
+                                    key={stat}
+                                    onClick={() => setFilterStatus(filterStatus === stat ? null : stat)}
+                                    className={cn(
+                                        "px-2 py-1 rounded text-xs border transition-colors",
+                                        filterStatus === stat
+                                            ? "bg-brand-blue/20 text-brand-blue border-brand-blue/50"
+                                            : "bg-background border-surface-highlight text-text-muted hover:text-text"
+                                    )}
+                                >
+                                    {stat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex items-end justify-end">
+                        <button
+                            onClick={() => { setFilterSeverity(null); setFilterStatus(null); }}
+                            className="text-xs text-text-muted hover:text-text underline decoration-dotted"
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-surface border border-surface-highlight rounded-lg overflow-hidden">
                 <table className="w-full text-left text-sm">
@@ -99,7 +171,7 @@ export default function DetectionsQueue() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-surface-highlight">
-                        {detections.map((det) => (
+                        {filteredDetections.length > 0 ? filteredDetections.map((det) => (
                             <tr
                                 key={det.id}
                                 className="group hover:bg-surface-highlight/30 transition-colors cursor-pointer"
@@ -150,7 +222,13 @@ export default function DetectionsQueue() {
                                     </button>
                                 </td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-text-muted italic">
+                                    No detections found matching filters.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
