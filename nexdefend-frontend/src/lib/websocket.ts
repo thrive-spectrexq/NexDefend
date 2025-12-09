@@ -1,4 +1,5 @@
 import { useDetectionStore, type Detection } from '../stores/detectionStore';
+import { useToastStore } from '../stores/toastStore';
 
 // Mock data generators
 const tactics = ['Initial Access', 'Execution', 'Persistence', 'Privilege Escalation', 'Defense Evasion', 'Credential Access', 'Discovery', 'Lateral Movement', 'Collection', 'Command and Control', 'Exfiltration', 'Impact'];
@@ -34,10 +35,20 @@ class SimulatedWebsocketService {
         if (this.isRunning) return;
         this.isRunning = true;
 
-        // Simulate incoming detection every 5-15 seconds
+        // Simulate incoming detection every 8 seconds
         this.intervalId = setInterval(() => {
             const detection = generateRandomDetection();
             useDetectionStore.getState().addDetection(detection);
+
+            // Trigger Toast
+            const isUrgent = detection.severity === 'Critical' || detection.severity === 'High';
+            useToastStore.getState().addToast({
+                title: `${detection.severity} Alert Detected`,
+                message: `${detection.tactic} on ${detection.host} (${detection.id})`,
+                type: isUrgent ? 'error' : 'warning',
+                duration: 6000
+            });
+
             console.log(`[WS-SIM] New Detection received: ${detection.id}`);
         }, 8000);
 

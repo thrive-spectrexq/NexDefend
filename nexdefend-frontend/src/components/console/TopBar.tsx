@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 
 // Mock Search Data (in a real app, this would be an API call)
 const mockSearchIndex = [
-    { type: 'host', label: 'FIN-WS-004', desc: '10.20.1.45 • Windows 11', path: '/dashboard/hosts' },
-    { type: 'host', label: 'DEV-SRV-01', desc: '10.30.5.12 • Ubuntu 22.04', path: '/dashboard/hosts' },
+    { type: 'host', label: 'FIN-WS-004', desc: '10.20.1.45 • Windows 11', path: '/dashboard/hosts/H-001' },
+    { type: 'host', label: 'DEV-SRV-01', desc: '10.30.5.12 • Ubuntu 22.04', path: '/dashboard/hosts/H-002' },
+    { type: 'host', label: 'MKT-MAC-05', desc: '10.20.2.18 • macOS', path: '/dashboard/hosts/H-003' },
     { type: 'detection', label: 'DET-1024', desc: 'Critical • Ransomware', path: '/dashboard/investigate' },
     { type: 'detection', label: 'DET-1023', desc: 'High • Credential Access', path: '/dashboard/investigate' },
+    { type: 'detection', label: 'DET-1020', desc: 'Critical • Exfiltration', path: '/dashboard/investigate' },
 ];
 
 export function TopBar() {
@@ -19,9 +21,12 @@ export function TopBar() {
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Simple breadcrumb generation
-    const breadcrumbs = location.pathname.split('/').filter(Boolean).map(segment =>
-        segment.charAt(0).toUpperCase() + segment.slice(1)
-    );
+    const breadcrumbs = location.pathname.split('/').filter(Boolean).map((segment) => {
+        // Handle dynamic ID segments (simplified check)
+        if (segment.startsWith('H-')) return segment;
+        if (segment.length > 20) return 'Details'; // UUID or long ID fallback
+        return segment.charAt(0).toUpperCase() + segment.slice(1);
+    });
 
     useEffect(() => {
         if (query.trim() === '') {
@@ -55,7 +60,7 @@ export function TopBar() {
     return (
         <header className="h-16 bg-background/50 backdrop-blur border-b border-surface-highlight flex items-center justify-between px-6 sticky top-0 z-40">
             {/* Breadcrumbs / Context */}
-            <div className="flex items-center gap-2 text-sm font-mono text-text-muted">
+            <div className="flex items-center gap-2 text-sm font-mono text-text-muted hidden md:flex">
                 <span>Console</span>
                 {breadcrumbs.map((crumb, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -68,7 +73,7 @@ export function TopBar() {
             </div>
 
             {/* Omnibar */}
-            <div className="flex-1 max-w-2xl px-8" ref={wrapperRef}>
+            <div className="flex-1 max-w-2xl px-4 md:px-8" ref={wrapperRef}>
                 <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-text-muted group-focus-within:text-brand-blue" />
@@ -81,13 +86,13 @@ export function TopBar() {
                         onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
                         onFocus={() => setIsOpen(true)}
                     />
-                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none hidden sm:flex">
                         <kbd className="inline-flex items-center border border-surface-highlight rounded px-2 text-xs font-sans font-medium text-text-muted">⌘K</kbd>
                     </div>
 
                     {/* Search Dropdown */}
                     {isOpen && query.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-surface-highlight rounded-lg shadow-xl overflow-hidden z-50">
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-surface-highlight rounded-lg shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                             {results.length > 0 ? (
                                 <div className="py-2">
                                     <div className="px-3 py-1 text-xs text-text-muted uppercase tracking-wider font-semibold">Results</div>
@@ -119,11 +124,11 @@ export function TopBar() {
 
             {/* Actions */}
             <div className="flex items-center gap-4">
-                <button className="text-text-muted hover:text-text relative">
+                <button className="text-text-muted hover:text-text relative transition-colors">
                     <Bell size={20} />
-                    <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-brand-red ring-2 ring-background transform translate-x-1/2 -translate-y-1/2"></span>
+                    <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-brand-red ring-2 ring-background transform translate-x-1/2 -translate-y-1/2 animate-pulse"></span>
                 </button>
-                <button className="text-text-muted hover:text-text">
+                <button className="text-text-muted hover:text-text transition-colors">
                     <HelpCircle size={20} />
                 </button>
             </div>
