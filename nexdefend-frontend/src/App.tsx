@@ -7,6 +7,7 @@ import { ConsoleLayout } from './layouts/ConsoleLayout'
 import CommandDashboard from './pages/console/CommandDashboard'
 import DetectionsQueue from './pages/console/DetectionsQueue'
 import HostManagement from './pages/console/HostManagement'
+import HostDetails from './pages/console/HostDetails'
 import InvestigationView from './pages/console/InvestigationView'
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
             <Route index element={<CommandDashboard />} />
             <Route path="detections" element={<DetectionsQueue />} />
             <Route path="hosts" element={<HostManagement />} />
+            <Route path="hosts/:id" element={<HostDetails />} />
             <Route path="investigate" element={<InvestigationView />} />
             {/* Fallbacks or placeholders for other links */}
             <Route path="config" element={<div className="p-4 text-text">Configuration View Coming Soon</div>} />

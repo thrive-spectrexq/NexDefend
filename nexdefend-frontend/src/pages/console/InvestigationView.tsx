@@ -12,6 +12,7 @@ import {
 // Types are not exported as values in some builds, import them as types
 import type { Node, Edge } from '@xyflow/react';
 import { useState } from 'react';
+import { PageTransition } from '../../components/common/PageTransition';
 
 import '@xyflow/react/dist/style.css';
 import {
@@ -122,7 +123,7 @@ export default function InvestigationView() {
     const closeDrawer = () => setSelectedNode(null);
 
     return (
-        <div className="h-full flex flex-col relative">
+        <PageTransition className="h-full flex flex-col relative">
             <div className="mb-4 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-text">Investigation: DET-1024</h1>
@@ -242,6 +243,6 @@ export default function InvestigationView() {
                     </div>
                 )}
             </div>
-        </div>
+        </PageTransition>
     );
 }

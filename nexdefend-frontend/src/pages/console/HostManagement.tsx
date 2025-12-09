@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
     Monitor,
     Server,
@@ -62,6 +63,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function HostManagement() {
+    const navigate = useNavigate();
+
     return (
         <div className="flex h-full gap-6">
             {/* Filter Facets */}
@@ -120,7 +123,11 @@ export default function HostManagement() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {hosts.map(host => (
-                        <div key={host.id} className="bg-surface border border-surface-highlight rounded-lg p-4 hover:border-brand-blue/50 transition-colors group cursor-pointer relative overflow-hidden">
+                        <div
+                            key={host.id}
+                            onClick={() => navigate(`/dashboard/hosts/${host.id}`)}
+                            className="bg-surface border border-surface-highlight rounded-lg p-4 hover:border-brand-blue/50 transition-colors group cursor-pointer relative overflow-hidden"
+                        >
                             <div className="flex items-start justify-between mb-4">
                                 <div className="p-2 bg-surface-highlight rounded-lg text-brand-blue">
                                     {host.os.includes('Windows') ? <Monitor size={24} /> :

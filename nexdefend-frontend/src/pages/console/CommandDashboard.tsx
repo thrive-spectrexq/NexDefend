@@ -7,6 +7,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { cn } from '../../lib/utils';
 import { useDetectionStore } from '../../stores/detectionStore';
+import { PageTransition } from '../../components/common/PageTransition';
 
 // Mock Timeline (keeping static for now as store doesn't have history trend yet)
 const timelineData = Array.from({ length: 24 }, (_, i) => ({
@@ -42,7 +43,7 @@ export default function CommandDashboard() {
   const activeThreats = stats.critical + stats.high;
 
   return (
-    <div className="space-y-6">
+    <PageTransition className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
             label="Security Score"
@@ -139,6 +140,6 @@ export default function CommandDashboard() {
             </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

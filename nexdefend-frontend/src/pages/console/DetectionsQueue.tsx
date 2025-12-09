@@ -10,6 +10,7 @@ import { cn } from '../../lib/utils';
 import { useState, useEffect } from 'react';
 import { useDetectionStore } from '../../stores/detectionStore';
 import { wsService } from '../../lib/websocket';
+import { PageTransition } from '../../components/common/PageTransition';
 
 const severityColors: Record<string, string> = {
     'Critical': 'text-brand-red bg-brand-red/10 border-brand-red/20',
@@ -38,7 +39,7 @@ export default function DetectionsQueue() {
     });
 
     return (
-        <div className="space-y-4">
+        <PageTransition className="space-y-4">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-semibold text-text">Detections Queue</h1>
                 <div className="flex gap-2">
@@ -187,6 +188,6 @@ export default function DetectionsQueue() {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </PageTransition>
     );
 }
