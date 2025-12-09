@@ -1,76 +1,76 @@
+import { Shield, Search, Terminal, Cloud, CheckCircle } from 'lucide-react';
 import './FeaturesGrid.css';
 
 const features = [
   {
     title: 'Endpoint Security',
     items: ['Configuration Assessment', 'Malware Detection', 'File Integrity Monitoring'],
-    color: 'hsl(220 95% 60%)',
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 1 3 5v6c0 5 3.8 10 9 11 5.2-1 9-6 9-11V5l-9-4z" />
-      </svg>
-    ),
+    color: 'var(--color-brand-blue)',
+    icon: Shield,
   },
   {
     title: 'Threat Intelligence',
     items: ['Threat Hunting', 'Log Data Analysis', 'Vulnerability Detection'],
-    color: 'hsl(10 85% 55%)',
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M15 3H9v2H5v4H3v8h18V9h-2V5h-4V3zM8 9h8v2H8V9zm0 4h5v2H8v-2z" />
-      </svg>
-    ),
+    color: 'var(--color-brand-red)',
+    icon: Search,
   },
   {
     title: 'Security Operations',
     items: ['Incident Response', 'Regulatory Compliance', 'IT Hygiene'],
-    color: 'hsl(140 60% 45%)',
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 17.9V20h-2v-.1C8.3 19.4 6 16.9 6 14h2c0 2 2.2 4 4 4s4-2 4-4h2c0 2.9-2.3 5.4-5 5.9zM11 7h2v6h-2z" />
-      </svg>
-    ),
+    color: 'var(--color-brand-green)',
+    icon: Terminal,
   },
   {
     title: 'Cloud Security',
     items: ['Container Security', 'Posture Management', 'Workload Protection'],
-    color: 'hsl(260 70% 60%)',
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M19.36 10.46A7 7 0 0 0 5.64 9 5.5 5.5 0 0 0 6 20h13a3.5 3.5 0 0 0 .36-9.54z" />
-      </svg>
-    ),
+    color: 'var(--color-brand-purple)', // Assuming purple or orange
+    icon: Cloud,
   },
 ];
 
 const FeaturesGrid = () => {
   return (
-    <section className="features-section" aria-labelledby="features-heading">
-      <div className="features-inner">
-        <h2 id="features-heading">Endpoint and Cloud Workload Protection</h2>
-        <p className="features-lead">
-          NexDefend unifies historically separate functions into a single agent and platform architecture.
-          Protection is provided for public clouds, private clouds, and on-premise data centers.
-        </p>
+    <section className="features-section py-24 bg-surface" aria-labelledby="features-heading">
+      <div className="container mx-auto px-6 max-w-7xl">
+        <div className="text-center mb-16 space-y-4">
+            <h2 id="features-heading" className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                Endpoint and Cloud Workload Protection
+            </h2>
+            <p className="text-lg text-text-muted max-w-2xl mx-auto">
+            NexDefend unifies historically separate functions into a single agent and platform architecture.
+            Protection is provided for public clouds, private clouds, and on-premise data centers.
+            </p>
+        </div>
 
-        <div className="features-grid" role="list" aria-label="Product features">
-          {features.map((f) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" role="list" aria-label="Product features">
+          {features.map((f, idx) => (
             <article
               key={f.title}
-              className="feature-card"
+              className="group relative bg-background border border-surface-highlight p-6 rounded-2xl hover:border-brand-blue/30 transition-all hover:-translate-y-1 hover:shadow-xl overflow-hidden"
               role="listitem"
               tabIndex={0}
-              aria-labelledby={`feature-${f.title.replace(/\s+/g, '-').toLowerCase()}-title`}
-              style={{ ['--accent' as any]: f.color }}
+              aria-labelledby={`feature-${idx}-title`}
             >
-              <div className="feature-icon" aria-hidden="true">
-                {f.icon}
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                  <f.icon size={120} />
               </div>
-              <div className="feature-content">
-                <h3 id={`feature-${f.title.replace(/\s+/g, '-').toLowerCase()}-title`}>{f.title}</h3>
-                <ul>
+
+              <div className="relative z-10 flex flex-col h-full">
+                <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-6 transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${f.color}20`, color: f.color }}
+                >
+                    <f.icon size={24} />
+                </div>
+
+                <h3 id={`feature-${idx}-title`} className="text-xl font-bold text-white mb-4">{f.title}</h3>
+
+                <ul className="space-y-3 mt-auto">
                   {f.items.map((it) => (
-                    <li key={it}>{it}</li>
+                    <li key={it} className="flex items-start gap-2 text-sm text-text-muted group-hover:text-text transition-colors">
+                        <CheckCircle size={16} className="text-brand-green mt-0.5 shrink-0" />
+                        <span>{it}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
