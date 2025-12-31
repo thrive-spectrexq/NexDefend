@@ -216,6 +216,11 @@ func startHeartbeat() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		apiURL = "http://api:8080"
+	}
+
 	for range ticker.C {
 		hostInfo, err := host.Info()
 		if err != nil {
@@ -263,7 +268,7 @@ func startHeartbeat() {
 			continue
 		}
 
-		resp, err := http.Post("http://api:8080/api/v1/assets/heartbeat", "application/json", bytes.NewBuffer(assetJSON))
+		resp, err := http.Post(fmt.Sprintf("%s/api/v1/assets/heartbeat", apiURL), "application/json", bytes.NewBuffer(assetJSON))
 		if err != nil {
 			log.Printf("Failed to send heartbeat: %v", err)
 			continue
@@ -282,7 +287,12 @@ func getAgentConfig() *AgentConfig {
 		log.Fatalf("Failed to get hostname: %v", err)
 	}
 
-	resp, err := http.Get(fmt.Sprintf("http://api:8080/api/v1/agent/config/%s", hostname))
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		apiURL = "http://api:8080"
+	}
+
+	resp, err := http.Get(fmt.Sprintf("%s/api/v1/agent/config/%s", apiURL, hostname))
 	if err != nil {
 		log.Printf("Failed to get agent config: %v", err)
 		return &AgentConfig{
