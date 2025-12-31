@@ -85,8 +85,12 @@ func startNetWatcher(producer *kafka.Producer, topic string) {
 			continue
 		}
 
+		currentActiveConnections := make(map[string]struct{})
+
 		for _, conn := range connections {
 			connID := conn.Laddr.IP + ":" + strconv.Itoa(int(conn.Laddr.Port)) + "->" + conn.Raddr.IP + ":" + strconv.Itoa(int(conn.Raddr.Port))
+			currentActiveConnections[connID] = struct{}{}
+
 			if _, exists := seenConnections[connID]; !exists {
 				seenConnections[connID] = struct{}{}
 
@@ -115,6 +119,14 @@ func startNetWatcher(producer *kafka.Producer, topic string) {
 				}, nil)
 			}
 		}
+
+		// Cleanup closed connections from seenConnections
+		for connID := range seenConnections {
+			if _, exists := currentActiveConnections[connID]; !exists {
+				delete(seenConnections, connID)
+			}
+		}
+
 		time.Sleep(15 * time.Second)
 	}
 }
