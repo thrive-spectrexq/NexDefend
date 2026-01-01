@@ -2,7 +2,11 @@
 package remediation
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
+	"net/http"
+	"os"
 
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/integrations/firewall"
 )
@@ -10,7 +14,44 @@ import (
 // Scan triggers a scan on the target.
 func Scan(target string) {
 	log.Printf("Scanning target: %s", target)
-	// In a real implementation, you would trigger a scan using a vulnerability scanner.
+
+	aiURL := os.Getenv("PYTHON_API")
+	if aiURL == "" {
+		aiURL = "http://nexdefend-ai:5000"
+	}
+	aiToken := os.Getenv("AI_SERVICE_TOKEN")
+
+	payload := map[string]string{"target": target}
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Failed to marshal scan payload: %v", err)
+		return
+	}
+
+	req, err := http.NewRequest("POST", aiURL+"/scan", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		log.Printf("Failed to create scan request: %v", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	if aiToken != "" {
+		req.Header.Set("Authorization", "Bearer "+aiToken)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Failed to send scan request: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Scan request failed with status: %d", resp.StatusCode)
+	} else {
+		log.Printf("Successfully triggered scan for %s", target)
+	}
 }
 
 // Isolate isolates the target from the network.

@@ -51,7 +51,8 @@ func (p *Playbook) Execute(producer *kafka.Producer) error {
 			cmdJSON, err := json.Marshal(command)
 			if err != nil {
 				log.Printf("Failed to marshal command to JSON: %v", err)
-				return err
+				// Continue to next action even if this one fails
+				continue
 			}
 			topic := "nexdefend-agent-responses"
 			producer.Produce(&kafka.Message{
