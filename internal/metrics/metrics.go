@@ -42,7 +42,8 @@ func CollectMetrics(store MetricStore) {
 			continue
 		}
 
-		// TODO: Pass a real organization ID to the StoreSystemMetric function.
+		// System metrics are associated with the default organization ID 1.
+		// In a multi-tenant environment, this should be configurable or context-aware.
 		organizationID := 1
 
 		metrics := models.SystemMetric{

@@ -135,6 +135,9 @@ func (d *Database) GetSystemMetrics(metricType string, from, to time.Time, organ
 
 // StoreSystemMetric stores a system metric in the database.
 func (d *Database) StoreSystemMetric(metric models.SystemMetric, organizationID int) error {
-	// In a real implementation, you would store the metric in the database.
+	metric.OrganizationID = organizationID
+	if err := d.Create(&metric).Error; err != nil {
+		return fmt.Errorf("failed to store system metric: %w", err)
+	}
 	return nil
 }
