@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
@@ -105,6 +106,49 @@ func (h *AssetHandler) DeleteAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AssetHandler) Heartbeat(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement heartbeat logic
+	var heartbeatData models.Asset
+	if err := json.NewDecoder(r.Body).Decode(&heartbeatData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Update asset status and last heartbeat
+	// We identify the asset by hostname or IP (assuming hostname is unique per org)
+	// In a real scenario, we should use a unique Agent ID or Token.
+	var asset models.Asset
+	if err := h.db.Where("hostname = ?", heartbeatData.Hostname).First(&asset).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Register new asset if it doesn't exist
+			heartbeatData.Status = "online"
+			heartbeatData.LastHeartbeat = time.Now()
+			// Defaulting OrganizationID to 1 for now
+			heartbeatData.OrganizationID = 1
+
+			if err := h.db.Create(&heartbeatData).Error; err != nil {
+				http.Error(w, "Failed to register new asset", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(heartbeatData)
+			return
+		}
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	asset.LastHeartbeat = time.Now()
+	asset.Status = "online"
+	asset.IPAddress = heartbeatData.IPAddress
+	asset.OSVersion = heartbeatData.OSVersion
+	asset.AgentVersion = heartbeatData.AgentVersion
+	// Keep MAC Address updated if it changes
+	asset.MACAddress = heartbeatData.MACAddress
+
+	if err := h.db.Save(&asset).Error; err != nil {
+		http.Error(w, "Failed to update asset heartbeat", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(asset)
 }
