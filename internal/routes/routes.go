@@ -81,6 +81,7 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	// Agent Fleet Management
 	agentHandler := handlers.NewAgentHandler(database.GetDB())
 	api.HandleFunc("/agent/config/{hostname}", agentHandler.GetAgentConfig).Methods("GET")
+	api.HandleFunc("/agent/config", agentHandler.UpdateAgentConfig).Methods("POST")
 
 	// File Upload & Analysis
 	uploadHandler := upload.NewUploadHandler(database.GetDB())
