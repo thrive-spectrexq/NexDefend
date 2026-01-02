@@ -1,65 +1,53 @@
-# NexDefend: AI-Powered XDR Platform
+# NexDefend: Systems and Service Monitoring System
 
-NexDefend is a unified, cloud-native XDR (Extended Detection and Response) platform designed to protect organizations from evolving threats. It integrates endpoint monitoring, network security, AI-driven anomaly detection, and automated incident response into a single, cohesive system.
+NexDefend is a comprehensive **systems and service monitoring system**. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed. It provides a unified dashboard for visualizing the health and performance of your infrastructure.
 
-Built on a modern microservice architecture, NexDefend leverages Go for high-performance API services, Python for AI/ML analytics, Kafka for a resilient event pipeline, and OpenSearch for large-scale log storage and search.
+Built on a modern microservice architecture, NexDefend leverages Go for high-performance data collection, Python for intelligent analytics, Kafka for a resilient event pipeline, and OpenSearch/PostgreSQL for scalable storage.
 
 ## Key Features
 
-The platform is a collection of specialized services working in concert.
+The platform is a collection of specialized services working in concert to provide end-to-end monitoring.
 
-### 1. Detection & Data Collection
+### 1. Data Collection & Monitoring
 
-*   **Endpoint Agent (nexdefend-agent)**: A lightweight Go agent that provides deep endpoint visibility. It streams security-relevant events to the Kafka pipeline.
-    *   **Cross-Platform Support**: The agent is designed to run on both Linux, Windows and macOS environments.
-    *   **Process Monitoring**: Captures process creation events, including PID, name, and command line arguments.
-    *   **File Integrity Monitoring (FIM)**: Uses `fsnotify` to monitor critical files and directories (e.g., `/etc`) for unauthorized changes.
-    *   **Network Connection Monitoring**: Tracks new network connections, linking them to specific processes.
-    *   **Windows Event Log Collection**: On Windows, the agent collects and forwards security-relevant event logs.
-    *   **Container/Kubernetes Support**: The agent can be deployed as a DaemonSet in Kubernetes to monitor K8s audit logs and container runtime events.
-    *   **Osquery Integration**: Allows analysts to run live SQL queries against the fleet from the NexDefend UI.
-*   **Network Detection & Response (NDR)**: The platform ingests network data from sources like NetFlow, sFlow, Zeek, or Suricata.
-*   **Malware Hash Detection**: All file uploads are checked against a known malware hash registry stored in the database.
-*   **Cloud Connector (nexdefend-cloud-connector)**: A dedicated service for ingesting security logs and events from cloud providers (e.g., AWS CloudTrail, Azure Monitor, Google Cloud Logging) and SaaS applications (e.g., Okta, Google Workspace, Microsoft 365).
+*   **Monitoring Agent (nexdefend-agent)**: A lightweight Go agent that provides deep visibility into endpoints and servers. It streams system metrics and events to the pipeline.
+    *   **Cross-Platform Support**: Runs on Linux, Windows, and macOS.
+    *   **Process Monitoring**: Tracks running processes and resource usage.
+    *   **File Integrity Monitoring (FIM)**: Monitors critical files and directories for changes.
+    *   **Network Monitoring**: Tracks network connections and traffic flows.
+    *   **Log Collection**: Collects and forwards system and application logs.
+    *   **Container/Kubernetes Support**: Deploys as a DaemonSet to monitor K8s nodes and pods.
+*   **Network Traffic Monitoring**: Ingests network data (NetFlow, sFlow, etc.) to monitor bandwidth usage and traffic patterns.
+*   **Cloud Connector (nexdefend-cloud-connector)**: Ingests logs and metrics from cloud providers (AWS, Azure, GCP) and SaaS applications.
 
-### 2. AI & Analytics (nexdefend-ai)
+### 2. Intelligent Analysis (nexdefend-ai)
 
-*   **ML Anomaly Detection**: Uses a pre-trained `IsolationForest` model to detect anomalies in Suricata event data. A dedicated `/train` endpoint allows for retraining the model.
-*   **Automated Incident Creation**: The AI service automatically creates "Critical" or "High" severity incidents in the backend when anomalies are detected.
-*   **Active Vulnerability Scanning**: Exposes a secure `/scan` endpoint that uses Nmap to perform on-demand port scanning, automatically creating vulnerability records for any open ports discovered.
-*   **User & Entity Behavior Analytics (UEBA)**: A background worker consumes agent events from Kafka to perform behavioral analysis and detect anomalies.
-*   **MITRE ATT&CK Mapping**: Detected threats and anomalies are automatically mapped to specific MITRE ATT&CK techniques.
-*   **Advanced Threat Detection**: The platform uses advanced threat detection models, such as those based on Natural Language Processing (NLP) for analyzing textual logs (e.g., PowerShell scripts, command-line arguments) and detecting DGA domains.
-*   **Threat Intelligence Platform (TIP)**: Ingests threat intelligence feeds (e.g., MISP, Abuse.ch, OTX) and correlates all incoming data against these IOCs in real-time.
+*   **Anomaly Detection**: Uses ML models (`IsolationForest`) to detect deviations from normal baseline metrics.
+*   **Automated Alerting**: Automatically generates alerts when anomalies or threshold violations are detected.
+*   **Active Service Scanning**: Exposes a `/scan` endpoint to perform active health checks and service discovery (using Nmap) on target hosts.
+*   **Behavioral Analytics**: Analyzes historical data to identify long-term trends and unusual behavior patterns.
 
-### 3. Response & Orchestration (nexdefend-soar)
+### 3. Alerting & Automation (nexdefend-soar)
 
-*   **Automated SOAR Playbooks**: A Go-based SOAR (Security Orchestration, Automation, and Response) service consumes from the `incidents` Kafka topic.
-*   **Incident-Driven Response**: When a "High" or "Critical" incident is detected, the SOAR service automatically triggers a playbook, such as initiating an Nmap scan on the incident's source IP.
-*   **Robust Playbook Engine**: The platform includes a robust playbook engine that allows for the creation of complex, multi-step automation workflows.
-*   **Automated Response Actions**: The platform supports a wide range of automated response actions, such as isolating an endpoint from the network, terminating a malicious process, or blocking an IP address at the firewall.
+*   **Automated Alert Handlers**: A service that consumes alerts and executes defined playbooks.
+*   **Rule Evaluation**: Evaluates rule expressions against incoming data streams to trigger notifications.
+*   **Automated Remediation**: Can trigger scripts or API calls to attempt auto-remediation of known issues (e.g., restarting a service, blocking traffic).
 
-### 4. Platform & UI (api & nexdefend-frontend)
+### 4. Visualization & Console (api & nexdefend-frontend)
 
-*   **Cyber-Tactical Console Interface**: A dark-themed, high-density console designed for SOC analysts, featuring neon accents and real-time data visualization.
-    *   **Command Dashboard**: A high-level HUD showing security scores, active threats, and detection volume timelines.
-    *   **Detections Queue**: A real-time, sortable, and filterable view of all security alerts with status tracking.
-    *   **Investigation Graph**: Interactive process tree visualization using `@xyflow/react` to map attack lineages (e.g., Process spawning Process -> Network Connection).
-    *   **Host Management**: Inventory view of all monitored endpoints with status and policy group filtering.
-*   **Global Omnibar**: Instant search capability to jump to specific hosts, IP addresses, or detection records.
-*   **Real-Time Interactions**: WebSocket integration for live alert streaming and immediate dashboard updates.
-*   **Full Incident Management**: A complete case management system for analysts to create, read, update, and resolve security incidents.
-*   **SOAR Playbook Editor**: A dedicated UI for building and managing automated response playbooks.
-*   **Secure Authentication**: Employs JWT-based authentication with a secure, public-facing landing page and a protected console environment.
-*   **Centralized Data Storage**:
-    *   **PostgreSQL**: Serves as the primary database for structured, relational data (incidents, vulnerabilities, users, metrics, etc.).
-    *   **OpenSearch**: Used as the high-throughput data store for all raw agent events (processes, FIM, net connections) ingested from Kafka.
-*   **Observability**:
-    *   **Prometheus**: Scrapes metrics from the Go API, Python AI service, and other services.
-    *   **Grafana**: Provides pre-built dashboards for monitoring the AI service's performance, Kafka health, and container overview.
-*   **Agent Management**: A dedicated API for agent registration and configuration management.
-*   **Asset & Identity Enrichment**: Connectors to Active Directory / Okta / Azure AD and CMDBs (like ServiceNow) to enrich asset and identity data.
-*   **Embedded Dashboards**: The UI now includes embedded Grafana panels for a seamless user experience.
+*   **Monitoring Console**: A high-density dashboard designed for operations teams.
+    *   **Command Dashboard**: A high-level HUD showing system health scores, active alerts, and metric timelines.
+    *   **Alerts Queue**: A real-time view of all active alerts with status tracking and severity filtering.
+    *   **Investigation Graph**: Interactive visualization to map dependencies and event sequences.
+    *   **Host Management**: Inventory view of all monitored targets with status and grouping.
+*   **Global Search**: Instant access to specific hosts, metrics, or logs.
+*   **Real-Time Updates**: WebSocket integration for live dashboard updates.
+*   **Data Storage**:
+    *   **PostgreSQL**: Stores relational data (alerts, users, configurations).
+    *   **OpenSearch**: Stores high-volume raw event data and logs.
+*   **Observability Stack**:
+    *   **Prometheus**: Scrapes internal metrics from NexDefend services.
+    *   **Grafana**: Provides pre-built dashboards for monitoring the platform's own performance.
 
 ## Architecture
 
@@ -75,7 +63,7 @@ graph TD
     subgraph U["User & Endpoints"]
         direction TB
         F["Browser (React UI)"]
-        A["nexdefend-agent"]
+        A["Monitoring Agent"]
     end
 
 %% ========= CORE PLATFORM =========
@@ -89,15 +77,12 @@ graph TD
 %% ========= SERVICES LAYER =========
     subgraph SVC["Services Layer"]
         direction TB
-        API["Go Core API"]
-        AI["Python AI Service"]
-        SOAR["Go SOAR Service"]
-        I["Go Ingestor"]
-        SUR["Suricata IDS"]
+        API["Core API (Go)"]
+        AI["Analytics Service (Python)"]
+        SOAR["Automation Service (Go)"]
+        I["Ingestor"]
         CC["Cloud Connector"]
-        TIP["Threat Intelligence Platform"]
-        CE["Correlation Engine"]
-        NDR["Network Detection & Response"]
+        NDR["Network Monitor"]
         P["Prometheus"]
         G["Grafana"]
     end
@@ -106,17 +91,17 @@ graph TD
 
 %% Frontend and Agents
     F -->|HTTPS API| API
-    A -->|Event Stream| K
-    CC -->|Cloud Events| K
-    NDR -->|Network Events| K
+    A -->|Metrics Stream| K
+    CC -->|Cloud Metrics| K
+    NDR -->|NetFlow| K
 
 %% Ingestor Flow
     I -->|Consumes| K
-    I -->|Agent Logs| OS
+    I -->|Logs| OS
 
 %% AI Service
     AI -->|Consumes| K
-    AI -->|Creates Incidents| API
+    AI -->|Creates Alerts| API
     AI -->|Reads| DB
 
 %% Core API
@@ -125,41 +110,29 @@ graph TD
     API -->|Proxies Scans| AI
 
 %% SOAR
-    SOAR -->|Consumes Incidents| K
-    SOAR -->|Triggers AI Scans| AI
-
-%% TIP & CE
-    TIP -->|Feeds| API
-    CE -->|Correlates| API
+    SOAR -->|Consumes Alerts| K
+    SOAR -->|Triggers Actions| AI
 
 %% Observability
     P -->|Scrapes Metrics| API
     P -->|Scrapes Metrics| AI
     G -->|Visualizes| P
-
-%% Suricata
-    SUR -->|Writes Logs| OS
-    API -->|Reads Logs| OS
 ```
 
 ### Service Overview
 
 | Service           | Language   | Purpose                                                                                |
 | ----------------- | ---------- | -------------------------------------------------------------------------------------- |
-| `api`             | Go         | The main backend. Handles user auth, all CRUD operations, and API-to-AI proxying.        |
-| `frontend`        | TypeScript | The React-based single-page application for all user interaction.                      |
-| `ai`              | Python     | Handles all compute-heavy and specialized tasks: ML/AI, Nmap scanning, and UEBA.       |
-| `nexdefend-agent` | Go         | Endpoint agent for collecting and streaming telemetry (FIM, process, network).         |
-| `nexdefend-soar`  | Go         | Listens for high-severity incidents on Kafka and runs automated response playbooks.      |
-| `nexdefend-cloud-connector` | Go | Ingests security logs and events from cloud providers.                               |
-| `db`              | N/A        | PostgreSQL database for storing state (incidents, users, vulnerabilities, etc.).       |
-| `opensearch`      | N/A        | Searchable log store for all raw endpoint events.                                      |
-| `kafka`/`zookeeper` | N/A        | The central event bus for decoupling services and handling high-throughput event data. |
-| `suricata`        | N/A        | Network IDS. Shares its log volume with the `api` service for ingestion.                 |
+| `api`             | Go         | The main backend. Handles user auth, data retrieval, and API proxying.                 |
+| `frontend`        | TypeScript | The React-based single-page application for the monitoring console.                    |
+| `ai`              | Python     | Handles compute-heavy analytics, anomaly detection, and active scanning.               |
+| `nexdefend-agent` | Go         | Endpoint agent for collecting metrics, logs, and system events.                        |
+| `nexdefend-soar`  | Go         | Listens for alerts on Kafka and executes automated response playbooks.                 |
+| `nexdefend-cloud-connector` | Go | Ingests logs and metrics from cloud providers.                                       |
+| `db`              | N/A        | PostgreSQL database for storing structured state (alerts, users, etc.).                |
+| `opensearch`      | N/A        | Searchable store for all raw logs and events.                                          |
+| `kafka`/`zookeeper` | N/A        | Central event bus for decoupling services and handling high-throughput data.           |
 | `prometheus`/`grafana` | N/A        | Provides platform-level monitoring and metrics visualization.                          |
-| `tip`             | Go         | Ingests threat intelligence feeds and correlates IOCs.                               |
-| `correlation-engine` | Go      | Links events and creates high-fidelity alerts.                                       |
-| `ndr`             | Go         | Ingests network data from sources like NetFlow, sFlow, Zeek, or Suricata.            |
 
 ## Getting Started
 
@@ -226,21 +199,17 @@ This is the recommended method to start all services.
 docker-compose up -d --build
 ```
 
-### 5. (Optional) Populate Sample Data
+### 5. Train the Anomaly Model
 
-If the `suricata_events` table is empty, you may need to run a one-time script to populate it from the `sample_eve.json` for the AI model to have data.
-
-### 6. Train the AI Model
-
-After the services are running, you must train the initial AI model.
+After the services are running, you must train the initial anomaly detection model.
 
 ```bash
 curl -X POST http://localhost:5000/train
 ```
 
-### 7. Access the Application
+### 6. Access the Application
 
-*   **NexDefend UI**: `http://localhost:3000`
+*   **NexDefend Console**: `http://localhost:3000`
 *   **Grafana**: `http://localhost:3001` (admin:grafana)
 *   **Prometheus**: `http://localhost:9090`
 *   **OpenSearch**: `http://localhost:9200`
