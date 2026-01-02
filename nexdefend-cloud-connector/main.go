@@ -23,7 +23,12 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// Kafka producer configuration
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "kafka:9092"})
+	kafkaBroker := os.Getenv("KAFKA_BROKER")
+	if kafkaBroker == "" {
+		kafkaBroker = "kafka:9092"
+	}
+
+	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +39,7 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start integrations
-	aws.StartAWSIntegration(producer, cfg.KafkaTopic)
+	aws.StartAWSIntegration(producer, cfg.KafkaTopic, cfg.S3_BUCKET_NAME, cfg.AWS_REGION)
 	azure.StartAzureIntegration(producer, cfg.KafkaTopic, cfg.AZURE_CONNECTION_STRING, cfg.AZURE_EVENT_HUB_NAME)
 	gcp.StartGCPIntegration(producer, cfg.KafkaTopic, cfg.GCP_PROJECT_ID, cfg.GCP_SUBSCRIPTION_ID)
 	saas.StartOktaIntegration(producer, cfg.KafkaTopic, cfg.OKTA_DOMAIN, cfg.OKTA_API_KEY)
