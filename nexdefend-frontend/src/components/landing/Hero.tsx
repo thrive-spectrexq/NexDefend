@@ -20,15 +20,15 @@ const Hero: React.FC = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-blue"></span>
             </span>
-            Next-Gen XDR Platform
+            Unified Monitoring System
           </div>
 
           <h1 className="hero-title text-5xl md:text-6xl font-bold tracking-tight text-white animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
-            Secure Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-purple">Infrastructure</span> with AI-Driven Defense
+            Monitor Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-purple">Infrastructure</span> with Intelligent Metrics
           </h1>
 
           <p className="hero-subtitle text-lg text-text-muted max-w-2xl leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
-            NexDefend unifies endpoint security, network detection, and automated response into a single, cyber-tactical console. Detect threats in real-time and respond with surgical precision.
+            NexDefend provides a comprehensive systems and service monitoring system. Collect metrics, evaluate rules in real-time, and trigger alerts from a single console.
           </p>
 
           <div className="hero-buttons flex flex-wrap gap-4 animate-in fade-in slide-in-from-bottom-7 duration-700 delay-300">
