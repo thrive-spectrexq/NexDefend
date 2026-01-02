@@ -3,26 +3,26 @@ import './FeaturesGrid.css';
 
 const features = [
   {
-    title: 'Endpoint Security',
-    items: ['Configuration Assessment', 'Malware Detection', 'File Integrity Monitoring'],
+    title: 'System Monitoring',
+    items: ['Resource Usage Tracking', 'Process Monitoring', 'File Integrity Monitoring'],
     color: 'var(--color-brand-blue)',
     icon: Shield,
   },
   {
     title: 'Threat Intelligence',
-    items: ['Threat Hunting', 'Log Data Analysis', 'Vulnerability Detection'],
+    items: ['AI-Powered Analysis', 'Threat Hunting', 'Vulnerability Detection'],
     color: 'var(--color-brand-red)',
     icon: Search,
   },
   {
-    title: 'Security Operations',
-    items: ['Incident Response', 'Regulatory Compliance', 'IT Hygiene'],
+    title: 'Automated Remediation',
+    items: ['Incident Response', 'Auto-Scaling', 'IT Hygiene'],
     color: 'var(--color-brand-green)',
     icon: Terminal,
   },
   {
-    title: 'Cloud Security',
-    items: ['Container Security', 'Posture Management', 'Workload Protection'],
+    title: 'Cloud Monitoring',
+    items: ['Container Metrics', 'Cloud Posture', 'Workload Health'],
     color: 'var(--color-brand-purple)', // Assuming purple or orange
     icon: Cloud,
   },
@@ -34,11 +34,11 @@ const FeaturesGrid = () => {
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="text-center mb-16 space-y-4">
             <h2 id="features-heading" className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-                Endpoint and Cloud Workload Protection
+                Unified System and Service Monitoring
             </h2>
             <p className="text-lg text-text-muted max-w-2xl mx-auto">
-            NexDefend unifies historically separate functions into a single agent and platform architecture.
-            Protection is provided for public clouds, private clouds, and on-premise data centers.
+            NexDefend unifies monitoring, analysis, and response into a single agent and platform architecture.
+            Monitoring is provided for public clouds, private clouds, and on-premise data centers.
             </p>
         </div>
 

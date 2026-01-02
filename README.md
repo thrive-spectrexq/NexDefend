@@ -22,6 +22,7 @@ The platform is a collection of specialized services working in concert to provi
 
 ### 2. Intelligent Analysis (nexdefend-ai)
 
+*   **AI-Powered Threat Intelligence Platform**: Ingests and correlates threat feeds (e.g., MISP, OTX) with system metrics to identify potential security risks alongside operational issues.
 *   **Anomaly Detection**: Uses ML models (`IsolationForest`) to detect deviations from normal baseline metrics.
 *   **Automated Alerting**: Automatically generates alerts when anomalies or threshold violations are detected.
 *   **Active Service Scanning**: Exposes a `/scan` endpoint to perform active health checks and service discovery (using Nmap) on target hosts.
