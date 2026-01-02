@@ -39,14 +39,52 @@ const Settings = () => {
 
   const handleAgentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement agent config submission
-    alert('Agent configuration saved!');
+    // We assume the user enters configuration for a specific hostname.
+    // In a real UI, this would be a selection from a dropdown or a specific config page per agent.
+    // For now, we will try to parse a hostname from the config or prompt for one, but to keep it simple
+    // we'll assume there is a 'hostname' field in the text area JSON, or we default to 'all'.
+
+    try {
+        let configObj;
+        try {
+            configObj = JSON.parse(agentConfig);
+        } catch {
+            alert("Invalid JSON configuration.");
+            return;
+        }
+
+        const hostname = configObj.hostname || "default-agent"; // Fallback if not specified
+
+        const response = await fetch('/api/v1/agent/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                hostname: hostname,
+                config: configObj
+            })
+        });
+
+        if (response.ok) {
+            alert('Agent configuration saved!');
+        } else {
+            alert('Failed to save agent configuration.');
+        }
+    } catch (error) {
+        console.error('Error saving agent config:', error);
+        alert('An error occurred.');
+    }
   };
 
   const handleThreatFeedSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement threat feed submission
-    alert('Threat feed saved!');
+    // Currently, there is no backend endpoint for persisting threat feeds in the database
+    // other than the TIP integration which is configured via environment variables or specialized services.
+    // We will log this for now.
+    console.log("Submitting threat feed:", threatFeed);
+    alert('Threat feed submitted (Mock)!');
   };
 
   return (
