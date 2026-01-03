@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
+    "database/sql"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -27,6 +29,20 @@ type Metric struct {
 	Value float64
 }
 
+// Vulnerability represents a security vulnerability
+type Vulnerability struct {
+	ID           uint           `gorm:"primarykey" json:"id"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	Description  string         `json:"description"`
+	Severity     string         `json:"severity"`
+	Status       string         `json:"status"`
+	HostIP       sql.NullString `json:"host_ip"`
+	Port         sql.NullInt32  `json:"port"`
+	DiscoveredAt time.Time      `json:"discovered_at"`
+}
+
 func InitDB() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -45,10 +61,24 @@ func InitDB() {
 	}
 
 	// Auto Migrate
-	err = db.AutoMigrate(&Incident{}, &Metric{})
+	err = db.AutoMigrate(&Incident{}, &Metric{}, &Vulnerability{})
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
 
 	DB = db
+
+    // Seed some initial vulnerability data if empty
+    var count int64
+    DB.Model(&Vulnerability{}).Count(&count)
+    if count == 0 {
+        DB.Create(&Vulnerability{
+            Description:  "Open SSH Port (22)",
+            Severity:     "Medium",
+            Status:       "Detected",
+            HostIP:       sql.NullString{String: "127.0.0.1", Valid: true},
+            Port:         sql.NullInt32{Int32: 22, Valid: true},
+            DiscoveredAt: time.Now(),
+        })
+    }
 }
