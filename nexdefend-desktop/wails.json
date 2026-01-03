@@ -6,7 +6,7 @@
     "email": "support@nexdefend.com"
   },
   "frontend:install": "npm install",
-  "frontend:build": "npm run build -- --mode desktop",
+  "frontend:build": "npm run build -- --mode desktop && rm -rf ../nexdefend-desktop/frontend/dist && cp -r dist ../nexdefend-desktop/frontend/dist",
   "frontend:dev:watcher": "npm run dev -- --mode desktop",
   "frontend:dir": "../nexdefend-frontend",
   "wailsjsdir": "./src/wailsjs",
