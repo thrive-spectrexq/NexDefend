@@ -1,6 +1,6 @@
-# NexDefend: AI-Powered Systems and Service Monitoring Platform
+# NexDefend: AI-Powered System Monitoring and Threat Intelligence Platform
 
-NexDefend is a comprehensive **AI-Powered Systems and Service Monitoring Platform**. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed. It provides a unified dashboard for visualizing the health and performance of your infrastructure.
+NexDefend is a comprehensive **AI-Powered System Monitoring and Threat Intelligence Platform**. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed. It provides a unified dashboard for visualizing the health and performance of your infrastructure.
 
 Built on a modern microservice architecture, NexDefend leverages Go for high-performance data collection, Python for intelligent analytics, Kafka for a resilient event pipeline, and OpenSearch/PostgreSQL for scalable storage.
 
