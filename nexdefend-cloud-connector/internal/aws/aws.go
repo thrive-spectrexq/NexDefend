@@ -15,7 +15,7 @@ import (
 func StartAWSIntegration(producer *kafka.Producer, topic string, bucketName string, region string) {
 	fmt.Printf("Starting AWS integration for bucket: %s (Region: %s)...\n", bucketName, region)
 
-	processedKeys := make(map[string]bool)
+	var lastProcessedTime time.Time
 
 	go func() {
 		for {
@@ -45,24 +45,29 @@ func StartAWSIntegration(producer *kafka.Producer, topic string, bucketName stri
 				continue
 			}
 
-			for _, object := range output.Contents {
-				key := *object.Key
-				if processedKeys[key] {
-					continue
-				}
-
-				fmt.Printf("Processing new key: %s\n", key)
-
-				// In a real implementation, we would fetch the object content and produce to Kafka
-				// For now, we just mark it as processed
-				processedKeys[key] = true
-
-				// produce message to kafka
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          []byte(fmt.Sprintf("New S3 object detected: %s", key)),
-				}, nil)
+			var maxTime time.Time
+			if !lastProcessedTime.IsZero() {
+				maxTime = lastProcessedTime
 			}
+
+			for _, object := range output.Contents {
+				if object.LastModified != nil && object.LastModified.After(lastProcessedTime) {
+					key := *object.Key
+					fmt.Printf("Processing new key: %s (Modified: %s)\n", key, object.LastModified)
+
+					// produce message to kafka
+					producer.Produce(&kafka.Message{
+						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+						Value:          []byte(fmt.Sprintf("New S3 object detected: %s", key)),
+					}, nil)
+
+					if object.LastModified.After(maxTime) {
+						maxTime = *object.LastModified
+					}
+				}
+			}
+
+			lastProcessedTime = maxTime
 
 			time.Sleep(60 * time.Second) // Poll for new logs every 60 seconds
 		}
