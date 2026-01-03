@@ -22,3 +22,4 @@ go.work
 .env
 nexdefend-ai/.env
 nexdefend-cloud-connector/.env
+nexdefend-desktop/frontend/node_modules/
