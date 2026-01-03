@@ -345,33 +345,43 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 	go func() {
 		for range ticker.C {
 			flowsMutex.Lock()
+			var expiredFlows []struct {
+				Key     flow.Flow
+				Metrics flow.FlowMetrics
+			}
 			for key, metrics := range flows {
 				if time.Since(metrics.EndTimestamp) > 30*time.Second {
-					event := Event{
-						EventType: "flow",
-						Timestamp: metrics.EndTimestamp,
-						Data: map[string]interface{}{
-							"flow":    key,
-							"metrics": metrics,
-						},
-					}
-
-					eventJSON, err := json.Marshal(event)
-					if err != nil {
-						log.Printf("Failed to marshal flow event to JSON: %v", err)
-						continue
-					}
-
-					producer.Produce(&kafka.Message{
-						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-						Value:          eventJSON,
-					}, nil)
-					EventsSent.WithLabelValues("flow").Inc()
-
+					expiredFlows = append(expiredFlows, struct {
+						Key     flow.Flow
+						Metrics flow.FlowMetrics
+					}{Key: key, Metrics: metrics})
 					delete(flows, key)
 				}
 			}
 			flowsMutex.Unlock()
+
+			for _, expired := range expiredFlows {
+				event := Event{
+					EventType: "flow",
+					Timestamp: expired.Metrics.EndTimestamp,
+					Data: map[string]interface{}{
+						"flow":    expired.Key,
+						"metrics": expired.Metrics,
+					},
+				}
+
+				eventJSON, err := json.Marshal(event)
+				if err != nil {
+					log.Printf("Failed to marshal flow event to JSON: %v", err)
+					continue
+				}
+
+				producer.Produce(&kafka.Message{
+					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+					Value:          eventJSON,
+				}, nil)
+				EventsSent.WithLabelValues("flow").Inc()
+			}
 		}
 	}()
 

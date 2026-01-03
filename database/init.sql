@@ -289,3 +289,11 @@ CREATE INDEX idx_case_artifacts_case_id ON case_artifacts (case_id);
 CREATE INDEX idx_dashboards_user_id ON dashboards (user_id);
 CREATE INDEX idx_assets_hostname ON assets (hostname);
 CREATE INDEX idx_agent_configs_asset_id ON agent_configs (asset_id);
+
+-- Create 'ueba_models' table for persistent UEBA baselines
+CREATE TABLE ueba_models (
+    username VARCHAR(255) PRIMARY KEY,
+    baseline_data JSONB,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE
+);
