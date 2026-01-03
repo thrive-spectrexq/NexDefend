@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
               <span className="text-xl font-bold text-white tracking-wide">NexDefend</span>
             </Link>
             <p className="text-sm text-text-muted leading-relaxed mb-6">
-              The AI-native XDR platform unifying endpoint security, cloud defense, and automated response for the modern enterprise.
+              The AI-Powered System Monitoring and Threat Intelligence Platform.
             </p>
             <div className="flex gap-4">
               <a href="#twitter" aria-label="Twitter" className="p-2 rounded-full bg-surface hover:bg-surface-highlight text-text-muted hover:text-brand-blue transition-colors">
