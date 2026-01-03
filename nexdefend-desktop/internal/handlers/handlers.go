@@ -16,6 +16,8 @@ func StartAPIServer() {
 
 	// Auth
 	r.HandleFunc("/api/v1/auth/login", LoginHandler).Methods("POST", "OPTIONS")
+    // Register mock (same as login for now)
+    r.HandleFunc("/api/v1/auth/register", LoginHandler).Methods("POST", "OPTIONS")
 
 	// Dashboard
 	r.HandleFunc("/api/v1/metrics/dashboard", DashboardMetricsHandler).Methods("GET", "OPTIONS")
@@ -30,17 +32,16 @@ func StartAPIServer() {
     // Settings
     r.HandleFunc("/api/v1/cloud-credentials", CloudCredentialsHandler).Methods("POST", "OPTIONS")
 
-	// AI Service Mock (so frontend doesn't crash)
-	// These run on port 5000 in the separate goroutine below, but we can reuse the handler functions if we wanted.
-    // However, the AI mock server needs its own router.
-
 	// Add CORS middleware
 	r.Use(mux.CORSMethodMiddleware(r))
 	r.Use(corsMiddleware)
 
 	// Start server in background
 	go func() {
-		http.ListenAndServe("localhost:8080", r)
+        if err := http.ListenAndServe("localhost:8080", r); err != nil {
+            // Log error in a real app
+            _ = err
+        }
 	}()
 
 	// Start AI Mock Server on 5000
@@ -54,7 +55,10 @@ func StartAPIServer() {
         aiRouter.Use(mux.CORSMethodMiddleware(aiRouter))
         aiRouter.Use(corsMiddleware)
 
-		http.ListenAndServe("localhost:5000", aiRouter)
+		if err := http.ListenAndServe("localhost:5000", aiRouter); err != nil {
+            // Log error in a real app
+            _ = err
+        }
 	}()
 }
 
