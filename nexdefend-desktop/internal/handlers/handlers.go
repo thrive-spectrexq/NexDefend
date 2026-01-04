@@ -64,6 +64,14 @@ func StartAPIServer() {
 	}()
 }
 
+// Helper struct for host info
+type HostInfo struct {
+    Hostname string `json:"hostname"`
+    OS       string `json:"os"`
+    Kernel   string `json:"kernel"`
+    Uptime   uint64 `json:"uptime"`
+}
+
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -166,10 +174,19 @@ func HostDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get Live Snapshot
 	topProcs, activeConns := agent.GetLiveSnapshot()
 
+    // Mock host details (In a real app, this would come from agent registration info)
+    hostInfo := HostInfo{
+        Hostname: "FIN-WS-004", // Mock
+        OS:       "Windows 11 Enterprise 22H2",
+        Kernel:   "10.0.22621",
+        Uptime:   12345, // Seconds
+    }
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"hostname": "LOCALHOST",
-		"ip": "127.0.0.1",
-		"os": "Windows 11 (Detected)",
+		"hostname": hostInfo.Hostname,
+		"ip": "10.20.1.45", // Mock
+		"os": hostInfo.OS,
+        "kernel": hostInfo.Kernel,
 		"status": "Online",
 		"history": history,
 		"processes": topProcs,

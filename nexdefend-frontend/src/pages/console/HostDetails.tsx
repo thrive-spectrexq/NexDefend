@@ -9,7 +9,10 @@ import {
     X,
     Maximize2,
     Minimize2,
-    Network
+    Network,
+    Cpu,
+    HardDrive,
+    Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -56,6 +59,7 @@ export default function HostDetails() {
         hostname: hostData?.hostname || 'FIN-WS-004',
         ip: hostData?.ip || '10.20.1.45',
         os: hostData?.os || 'Windows 11 Enterprise',
+        kernel: hostData?.kernel || '10.0.22621', // Added kernel
         status: hostData?.status || 'Online',
         policy: 'Strict Audit',
         lastSeen: 'Just now',
@@ -206,29 +210,47 @@ export default function HostDetails() {
                 {/* System Info Card */}
                 <div className="bg-surface border border-surface-highlight rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                        <Shield size={18} className="text-brand-blue" />
-                        System Information
+                        <Info size={18} className="text-brand-blue" />
+                        Device Details
                     </h3>
-                    <div className="space-y-4 font-mono text-sm">
-                        <div className="flex justify-between border-b border-surface-highlight pb-2">
-                            <span className="text-text-muted">Agent ID</span>
-                            <span className="text-text">{id}</span>
+                    <div className="space-y-4 text-sm">
+                        <div className="flex items-center gap-3">
+                            <Monitor className="text-text-muted" size={16} />
+                            <div>
+                                <div className="text-text-muted text-xs">Operating System</div>
+                                <div className="text-text font-medium">{host.os}</div>
+                            </div>
                         </div>
-                        <div className="flex justify-between border-b border-surface-highlight pb-2">
-                            <span className="text-text-muted">Policy Group</span>
-                            <span className="text-text">{host.policy}</span>
+                        <div className="flex items-center gap-3">
+                            <Cpu className="text-text-muted" size={16} />
+                            <div>
+                                <div className="text-text-muted text-xs">Kernel / Build</div>
+                                <div className="text-text font-medium">{host.kernel}</div>
+                            </div>
                         </div>
-                        <div className="flex justify-between border-b border-surface-highlight pb-2">
-                            <span className="text-text-muted">Agent Version</span>
-                            <span className="text-text">{host.agentVersion}</span>
+                        <div className="flex items-center gap-3">
+                            <Shield className="text-text-muted" size={16} />
+                            <div>
+                                <div className="text-text-muted text-xs">Agent Version</div>
+                                <div className="text-text font-medium">{host.agentVersion}</div>
+                            </div>
                         </div>
-                        <div className="flex justify-between border-b border-surface-highlight pb-2">
-                            <span className="text-text-muted">Uptime</span>
-                            <span className="text-text">{host.uptime}</span>
+                        <div className="flex items-center gap-3">
+                            <Network className="text-text-muted" size={16} />
+                            <div>
+                                <div className="text-text-muted text-xs">MAC Address</div>
+                                <div className="text-text font-mono">{host.mac}</div>
+                            </div>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-text-muted">MAC Address</span>
-                            <span className="text-text">{host.mac}</span>
+                        <div className="flex items-center gap-3">
+                            <HardDrive className="text-text-muted" size={16} />
+                            <div>
+                                <div className="text-text-muted text-xs">Disk Encryption</div>
+                                <div className="text-brand-green font-medium flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-green"></span>
+                                    BitLocker Enabled
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
