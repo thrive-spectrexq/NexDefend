@@ -9,6 +9,9 @@ import DetectionsQueue from './pages/console/DetectionsQueue'
 import HostManagement from './pages/console/HostManagement'
 import HostDetails from './pages/console/HostDetails'
 import InvestigationView from './pages/console/InvestigationView'
+import Settings from './pages/Settings'
+import AIDashboardPage from './pages/AIDashboardPage'
+import Support from './pages/console/Support'
 
 function App() {
   return (
@@ -24,13 +27,13 @@ function App() {
         {/* We can treat this as PrivateRoute eventually, but for now hooking it up directly to visualize */}
         <Route path="/dashboard" element={<ConsoleLayout />}>
             <Route index element={<CommandDashboard />} />
+            <Route path="ai-dashboard" element={<AIDashboardPage />} />
             <Route path="detections" element={<DetectionsQueue />} />
             <Route path="hosts" element={<HostManagement />} />
             <Route path="hosts/:id" element={<HostDetails />} />
             <Route path="investigate" element={<InvestigationView />} />
-            {/* Fallbacks or placeholders for other links */}
-            <Route path="config" element={<div className="p-4 text-text">Configuration View Coming Soon</div>} />
-            <Route path="support" element={<div className="p-4 text-text">Support View Coming Soon</div>} />
+            <Route path="config" element={<Settings />} />
+            <Route path="support" element={<Support />} />
         </Route>
 
         {/* Redirect legacy routes if necessary or just let 404s happen for now */}
