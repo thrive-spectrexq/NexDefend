@@ -16,7 +16,7 @@ import Alerts from './pages/Alerts'
 import AlertTriage from './pages/AlertTriage'
 import Reports from './pages/Reports'
 import SOARPlaybookEditor from './pages/SOARPlaybookEditor'
-import NetworkDashboard from './pages/NetworkDashboard'
+import NetworkTopology from './pages/NetworkTopology'
 import PlatformHealth from './pages/PlatformHealth'
 import SecurityOverview from './pages/SecurityOverview'
 import Vulnerabilities from './pages/Vulnerabilities'
@@ -43,7 +43,7 @@ function App() {
             <Route path="incidents" element={<Incidents />} />
             <Route path="hosts" element={<HostManagement />} />
             <Route path="hosts/:id" element={<HostDetails />} />
-            <Route path="network" element={<NetworkDashboard />} />
+          <Route path="network" element={<NetworkTopology />} />
             <Route path="vulnerabilities" element={<Vulnerabilities />} />
             <Route path="investigate" element={<InvestigationView />} />
             <Route path="soar" element={<SOARPlaybookEditor />} />
