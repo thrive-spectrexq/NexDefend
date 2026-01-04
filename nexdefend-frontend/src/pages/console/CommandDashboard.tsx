@@ -3,10 +3,7 @@ import {
   AlertTriangle,
   Wifi,
   Users,
-  Activity,
-  Terminal,
-  FileText,
-  Globe
+  Activity
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { cn } from '../../lib/utils';
@@ -174,21 +171,6 @@ export default function CommandDashboard() {
                   <Activity className="text-brand-blue" size={20} />
                   Recent System Activity
               </h3>
-              <div className="flex gap-2">
-                  {['All', 'Process', 'Network', 'File'].map((filter) => (
-                      <button
-                          key={filter}
-                          className={cn(
-                              "px-3 py-1 text-xs font-mono rounded border transition-colors",
-                              filter === 'All'
-                                  ? "bg-brand-blue/10 text-brand-blue border-brand-blue/30"
-                                  : "bg-surface-highlight/10 text-text-muted border-surface-highlight hover:bg-surface-highlight/20"
-                          )}
-                      >
-                          {filter}
-                      </button>
-                  ))}
-              </div>
           </div>
           <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -196,45 +178,41 @@ export default function CommandDashboard() {
                       <tr>
                           <th className="px-4 py-3 font-medium">Timestamp</th>
                           <th className="px-4 py-3 font-medium">Type</th>
-                          <th className="px-4 py-3 font-medium">Host</th>
-                          <th className="px-4 py-3 font-medium">User</th>
-                          <th className="px-4 py-3 font-medium">Event Detail</th>
-                          <th className="px-4 py-3 font-medium text-right">Action</th>
+                          <th className="px-4 py-3 font-medium">Description</th>
+                          <th className="px-4 py-3 font-medium text-right">Severity</th>
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-highlight font-mono">
+                       {/* Mock items mixed with dynamic - ideally we fetch incidents here */}
                       {[
-                          { time: '10:42:15', type: 'Process', host: 'FIN-WS-004', user: 'j.doe', detail: 'Started powershell.exe -enc ...', icon: Terminal, color: 'text-brand-orange' },
-                          { time: '10:41:02', type: 'Network', host: 'DMZ-WEB-01', user: 'SYSTEM', detail: 'Outbound conn to 192.168.4.22:443', icon: Globe, color: 'text-brand-blue' },
-                          { time: '10:38:55', type: 'File', host: 'HR-LAP-09', user: 'm.smith', detail: 'Modified payroll_2024.xlsx', icon: FileText, color: 'text-brand-green' },
-                          { time: '10:35:12', type: 'Process', host: 'DEV-SRV-01', user: 'root', detail: 'sudo apt-get install nmap', icon: Terminal, color: 'text-text-muted' },
-                          { time: '10:32:01', type: 'Network', host: 'FIN-WS-004', user: 'j.doe', detail: 'DNS Query: mal-site.com', icon: Globe, color: 'text-brand-red' },
+                          { time: 'Just now', type: 'System', desc: 'Agent Heartbeat Received', severity: 'Info' },
+                          { time: '1 min ago', type: 'Process', desc: 'Process metrics collected', severity: 'Info' },
+                          ...(data?.severity_breakdown?.critical > 0 ? [{ time: '2 mins ago', type: 'Security', desc: 'Critical CPU Usage Detected', severity: 'Critical' }] : []),
+                          { time: '5 mins ago', type: 'Network', desc: 'Network statistics updated', severity: 'Info' },
                       ].map((event, idx) => (
                           <tr key={idx} className="hover:bg-surface-highlight/10 group transition-colors">
                               <td className="px-4 py-3 text-text-muted whitespace-nowrap">{event.time}</td>
                               <td className="px-4 py-3">
-                                  <span className={cn("flex items-center gap-2", event.color)}>
-                                      <event.icon size={14} />
+                                  <span className={cn("flex items-center gap-2",
+                                      event.type === 'Security' ? 'text-brand-red' : 'text-brand-blue'
+                                  )}>
+                                      {event.type === 'Security' ? <AlertTriangle size={14} /> : <Activity size={14} />}
                                       {event.type}
                                   </span>
                               </td>
-                              <td className="px-4 py-3 text-text">{event.host}</td>
-                              <td className="px-4 py-3 text-text-muted">{event.user}</td>
-                              <td className="px-4 py-3 text-text truncate max-w-xs" title={event.detail}>{event.detail}</td>
+                              <td className="px-4 py-3 text-text truncate max-w-xs">{event.desc}</td>
                               <td className="px-4 py-3 text-right">
-                                  <button className="text-xs text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity hover:underline">
-                                      View Raw
-                                  </button>
+                                  <span className={cn("px-2 py-1 rounded text-xs font-semibold",
+                                      event.severity === 'Critical' ? 'bg-brand-red/20 text-brand-red' :
+                                      event.severity === 'Info' ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-muted'
+                                  )}>
+                                      {event.severity}
+                                  </span>
                               </td>
                           </tr>
                       ))}
                   </tbody>
               </table>
-          </div>
-          <div className="mt-4 text-center">
-              <button className="text-sm text-text-muted hover:text-brand-blue transition-colors">
-                  Load More Activity
-              </button>
           </div>
       </div>
     </PageTransition>

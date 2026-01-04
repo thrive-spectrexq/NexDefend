@@ -256,17 +256,61 @@ func AIHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AIAnomaliesHandler(w http.ResponseWriter, r *http.Request) {
-    // Return some mock anomalies
-    anomalies := []map[string]interface{}{
-        {
-            "id": 1,
-            "type": "Unusual Process",
+    var anomalies []map[string]interface{}
+
+    // 1. Static/Historical Anomalies (kept for demo)
+    anomalies = append(anomalies, map[string]interface{}{
+        "id": 1,
+        "type": "Unusual Process Chain",
+        "host": "localhost",
+        "source": "UEBA Engine",
+        "score": 0.88,
+        "timestamp": time.Now().Add(-10 * time.Minute).Format(time.RFC3339),
+    })
+
+    // 2. Real-time Heuristic "AI" Detection based on DB Metrics
+    // Check for high CPU
+    var lastCpu db.Metric
+    db.DB.Where("type = ?", "cpu_usage").Last(&lastCpu)
+    if lastCpu.Value > 85.0 {
+        anomalies = append(anomalies, map[string]interface{}{
+            "id": 2,
+            "type": "Abnormal CPU Spike",
+            "host": "localhost",
+            "source": "Metric Analyzer",
+            "score": 0.92,
+            "timestamp": lastCpu.CreatedAt.Format(time.RFC3339),
+        })
+    }
+
+    // Check for high Memory
+    var lastMem db.Metric
+    db.DB.Where("type = ?", "memory_usage").Last(&lastMem)
+    if lastMem.Value > 90.0 {
+        anomalies = append(anomalies, map[string]interface{}{
+            "id": 3,
+            "type": "Memory Exhaustion Pattern",
+            "host": "localhost",
+            "source": "Metric Analyzer",
+            "score": 0.89,
+            "timestamp": lastMem.CreatedAt.Format(time.RFC3339),
+        })
+    }
+
+    // Check for Process Count Surge
+    var lastProcs db.Metric
+    db.DB.Where("type = ?", "process_count").Last(&lastProcs)
+    if lastProcs.Value > 300 { // Arbitrary threshold for demo
+         anomalies = append(anomalies, map[string]interface{}{
+            "id": 4,
+            "type": "Process Spawn Surge",
             "host": "localhost",
             "source": "Process Monitor",
-            "score": 0.85,
-            "timestamp": time.Now().Add(-10 * time.Minute).Format(time.RFC3339),
-        },
+            "score": 0.76,
+            "timestamp": lastProcs.CreatedAt.Format(time.RFC3339),
+        })
     }
+
     json.NewEncoder(w).Encode(map[string]interface{}{
         "anomalies": anomalies,
     })
