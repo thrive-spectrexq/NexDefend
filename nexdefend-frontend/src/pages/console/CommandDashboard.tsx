@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { cn } from '../../lib/utils';
-import { useDetectionStore } from '../../stores/detectionStore';
 import { PageTransition } from '../../components/common/PageTransition';
+import { useEffect, useState } from 'react';
 
 // Mock Timeline (keeping static for now as store doesn't have history trend yet)
 const timelineData = Array.from({ length: 24 }, (_, i) => ({
@@ -35,16 +35,36 @@ function StatCard({ label, value, subtext, icon: Icon, colorClass }: any) {
 }
 
 export default function CommandDashboard() {
-  const stats = useDetectionStore((state) => state.stats);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    // Poll for metrics
+    const fetchMetrics = async () => {
+        try {
+            const res = await fetch('http://localhost:8080/api/v1/metrics/dashboard');
+            if (res.ok) {
+                const json = await res.json();
+                setData(json);
+            }
+        } catch (e) {
+            console.error("Failed to fetch dashboard metrics", e);
+        }
+    };
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const severityData = [
-    { name: 'Critical', value: stats.critical, color: '#F87171' }, // brand-red
-    { name: 'High', value: stats.high, color: '#FB923C' },     // brand-orange
-    { name: 'Medium', value: stats.medium, color: '#38BDF8' },   // brand-blue
-    { name: 'Low', value: stats.low, color: '#4ADE80' },      // brand-green
+    { name: 'Critical', value: data?.severity_breakdown?.critical || 0, color: '#F87171' }, // brand-red
+    { name: 'High', value: data?.severity_breakdown?.high || 0, color: '#FB923C' },     // brand-orange
+    { name: 'Medium', value: data?.severity_breakdown?.medium || 0, color: '#38BDF8' },   // brand-blue
+    { name: 'Low', value: data?.severity_breakdown?.low || 0, color: '#4ADE80' },      // brand-green
   ];
 
-  const activeThreats = stats.critical + stats.high;
+  const activeThreats = data?.active_threats || 0;
+  const securityScore = data?.security_score || 100;
 
   return (
     <PageTransition className="space-y-6">
@@ -52,15 +72,15 @@ export default function CommandDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
             label="Security Score"
-            value={`${Math.max(0, 100 - (activeThreats * 2))}/100`}
+            value={`${securityScore}/100`}
             subtext="Real-time calculation"
             icon={ShieldCheck}
-            colorClass="text-brand-green"
+            colorClass={securityScore > 80 ? "text-brand-green" : securityScore > 50 ? "text-brand-orange" : "text-brand-red"}
         />
         <StatCard
             label="Active Threats"
             value={activeThreats}
-            subtext={`${stats.critical} Critical, ${stats.high} High`}
+            subtext={`${data?.severity_breakdown?.critical || 0} Critical, ${data?.severity_breakdown?.high || 0} High`}
             icon={AlertTriangle}
             colorClass="text-brand-red"
         />

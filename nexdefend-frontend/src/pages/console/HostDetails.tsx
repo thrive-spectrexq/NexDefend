@@ -29,14 +29,34 @@ export default function HostDetails() {
     const [terminalLines, setTerminalLines] = useState<string[]>(['NexDefend Remote Shell v2.4.1', 'Connected to FIN-WS-004 (10.20.1.45)', 'Type "help" for commands.']);
     const [cmdInput, setCmdInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
+    const [hostData, setHostData] = useState<any>(null);
 
-    // Mock host data based on ID (normally fetched from API)
+    // Fetch real host metrics
+    useEffect(() => {
+        const fetchHostDetails = async () => {
+            try {
+                const res = await fetch('http://localhost:8080/api/v1/host/details');
+                if (res.ok) {
+                    const json = await res.json();
+                    setHostData(json);
+                }
+            } catch (e) {
+                console.error("Failed to fetch host details", e);
+            }
+        };
+
+        fetchHostDetails();
+        const interval = setInterval(fetchHostDetails, 2000); // Fast poll for live chart
+        return () => clearInterval(interval);
+    }, []);
+
+    // Fallback/Mock host data if API fails or for static fields not yet in API
     const host = {
         id,
-        hostname: 'FIN-WS-004',
-        ip: '10.20.1.45',
-        os: 'Windows 11 Enterprise',
-        status: 'Online',
+        hostname: hostData?.hostname || 'FIN-WS-004',
+        ip: hostData?.ip || '10.20.1.45',
+        os: hostData?.os || 'Windows 11 Enterprise',
+        status: hostData?.status || 'Online',
         policy: 'Strict Audit',
         lastSeen: 'Just now',
         uptime: '4d 12h 32m',
@@ -221,7 +241,7 @@ export default function HostDetails() {
                     </h3>
                     <div className="flex-1 w-full min-h-[200px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={mockPerformanceData}>
+                            <AreaChart data={hostData?.history || mockPerformanceData}>
                                 <defs>
                                     <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.3}/>
@@ -233,7 +253,7 @@ export default function HostDetails() {
                                     </linearGradient>
                                 </defs>
                                 <XAxis dataKey="time" hide />
-                                <YAxis hide />
+                                <YAxis hide domain={[0, 100]} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#162032', borderColor: '#1E293B' }}
                                     itemStyle={{ fontSize: '12px' }}
