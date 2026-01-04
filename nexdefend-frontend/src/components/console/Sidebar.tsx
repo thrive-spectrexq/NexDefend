@@ -6,13 +6,15 @@ import {
   Settings,
   LifeBuoy,
   Menu,
-  ShieldAlert
+  ShieldAlert,
+  Brain
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useState } from 'react';
 
 const navItems = [
   { icon: Activity, label: 'Activity', path: '/dashboard' }, // Mapping Command Dashboard to Activity/Home
+  { icon: Brain, label: 'AI Insights', path: '/dashboard/ai-dashboard' },
   { icon: ShieldAlert, label: 'Detections', path: '/dashboard/detections' },
   { icon: Search, label: 'Investigate', path: '/dashboard/investigate' },
   { icon: Monitor, label: 'Hosts', path: '/dashboard/hosts' },
