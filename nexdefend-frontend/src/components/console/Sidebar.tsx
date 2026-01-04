@@ -7,17 +7,29 @@ import {
   LifeBuoy,
   Menu,
   ShieldAlert,
-  Brain
+  Brain,
+  Bell,
+  GitBranch,
+  FileText,
+  Globe,
+  Bug,
+  Siren
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useState } from 'react';
 
 const navItems = [
-  { icon: Activity, label: 'Activity', path: '/dashboard' }, // Mapping Command Dashboard to Activity/Home
+  { icon: Activity, label: 'Overview', path: '/dashboard' },
   { icon: Brain, label: 'AI Insights', path: '/dashboard/ai-dashboard' },
-  { icon: ShieldAlert, label: 'Detections', path: '/dashboard/detections' },
+  { icon: ShieldAlert, label: 'Alerts', path: '/dashboard/alerts' },
+  { icon: Bell, label: 'Triage', path: '/dashboard/triage' },
+  { icon: Siren, label: 'Incidents', path: '/dashboard/incidents' },
   { icon: Search, label: 'Investigate', path: '/dashboard/investigate' },
   { icon: Monitor, label: 'Hosts', path: '/dashboard/hosts' },
+  { icon: Globe, label: 'Network', path: '/dashboard/network' },
+  { icon: Bug, label: 'Vulnerabilities', path: '/dashboard/vulnerabilities' },
+  { icon: GitBranch, label: 'Playbooks', path: '/dashboard/soar' },
+  { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
   { icon: Settings, label: 'Configuration', path: '/dashboard/config' },
   { icon: LifeBuoy, label: 'Support', path: '/dashboard/support' },
 ];
