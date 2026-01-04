@@ -2,7 +2,11 @@ import {
   ShieldCheck,
   AlertTriangle,
   Wifi,
-  Users
+  Users,
+  Activity,
+  Terminal,
+  FileText,
+  Globe
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { cn } from '../../lib/utils';
@@ -44,6 +48,7 @@ export default function CommandDashboard() {
 
   return (
     <PageTransition className="space-y-6">
+      {/* Top Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
             label="Security Score"
@@ -75,6 +80,7 @@ export default function CommandDashboard() {
         />
       </div>
 
+      {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96">
         {/* Severity Breakdown */}
         <div className="bg-surface border border-surface-highlight rounded-lg p-6 flex flex-col">
@@ -139,6 +145,77 @@ export default function CommandDashboard() {
                 </ResponsiveContainer>
             </div>
         </div>
+      </div>
+
+      {/* Recent System Activity Feed */}
+      <div className="bg-surface border border-surface-highlight rounded-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-text flex items-center gap-2">
+                  <Activity className="text-brand-blue" size={20} />
+                  Recent System Activity
+              </h3>
+              <div className="flex gap-2">
+                  {['All', 'Process', 'Network', 'File'].map((filter) => (
+                      <button
+                          key={filter}
+                          className={cn(
+                              "px-3 py-1 text-xs font-mono rounded border transition-colors",
+                              filter === 'All'
+                                  ? "bg-brand-blue/10 text-brand-blue border-brand-blue/30"
+                                  : "bg-surface-highlight/10 text-text-muted border-surface-highlight hover:bg-surface-highlight/20"
+                          )}
+                      >
+                          {filter}
+                      </button>
+                  ))}
+              </div>
+          </div>
+          <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                  <thead className="text-text-muted font-mono bg-surface-highlight/20 border-b border-surface-highlight">
+                      <tr>
+                          <th className="px-4 py-3 font-medium">Timestamp</th>
+                          <th className="px-4 py-3 font-medium">Type</th>
+                          <th className="px-4 py-3 font-medium">Host</th>
+                          <th className="px-4 py-3 font-medium">User</th>
+                          <th className="px-4 py-3 font-medium">Event Detail</th>
+                          <th className="px-4 py-3 font-medium text-right">Action</th>
+                      </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-highlight font-mono">
+                      {[
+                          { time: '10:42:15', type: 'Process', host: 'FIN-WS-004', user: 'j.doe', detail: 'Started powershell.exe -enc ...', icon: Terminal, color: 'text-brand-orange' },
+                          { time: '10:41:02', type: 'Network', host: 'DMZ-WEB-01', user: 'SYSTEM', detail: 'Outbound conn to 192.168.4.22:443', icon: Globe, color: 'text-brand-blue' },
+                          { time: '10:38:55', type: 'File', host: 'HR-LAP-09', user: 'm.smith', detail: 'Modified payroll_2024.xlsx', icon: FileText, color: 'text-brand-green' },
+                          { time: '10:35:12', type: 'Process', host: 'DEV-SRV-01', user: 'root', detail: 'sudo apt-get install nmap', icon: Terminal, color: 'text-text-muted' },
+                          { time: '10:32:01', type: 'Network', host: 'FIN-WS-004', user: 'j.doe', detail: 'DNS Query: mal-site.com', icon: Globe, color: 'text-brand-red' },
+                      ].map((event, idx) => (
+                          <tr key={idx} className="hover:bg-surface-highlight/10 group transition-colors">
+                              <td className="px-4 py-3 text-text-muted whitespace-nowrap">{event.time}</td>
+                              <td className="px-4 py-3">
+                                  <span className={cn("flex items-center gap-2", event.color)}>
+                                      <event.icon size={14} />
+                                      {event.type}
+                                  </span>
+                              </td>
+                              <td className="px-4 py-3 text-text">{event.host}</td>
+                              <td className="px-4 py-3 text-text-muted">{event.user}</td>
+                              <td className="px-4 py-3 text-text truncate max-w-xs" title={event.detail}>{event.detail}</td>
+                              <td className="px-4 py-3 text-right">
+                                  <button className="text-xs text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity hover:underline">
+                                      View Raw
+                                  </button>
+                              </td>
+                          </tr>
+                      ))}
+                  </tbody>
+              </table>
+          </div>
+          <div className="mt-4 text-center">
+              <button className="text-sm text-text-muted hover:text-brand-blue transition-colors">
+                  Load More Activity
+              </button>
+          </div>
       </div>
     </PageTransition>
   );
