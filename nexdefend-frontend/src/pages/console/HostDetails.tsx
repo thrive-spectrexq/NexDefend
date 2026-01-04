@@ -6,10 +6,10 @@ import {
     Shield,
     Activity,
     Terminal,
-    AlertCircle,
     X,
     Maximize2,
-    Minimize2
+    Minimize2,
+    Network
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -251,6 +251,10 @@ export default function HostDetails() {
                                         <stop offset="5%" stopColor="#818CF8" stopOpacity={0.3}/>
                                         <stop offset="95%" stopColor="#818CF8" stopOpacity={0}/>
                                     </linearGradient>
+                                    <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#34D399" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#34D399" stopOpacity={0}/>
+                                    </linearGradient>
                                 </defs>
                                 <XAxis dataKey="time" hide />
                                 <YAxis hide domain={[0, 100]} />
@@ -260,6 +264,8 @@ export default function HostDetails() {
                                 />
                                 <Area type="monotone" dataKey="cpu" stroke="#38BDF8" fillOpacity={1} fill="url(#colorCpu)" name="CPU %" />
                                 <Area type="monotone" dataKey="memory" stroke="#818CF8" fillOpacity={1} fill="url(#colorMem)" name="Memory %" />
+                                {/* Normalize net_recv roughly for visualization or just show it */}
+                                <Area type="monotone" dataKey="net_recv" stroke="#34D399" fillOpacity={0.5} fill="url(#colorNet)" name="Net Recv (KB/s)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -268,61 +274,81 @@ export default function HostDetails() {
 
             {/* Bottom Section: Processes & Network */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Real Processes Table */}
                 <div className="bg-surface border border-surface-highlight rounded-lg p-6">
                      <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
                         <Terminal size={18} className="text-text-muted" />
-                        Running Processes (Top 5)
+                        Running Processes (Top CPU)
                     </h3>
-                    <table className="w-full text-left text-sm">
-                        <thead className="text-text-muted font-mono bg-surface-highlight/20">
-                            <tr>
-                                <th className="p-2">Name</th>
-                                <th className="p-2">PID</th>
-                                <th className="p-2">User</th>
-                                <th className="p-2 text-right">CPU</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-surface-highlight font-mono">
-                            {[
-                                { name: 'chrome.exe', pid: 4521, user: 'j.doe', cpu: '12%' },
-                                { name: 'slack.exe', pid: 1102, user: 'j.doe', cpu: '4%' },
-                                { name: 'nexdefend_agent.exe', pid: 991, user: 'SYSTEM', cpu: '2%' },
-                                { name: 'explorer.exe', pid: 3442, user: 'j.doe', cpu: '1%' },
-                                { name: 'svchost.exe', pid: 882, user: 'SYSTEM', cpu: '0.5%' },
-                            ].map((proc) => (
-                                <tr key={proc.pid} className="hover:bg-surface-highlight/10">
-                                    <td className="p-2 text-text">{proc.name}</td>
-                                    <td className="p-2 text-text-muted">{proc.pid}</td>
-                                    <td className="p-2 text-text-muted">{proc.user}</td>
-                                    <td className="p-2 text-text-muted text-right">{proc.cpu}</td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="text-text-muted font-mono bg-surface-highlight/20">
+                                <tr>
+                                    <th className="p-2">Name</th>
+                                    <th className="p-2">PID</th>
+                                    <th className="p-2">User</th>
+                                    <th className="p-2 text-right">CPU %</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-surface-highlight font-mono">
+                                {(hostData?.processes || []).slice(0, 5).map((proc: any) => (
+                                    <tr key={proc.pid} className="hover:bg-surface-highlight/10">
+                                        <td className="p-2 text-text truncate max-w-[120px]" title={proc.name}>{proc.name}</td>
+                                        <td className="p-2 text-text-muted">{proc.pid}</td>
+                                        <td className="p-2 text-text-muted truncate max-w-[80px]" title={proc.user}>{proc.user}</td>
+                                        <td className="p-2 text-text-muted text-right">{proc.cpu.toFixed(1)}%</td>
+                                    </tr>
+                                ))}
+                                {(!hostData?.processes || hostData.processes.length === 0) && (
+                                    <tr>
+                                        <td colSpan={4} className="p-4 text-center text-text-muted">Loading processes...</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
+                {/* Real Network Connections Table */}
                 <div className="bg-surface border border-surface-highlight rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                        <AlertCircle size={18} className="text-brand-orange" />
-                        Recent Alerts
+                        <Network size={18} className="text-brand-blue" />
+                        Active Network Connections
                     </h3>
-                    <div className="space-y-3">
-                         {[
-                            { id: 'DET-1024', title: 'Ransomware Attempt Blocked', time: '2 mins ago', severity: 'Critical' },
-                            { id: 'DET-1001', title: 'Unusual PowerShell Argument', time: '4 hours ago', severity: 'Medium' },
-                            { id: 'DET-0992', title: 'Port Scanning Detected', time: '1 day ago', severity: 'Low' },
-                        ].map((alert) => (
-                            <div key={alert.id} className="flex items-center gap-3 p-3 rounded bg-surface-highlight/10 border border-surface-highlight/50 hover:border-brand-blue/30 transition-colors cursor-pointer">
-                                <div className={cn("w-2 h-2 rounded-full",
-                                    alert.severity === 'Critical' ? 'bg-brand-red' :
-                                    alert.severity === 'Medium' ? 'bg-brand-blue' : 'bg-brand-green'
-                                )} />
-                                <div className="flex-1">
-                                    <div className="text-sm font-semibold text-text">{alert.title}</div>
-                                    <div className="text-xs text-text-muted font-mono">{alert.id} • {alert.time}</div>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="text-text-muted font-mono bg-surface-highlight/20">
+                                <tr>
+                                    <th className="p-2">Proto</th>
+                                    <th className="p-2">Local</th>
+                                    <th className="p-2">Remote</th>
+                                    <th className="p-2">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-surface-highlight font-mono">
+                                {(hostData?.connections || []).slice(0, 5).map((conn: any, idx: number) => (
+                                    <tr key={idx} className="hover:bg-surface-highlight/10">
+                                        <td className="p-2 text-text-muted">
+                                            {conn.type === 1 ? 'TCP' : conn.type === 2 ? 'UDP' : 'UNK'}
+                                        </td>
+                                        <td className="p-2 text-text truncate max-w-[120px]" title={`${conn.local_ip}:${conn.local_port}`}>
+                                            {conn.local_ip}:{conn.local_port}
+                                        </td>
+                                        <td className="p-2 text-text-muted truncate max-w-[120px]" title={`${conn.remote_ip}:${conn.remote_port}`}>
+                                            {conn.remote_ip}:{conn.remote_port}
+                                        </td>
+                                        <td className="p-2 text-xs text-brand-green">
+                                            {conn.status}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(!hostData?.connections || hostData.connections.length === 0) && (
+                                    <tr>
+                                        <td colSpan={4} className="p-4 text-center text-text-muted">No active connections (or loading)...</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
