@@ -12,6 +12,15 @@ import InvestigationView from './pages/console/InvestigationView'
 import Settings from './pages/Settings'
 import AIDashboardPage from './pages/AIDashboardPage'
 import Support from './pages/console/Support'
+import Alerts from './pages/Alerts'
+import AlertTriage from './pages/AlertTriage'
+import Reports from './pages/Reports'
+import SOARPlaybookEditor from './pages/SOARPlaybookEditor'
+import NetworkDashboard from './pages/NetworkDashboard'
+import PlatformHealth from './pages/PlatformHealth'
+import SecurityOverview from './pages/SecurityOverview'
+import Vulnerabilities from './pages/Vulnerabilities'
+import Incidents from './pages/Incidents'
 
 function App() {
   return (
@@ -28,10 +37,19 @@ function App() {
         <Route path="/dashboard" element={<ConsoleLayout />}>
             <Route index element={<CommandDashboard />} />
             <Route path="ai-dashboard" element={<AIDashboardPage />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="triage" element={<AlertTriage />} />
             <Route path="detections" element={<DetectionsQueue />} />
+            <Route path="incidents" element={<Incidents />} />
             <Route path="hosts" element={<HostManagement />} />
             <Route path="hosts/:id" element={<HostDetails />} />
+            <Route path="network" element={<NetworkDashboard />} />
+            <Route path="vulnerabilities" element={<Vulnerabilities />} />
             <Route path="investigate" element={<InvestigationView />} />
+            <Route path="soar" element={<SOARPlaybookEditor />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="security" element={<SecurityOverview />} />
+            <Route path="health" element={<PlatformHealth />} />
             <Route path="config" element={<Settings />} />
             <Route path="support" element={<Support />} />
         </Route>
