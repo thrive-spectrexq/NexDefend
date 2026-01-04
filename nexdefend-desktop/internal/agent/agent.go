@@ -3,7 +3,6 @@ package agent
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"sort"
 	"sync"
 	"time"
