@@ -101,6 +101,7 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	// Handlers to query Python API
 	api.HandleFunc("/python-analysis", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
 	api.HandleFunc("/python-anomalies", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
+	api.HandleFunc("/ai/chat", handlers.ProxyChatHandler(cfg)).Methods("POST")
 
 	// Cloud Credentials Management
 	cloudCredentialHandler := handlers.NewCloudCredentialHandler(database.GetDB())
