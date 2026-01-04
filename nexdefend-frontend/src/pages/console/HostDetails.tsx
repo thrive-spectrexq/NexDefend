@@ -1,13 +1,17 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import {
     ArrowLeft,
     Monitor,
     Shield,
     Activity,
     Terminal,
-    AlertCircle
+    AlertCircle,
+    X,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -20,6 +24,11 @@ const mockPerformanceData = Array.from({ length: 20 }, (_, i) => ({
 export default function HostDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
+    const [terminalLines, setTerminalLines] = useState<string[]>(['NexDefend Remote Shell v2.4.1', 'Connected to FIN-WS-004 (10.20.1.45)', 'Type "help" for commands.']);
+    const [cmdInput, setCmdInput] = useState('');
+    const bottomRef = useRef<HTMLDivElement>(null);
 
     // Mock host data based on ID (normally fetched from API)
     const host = {
@@ -33,6 +42,46 @@ export default function HostDetails() {
         uptime: '4d 12h 32m',
         mac: '00:1B:44:11:3A:B7',
         agentVersion: 'v2.4.1'
+    };
+
+    useEffect(() => {
+        if (isTerminalOpen) {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [terminalLines, isTerminalOpen]);
+
+    const handleCommand = (e: React.FormEvent) => {
+        e.preventDefault();
+        const cmd = cmdInput.trim();
+        if (!cmd) return;
+
+        setTerminalLines(prev => [...prev, `C:\\Users\\Admin> ${cmd}`]);
+        setCmdInput('');
+
+        // Mock responses
+        setTimeout(() => {
+            let response = '';
+            switch (cmd.toLowerCase()) {
+                case 'help':
+                    response = 'Available commands: ipconfig, ps, netstat, whoami, exit';
+                    break;
+                case 'whoami':
+                    response = 'nt authority\\system';
+                    break;
+                case 'ipconfig':
+                    response = 'Ethernet adapter Ethernet:\n   IPv4 Address. . . . . . . . . . . : 10.20.1.45\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0';
+                    break;
+                case 'ps':
+                    response = 'PID   User     CPU    Command\n991   SYSTEM   0.5    nexdefend_agent.exe\n4521  j.doe    12.0   chrome.exe';
+                    break;
+                case 'exit':
+                    setIsTerminalOpen(false);
+                    return;
+                default:
+                    response = `'${cmd}' is not recognized as an internal or external command.`;
+            }
+            setTerminalLines(prev => [...prev, response]);
+        }, 300);
     };
 
     return (
@@ -66,14 +115,72 @@ export default function HostDetails() {
                     </div>
                 </div>
                 <div className="ml-auto flex gap-3">
+                    <button
+                        onClick={() => setIsTerminalOpen(true)}
+                        className="px-4 py-2 bg-brand-blue text-background hover:bg-brand-blue/90 rounded transition-colors text-sm font-semibold flex items-center gap-2"
+                    >
+                        <Terminal size={16} />
+                        Remote Shell
+                    </button>
                     <button className="px-4 py-2 bg-brand-red/10 text-brand-red border border-brand-red/20 rounded hover:bg-brand-red/20 transition-colors text-sm font-semibold">
                         Isolate Host
                     </button>
-                    <button className="px-4 py-2 bg-brand-blue/10 text-brand-blue border border-brand-blue/20 rounded hover:bg-brand-blue/20 transition-colors text-sm font-semibold">
-                        Request Scan
-                    </button>
                 </div>
             </div>
+
+            {/* Remote Shell Modal */}
+            <AnimatePresence>
+                {isTerminalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                    >
+                        <div className={cn(
+                            "bg-[#0D1117] border border-surface-highlight rounded-lg shadow-2xl flex flex-col overflow-hidden font-mono",
+                            isMaximized ? "w-full h-full" : "w-[800px] h-[600px]"
+                        )}>
+                            <div className="flex items-center justify-between px-4 py-2 bg-surface-highlight/20 border-b border-surface-highlight select-none">
+                                <div className="flex items-center gap-2 text-sm text-text-muted">
+                                    <Terminal size={14} className="text-brand-green" />
+                                    <span>root@FIN-WS-004:~</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => setIsMaximized(!isMaximized)} className="p-1 hover:text-white text-text-muted transition-colors">
+                                        {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                    </button>
+                                    <button onClick={() => setIsTerminalOpen(false)} className="p-1 hover:text-brand-red text-text-muted transition-colors">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                className="flex-1 p-4 overflow-y-auto text-sm"
+                                onClick={() => document.getElementById('terminal-input')?.focus()}
+                            >
+                                {terminalLines.map((line, i) => (
+                                    <div key={i} className="whitespace-pre-wrap text-[#c9d1d9] mb-1">{line}</div>
+                                ))}
+                                <form onSubmit={handleCommand} className="flex gap-2 text-[#c9d1d9]">
+                                    <span className="text-brand-green">➜</span>
+                                    <span className="text-brand-blue">~</span>
+                                    <input
+                                        id="terminal-input"
+                                        type="text"
+                                        value={cmdInput}
+                                        onChange={(e) => setCmdInput(e.target.value)}
+                                        className="bg-transparent border-none outline-none flex-1 font-inherit text-[#c9d1d9]"
+                                        autoFocus
+                                        autoComplete="off"
+                                    />
+                                </form>
+                                <div ref={bottomRef} />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* System Info Card */}
