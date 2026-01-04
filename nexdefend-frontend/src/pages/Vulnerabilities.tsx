@@ -1,21 +1,24 @@
-import { useState } from 'react'; // Import useState
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/apiClient';
 import type { Vulnerability } from '../api/apiClient';
-import { Loader2, Search } from 'lucide-react'; // Import Search icon
-import './Vulnerabilities.css';
+import { Loader2, Search, Bug, AlertTriangle } from 'lucide-react';
+import { PageTransition } from '../components/common/PageTransition';
+import { cn } from '../lib/utils';
+
+// import './Vulnerabilities.css'; // Removed legacy CSS
 
 const severityClasses: { [key: string]: string } = {
-  critical: 'text-red-400 font-bold uppercase',
-  high: 'text-red-500 font-semibold',
-  medium: 'text-yellow-500 font-semibold',
-  low: 'text-green-500 font-semibold',
+  critical: 'text-brand-red bg-brand-red/10',
+  high: 'text-brand-orange bg-brand-orange/10',
+  medium: 'text-brand-blue bg-brand-blue/10',
+  low: 'text-brand-green bg-brand-green/10',
 };
 
 const statusClasses: { [key: string]: string } = {
-  detected: 'text-red-400',
-  assessed: 'text-yellow-400',
-  resolved: 'text-green-500',
+  detected: 'text-brand-red',
+  assessed: 'text-brand-orange',
+  resolved: 'text-brand-green',
 };
 
 const Vulnerabilities = () => {
@@ -65,9 +68,12 @@ const Vulnerabilities = () => {
   };
 
   return (
-    <div className="vulnerabilities-page">
+    <PageTransition className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Vulnerabilities</h1>
+        <h1 className="text-2xl font-bold text-text flex items-center gap-3">
+            <Bug className="text-brand-orange" />
+            Vulnerabilities
+        </h1>
         
         {/* --- NEW SCAN FORM --- */}
         <form onSubmit={handleScanSubmit} className="flex gap-2">
@@ -75,84 +81,97 @@ const Vulnerabilities = () => {
             type="text"
             value={targetIp}
             onChange={(e) => setTargetIp(e.target.value)}
-            className="bg-gray-700 border border-gray-600 rounded p-2 text-white"
-            placeholder="Enter IP to scan (e.g., 127.0.0.1)"
+            className="bg-surface border border-surface-highlight rounded px-3 py-2 text-text text-sm focus:border-brand-blue outline-none placeholder-text-muted"
+            placeholder="Scan Target (e.g. 192.168.1.5)"
             disabled={scanMutation.isPending}
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+            className="bg-brand-blue text-background hover:bg-brand-blue/90 font-semibold py-2 px-4 rounded text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
             disabled={scanMutation.isPending}
           >
             {scanMutation.isPending ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
             ) : (
-              <Search size={20} />
+              <Search size={16} />
             )}
             {scanMutation.isPending ? 'Scanning...' : 'Start Scan'}
           </button>
         </form>
       </div>
       
-      {scanError && <p className="text-red-500 mb-4">{scanError}</p>}
+      {scanError && (
+          <div className="bg-brand-red/10 border border-brand-red/20 text-brand-red p-3 rounded mb-4 flex items-center gap-2 text-sm">
+              <AlertTriangle size={16} />
+              {scanError}
+          </div>
+      )}
       
       {/* --- END SCAN FORM --- */}
 
 
       {isLoading && (
-        <div className="flex justify-center items-center p-12">
-          <Loader2 size={40} className="animate-spin" />
+        <div className="flex justify-center items-center p-12 text-text-muted">
+          <Loader2 size={32} className="animate-spin" />
         </div>
       )}
 
       {error && (
-        <p className="text-red-500">Failed to load vulnerabilities. Please try again later.</p>
+        <div className="p-4 bg-brand-red/10 border border-brand-red/20 text-brand-red rounded text-center">
+            Failed to load vulnerabilities. Please try again later.
+        </div>
       )}
 
       {data && (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
-          <table className="w-full text-sm text-left text-gray-300">
-            <thead className="text-xs text-gray-400 uppercase bg-gray-700">
+        <div className="bg-surface border border-surface-highlight rounded-lg overflow-hidden">
+          <table className="w-full text-left text-sm">
+            <thead className="text-text-muted font-mono bg-surface-highlight/20 border-b border-surface-highlight">
               <tr>
-                <th scope="col" className="px-6 py-3">ID</th>
-                <th scope="col" className="px-6 py-3">Description</th>
-                <th scope="col" className="px-6 py-3">Severity</th>
-                <th scope="col" className="px-6 py-3">Host</th>
-                <th scope="col" className="px-6 py-3">Port</th>
-                <th scope="col" className="px-6 py-3">Discovered</th>
-                <th scope="col" className="px-6 py-3">Status</th>
+                <th className="px-6 py-4">ID</th>
+                <th className="px-6 py-4">Description</th>
+                <th className="px-6 py-4">Severity</th>
+                <th className="px-6 py-4">Host</th>
+                <th className="px-6 py-4">Port</th>
+                <th className="px-6 py-4">Discovered</th>
+                <th className="px-6 py-4">Status</th>
               </tr>
             </thead>
-            <tbody>
-              {data.map((vuln) => (
-                <tr key={vuln.id} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
-                  <td className="px-6 py-4 font-bold">#{vuln.id}</td>
-                  <td className="px-6 py-4">{vuln.description}</td>
-                  <td className={`px-6 py-4 ${severityClasses[vuln.severity.toLowerCase()] || ''}`}>
-                    {vuln.severity}
-                  </td>
-                  <td className="px-6 py-4">{vuln.host_ip.Valid ? vuln.host_ip.String : 'N/A'}</td>
-                  <td className="px-6 py-4">{vuln.port.Valid ? vuln.port.Int32 : 'N/A'}</td>
-                  <td className="px-6 py-4">{new Date(vuln.discovered_at).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">
-                    <select
-                      value={vuln.status}
-                      onChange={(e) => handleStatusChange(vuln.id, e.target.value as Vulnerability['status'])}
-                      className={`bg-gray-700 border border-gray-600 rounded p-1 text-xs ${statusClasses[vuln.status.toLowerCase()] || ''}`}
-                      disabled={updateMutation.isPending}
-                    >
-                      <option value="Detected">Detected</option>
-                      <option value="Assessed">Assessed</option>
-                      <option value="Resolved">Resolved</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-surface-highlight font-mono">
+              {data.length === 0 ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-text-muted">No vulnerabilities found. System is clean.</td></tr>
+              ) : (
+                data.map((vuln) => (
+                    <tr key={vuln.id} className="hover:bg-surface-highlight/10 transition-colors">
+                    <td className="px-6 py-4 text-text-muted">#{vuln.id}</td>
+                    <td className="px-6 py-4 text-text">{vuln.description}</td>
+                    <td className="px-6 py-4">
+                        <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase", severityClasses[vuln.severity.toLowerCase()] || '')}>
+                            {vuln.severity}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 text-text">{vuln.host_ip.Valid ? vuln.host_ip.String : 'N/A'}</td>
+                    <td className="px-6 py-4 text-text-muted">{vuln.port.Valid ? vuln.port.Int32 : 'N/A'}</td>
+                    <td className="px-6 py-4 text-text-muted">{new Date(vuln.discovered_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                        <select
+                        value={vuln.status}
+                        onChange={(e) => handleStatusChange(vuln.id, e.target.value as Vulnerability['status'])}
+                        className={cn("bg-surface border border-surface-highlight rounded p-1 text-xs outline-none focus:border-brand-blue", statusClasses[vuln.status.toLowerCase()] || '')}
+                        disabled={updateMutation.isPending}
+                        >
+                        <option value="Detected">Detected</option>
+                        <option value="Assessed">Assessed</option>
+                        <option value="Resolved">Resolved</option>
+                        </select>
+                    </td>
+                    </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 };
 

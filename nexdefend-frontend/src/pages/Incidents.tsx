@@ -3,21 +3,24 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/apiClient';
 import type { Incident } from '../api/apiClient';
 import IncidentModal from '../components/dashboard/IncidentModal';
-import { Loader2 } from 'lucide-react';
-import './Incidents.css';
+import { Loader2, Siren, AlertCircle } from 'lucide-react';
+import { PageTransition } from '../components/common/PageTransition';
+import { cn } from '../lib/utils';
+
+// import './Incidents.css'; // Removed legacy CSS
 
 const severityClasses: { [key: string]: string } = {
-  critical: 'text-red-400 font-bold uppercase',
-  high: 'text-red-500 font-semibold',
-  medium: 'text-yellow-500 font-semibold',
-  low: 'text-green-500 font-semibold',
+  critical: 'text-brand-red bg-brand-red/10 border-brand-red/20',
+  high: 'text-brand-orange bg-brand-orange/10 border-brand-orange/20',
+  medium: 'text-brand-blue bg-brand-blue/10 border-brand-blue/20',
+  low: 'text-brand-green bg-brand-green/10 border-brand-green/20',
 };
 
 const statusClasses: { [key: string]: string } = {
-  open: 'text-red-400',
-  'in progress': 'text-yellow-400',
-  escalated: 'text-orange-400 font-bold',
-  resolved: 'text-green-500',
+  open: 'text-brand-red',
+  'in progress': 'text-brand-orange',
+  escalated: 'text-brand-orange font-bold',
+  resolved: 'text-brand-green',
 };
 
 const Incidents = () => {
@@ -30,57 +33,73 @@ const Incidents = () => {
   });
 
   return (
-    <div className="incidents-page">
-      <h1 className="text-3xl font-bold mb-6">Security Incidents</h1>
+    <PageTransition className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-text flex items-center gap-3">
+            <Siren className="text-brand-red" />
+            Security Incidents
+        </h1>
+        <button className="px-4 py-2 bg-brand-red text-background rounded hover:bg-brand-red/90 text-sm font-semibold shadow-[0_0_10px_rgba(248,113,113,0.3)]">
+            Create Incident
+        </button>
+      </div>
 
       {isLoading && (
-        <div className="flex justify-center items-center p-12">
-          <Loader2 size={40} className="animate-spin">
-            <title>Loading...</title>
-          </Loader2>
+        <div className="flex justify-center items-center p-12 text-text-muted">
+          <Loader2 size={32} className="animate-spin" />
         </div>
       )}
 
       {error && (
-        <p className="text-red-500">Failed to load incidents. Please try again later.</p>
+        <div className="p-4 bg-brand-red/10 border border-brand-red/20 text-brand-red rounded text-center flex items-center justify-center gap-2">
+            <AlertCircle size={20} />
+            Failed to load incidents. Please try again later.
+        </div>
       )}
 
       {data && (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden">
-          <table className="w-full text-sm text-left text-gray-300">
-            <thead className="text-xs text-gray-400 uppercase bg-gray-700">
+        <div className="bg-surface border border-surface-highlight rounded-lg overflow-hidden">
+          <table className="w-full text-left text-sm">
+            <thead className="text-text-muted font-mono bg-surface-highlight/20 border-b border-surface-highlight">
               <tr>
-                <th scope="col" className="px-6 py-3">ID</th>
-                {/* --- THIS LINE IS FIXED --- */}
-                <th scope="col" className="px-6 py-3">Description</th>
-                <th scope="col" className="px-6 py-3">Severity</th>
-                <th scope="col" className="px-6 py-3">Status</th>
-                <th scope="col" className="px-6 py-3">Created</th>
-                <th scope="col" className="px-6 py-3">Action</th>
+                <th scope="col" className="px-6 py-4">ID</th>
+                <th scope="col" className="px-6 py-4">Description</th>
+                <th scope="col" className="px-6 py-4">Severity</th>
+                <th scope="col" className="px-6 py-4">Status</th>
+                <th scope="col" className="px-6 py-4">Created</th>
+                <th scope="col" className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody>
-              {data.map((incident) => (
-                <tr key={incident.id} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
-                  <td className="px-6 py-4 font-bold">#{incident.id}</td>
-                  <td className="px-6 py-4">{incident.description}</td>
-                  <td className={`px-6 py-4 ${severityClasses[incident.severity.toLowerCase()] || ''}`}>
-                    {incident.severity}
-                  </td>
-                  <td className={`px-6 py-4 uppercase font-semibold ${statusClasses[incident.status.toLowerCase()] || ''}`}>
-                    {incident.status}
-                  </td>
-                  <td className="px-6 py-4">{new Date(incident.created_at).toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <button 
-                      onClick={() => setSelectedIncident(incident)}
-                      className="text-blue-400 hover:text-blue-300 font-semibold"
-                    >
-                      Manage
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-surface-highlight font-mono">
+              {data.length === 0 ? (
+                  <tr><td colSpan={6} className="p-8 text-center text-text-muted">No active incidents.</td></tr>
+              ) : (
+                data.map((incident) => (
+                    <tr key={incident.id} className="hover:bg-surface-highlight/10 transition-colors">
+                    <td className="px-6 py-4 text-text-muted">#{incident.id}</td>
+                    <td className="px-6 py-4 text-text">{incident.description}</td>
+                    <td className="px-6 py-4">
+                        <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase border", severityClasses[incident.severity.toLowerCase()] || '')}>
+                            {incident.severity}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4">
+                        <span className={cn("uppercase font-semibold text-xs", statusClasses[incident.status.toLowerCase()] || '')}>
+                            {incident.status}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 text-text-muted">{new Date(incident.created_at).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right">
+                        <button
+                        onClick={() => setSelectedIncident(incident)}
+                        className="text-brand-blue hover:text-brand-blue/80 font-semibold hover:underline"
+                        >
+                        Manage
+                        </button>
+                    </td>
+                    </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -92,7 +111,7 @@ const Incidents = () => {
           onClose={() => setSelectedIncident(null)}
         />
       )}
-    </div>
+    </PageTransition>
   );
 };
 
