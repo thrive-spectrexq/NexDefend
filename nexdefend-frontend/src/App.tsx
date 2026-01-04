@@ -43,7 +43,7 @@ function App() {
             <Route path="incidents" element={<Incidents />} />
             <Route path="hosts" element={<HostManagement />} />
             <Route path="hosts/:id" element={<HostDetails />} />
-          <Route path="network" element={<NetworkTopology />} />
+            <Route path="network" element={<NetworkTopology />} />
             <Route path="vulnerabilities" element={<Vulnerabilities />} />
             <Route path="investigate" element={<InvestigationView />} />
             <Route path="soar" element={<SOARPlaybookEditor />} />

@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, X, MessageSquare, Minimize2, Maximize2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Send, Bot, X, Minimize2, Maximize2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { apiClient } from '../api/apiClient';
 
