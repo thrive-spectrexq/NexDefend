@@ -12,6 +12,40 @@ import (
 var pythonRoutes = map[string]string{
 	"analysis":  "/analysis",
 	"anomalies": "/anomalies",
+	"chat":      "/chat",
+}
+
+// ProxyChatHandler forwards the chat request to the Python API
+func ProxyChatHandler(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pythonURL := cfg.PythonAPI + pythonRoutes["chat"]
+
+		// Create a new request to the Python API
+		req, err := http.NewRequest(r.Method, pythonURL, r.Body)
+		if err != nil {
+			log.Printf("Error creating request to Python API: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Copy headers
+		req.Header = r.Header
+
+		// Send the request
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("Error contacting Python API: %v", err)
+			http.Error(w, "Failed to contact AI service", http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Copy response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(resp.StatusCode)
+		io.Copy(w, resp.Body)
+	}
 }
 
 // PythonAnalysisHandler fetches analysis results from the Python API

@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/console/Sidebar';
 import { TopBar } from '../components/console/TopBar';
 import { ToastContainer } from '../components/common/ToastContainer';
+import SentinelChat from '../components/SentinelChat';
 
 export function ConsoleLayout() {
   return (
@@ -13,6 +14,7 @@ export function ConsoleLayout() {
           <Outlet />
         </main>
       </div>
+      <SentinelChat />
       <ToastContainer />
     </div>
   );
