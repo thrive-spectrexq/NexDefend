@@ -55,7 +55,12 @@ func InitDB() {
 		log.Fatal("Failed to create db directory:", err)
 	}
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	// Enable WAL mode and optimize performance
+	// _journal_mode=WAL: Significantly faster writes and concurrency
+	// _synchronous=NORMAL: Good balance between safety and speed
+	// _busy_timeout=5000: Wait up to 5s if DB is locked
+	dsn := dbPath + "?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(5000)"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
