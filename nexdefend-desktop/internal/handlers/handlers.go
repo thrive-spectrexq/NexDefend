@@ -21,6 +21,7 @@ func StartAPIServer() {
 
 	// Dashboard
 	r.HandleFunc("/api/v1/metrics/dashboard", DashboardMetricsHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/v1/host/details", HostDetailsHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/incidents", IncidentsHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/assets/heartbeat", HeartbeatHandler).Methods("POST", "OPTIONS")
 
@@ -89,26 +90,73 @@ func DashboardMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	var processCount db.Metric
 	var cpuUsage db.Metric
 	var openIncidents int64
+	var criticalIncidents int64
+	var highIncidents int64
+	var mediumIncidents int64
+	var lowIncidents int64
 
 	// Get latest metrics
 	db.DB.Where("type = ?", "process_count").Last(&processCount)
 	db.DB.Where("type = ?", "cpu_usage").Last(&cpuUsage)
 
-	// Count open incidents
+	// Count open incidents by severity
 	db.DB.Model(&db.Incident{}).Where("status = ?", "Open").Count(&openIncidents)
+	db.DB.Model(&db.Incident{}).Where("status = ? AND severity = ?", "Open", "Critical").Count(&criticalIncidents)
+	db.DB.Model(&db.Incident{}).Where("status = ? AND severity = ?", "Open", "High").Count(&highIncidents)
+	db.DB.Model(&db.Incident{}).Where("status = ? AND severity = ?", "Open", "Medium").Count(&mediumIncidents)
+	db.DB.Model(&db.Incident{}).Where("status = ? AND severity = ?", "Open", "Low").Count(&lowIncidents)
 
 	// Calculate a mock security score based on incidents
-	securityScore := 100 - (int(openIncidents) * 10)
+	securityScore := 100 - (int(criticalIncidents)*20 + int(highIncidents)*10 + int(mediumIncidents)*5)
 	if securityScore < 0 {
 		securityScore = 0
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"active_threats": openIncidents,
+		"active_threats":   openIncidents,
 		"monitored_assets": 1, // Localhost
-		"process_count": processCount.Value,
-		"cpu_usage": cpuUsage.Value,
-		"security_score": securityScore,
+		"process_count":    processCount.Value,
+		"cpu_usage":        cpuUsage.Value,
+		"security_score":   securityScore,
+		"severity_breakdown": map[string]int64{
+			"critical": criticalIncidents,
+			"high":     highIncidents,
+			"medium":   mediumIncidents,
+			"low":      lowIncidents,
+		},
+	})
+}
+
+func HostDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	// Fetch historical data (last 20 points)
+	var cpuMetrics []db.Metric
+	var memMetrics []db.Metric
+
+	db.DB.Where("type = ?", "cpu_usage").Order("created_at desc").Limit(20).Find(&cpuMetrics)
+	db.DB.Where("type = ?", "memory_usage").Order("created_at desc").Limit(20).Find(&memMetrics)
+
+	// Reverse to chronological order
+	history := make([]map[string]interface{}, 0)
+	// Assuming comparable lengths, simplified for demo
+	length := len(cpuMetrics)
+	if len(memMetrics) < length {
+		length = len(memMetrics)
+	}
+
+	for i := length - 1; i >= 0; i-- {
+		history = append(history, map[string]interface{}{
+			"time": cpuMetrics[i].CreatedAt.Format("15:04:05"),
+			"cpu":  cpuMetrics[i].Value,
+			"memory": memMetrics[i].Value,
+		})
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"hostname": "LOCALHOST", // Could fetch real hostname
+		"ip": "127.0.0.1",
+		"os": "Windows 11 (Detected)", // Could use runtime.GOOS
+		"status": "Online",
+		"history": history,
 	})
 }
 
