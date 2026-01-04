@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/db"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/agent"
 )
 
 // StartAPIServer starts the embedded HTTP server
@@ -131,32 +132,48 @@ func HostDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetch historical data (last 20 points)
 	var cpuMetrics []db.Metric
 	var memMetrics []db.Metric
+	var netSentMetrics []db.Metric
+	var netRecvMetrics []db.Metric
 
 	db.DB.Where("type = ?", "cpu_usage").Order("created_at desc").Limit(20).Find(&cpuMetrics)
 	db.DB.Where("type = ?", "memory_usage").Order("created_at desc").Limit(20).Find(&memMetrics)
+	db.DB.Where("type = ?", "network_sent_bps").Order("created_at desc").Limit(20).Find(&netSentMetrics)
+	db.DB.Where("type = ?", "network_recv_bps").Order("created_at desc").Limit(20).Find(&netRecvMetrics)
 
 	// Reverse to chronological order
 	history := make([]map[string]interface{}, 0)
-	// Assuming comparable lengths, simplified for demo
+	// Use CPU length as base
 	length := len(cpuMetrics)
-	if len(memMetrics) < length {
-		length = len(memMetrics)
-	}
+	if len(memMetrics) < length { length = len(memMetrics) }
 
 	for i := length - 1; i >= 0; i-- {
-		history = append(history, map[string]interface{}{
+		// Basic synchronization assumption: metrics are created in same transaction, so ids/times align closely.
+		// For robustness, we just index. In production, matching by timestamp is safer.
+		// Handle potential array bounds if lengths differ slightly
+
+		item := map[string]interface{}{
 			"time": cpuMetrics[i].CreatedAt.Format("15:04:05"),
 			"cpu":  cpuMetrics[i].Value,
 			"memory": memMetrics[i].Value,
-		})
+		}
+
+		if i < len(netSentMetrics) { item["net_sent"] = netSentMetrics[i].Value }
+		if i < len(netRecvMetrics) { item["net_recv"] = netRecvMetrics[i].Value }
+
+		history = append(history, item)
 	}
 
+	// Get Live Snapshot
+	topProcs, activeConns := agent.GetLiveSnapshot()
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"hostname": "LOCALHOST", // Could fetch real hostname
+		"hostname": "LOCALHOST",
 		"ip": "127.0.0.1",
-		"os": "Windows 11 (Detected)", // Could use runtime.GOOS
+		"os": "Windows 11 (Detected)",
 		"status": "Online",
 		"history": history,
+		"processes": topProcs,
+		"connections": activeConns,
 	})
 }
 
