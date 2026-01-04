@@ -17,10 +17,12 @@ import (
 
 // Data Structures for Live Monitoring
 type ProcessInfo struct {
-	PID  int32   `json:"pid"`
-	Name string  `json:"name"`
-	CPU  float64 `json:"cpu"`
-	User string  `json:"user"`
+	PID    int32   `json:"pid"`
+	Name   string  `json:"name"`
+	CPU    float64 `json:"cpu"`
+	User   string  `json:"user"`
+	Memory uint64  `json:"memory"` // RSS in bytes
+	Status string  `json:"status"` // Running, Sleeping, etc.
 }
 
 type ConnectionInfo struct {
@@ -138,20 +140,32 @@ func collectLiveProcesses() {
 
 	var procList []ProcessInfo
 	for _, p := range procs {
-		// CPU percent is expensive, maybe limit to top?
-		// Optimized: Just get basic info first? No, we need CPU to sort.
-		// Windows: p.CPUPercent() can be slow if called on all.
-		// For "Lite" desktop, let's just grab a few or accept the cost (it's every 5s).
-
 		cpu, _ := p.CPUPercent()
-		if cpu > 0.1 { // Filter idle
+		// Lower threshold to catch more "Task Manager" like view
+		if cpu >= 0.0 {
 			name, _ := p.Name()
 			username, _ := p.Username()
+			memInfo, _ := p.MemoryInfo()
+			status, _ := p.Status()
+
+			// Default memory to 0 if info fetch fails
+			rss := uint64(0)
+			if memInfo != nil {
+				rss = memInfo.RSS
+			}
+			// Default status to generic string
+			statusStr := ""
+			if len(status) > 0 {
+				statusStr = status[0]
+			}
+
 			procList = append(procList, ProcessInfo{
-				PID:  p.Pid,
-				Name: name,
-				CPU:  cpu,
-				User: username,
+				PID:    p.Pid,
+				Name:   name,
+				CPU:    cpu,
+				User:   username,
+				Memory: rss,
+				Status: statusStr,
 			})
 		}
 	}
@@ -161,9 +175,9 @@ func collectLiveProcesses() {
 		return procList[i].CPU > procList[j].CPU
 	})
 
-	// Keep Top 10
-	if len(procList) > 10 {
-		procList = procList[:10]
+	// Keep Top 100 for a detailed list (Task Manager style)
+	if len(procList) > 100 {
+		procList = procList[:100]
 	}
 
 	liveDataMutex.Lock()

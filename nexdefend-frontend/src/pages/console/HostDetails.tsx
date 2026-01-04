@@ -12,11 +12,13 @@ import {
     Network,
     Cpu,
     HardDrive,
-    Info
+    Info,
+    List,
+    BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 const mockPerformanceData = Array.from({ length: 20 }, (_, i) => ({
     time: i,
@@ -33,6 +35,9 @@ export default function HostDetails() {
     const [cmdInput, setCmdInput] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
     const [hostData, setHostData] = useState<any>(null);
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'overview' | 'processes' | 'network'>('overview');
 
     // Fetch real host metrics
     useEffect(() => {
@@ -206,7 +211,43 @@ export default function HostDetails() {
                 )}
             </AnimatePresence>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Tabs */}
+            <div className="flex border-b border-surface-highlight mb-6">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2",
+                        activeTab === 'overview' ? "border-brand-blue text-brand-blue" : "border-transparent text-text-muted hover:text-text"
+                    )}
+                >
+                    <Activity size={16} />
+                    Overview
+                </button>
+                <button
+                    onClick={() => setActiveTab('processes')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2",
+                        activeTab === 'processes' ? "border-brand-blue text-brand-blue" : "border-transparent text-text-muted hover:text-text"
+                    )}
+                >
+                    <List size={16} />
+                    Processes
+                </button>
+                <button
+                    onClick={() => setActiveTab('network')}
+                    className={cn(
+                        "px-6 py-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2",
+                        activeTab === 'network' ? "border-brand-blue text-brand-blue" : "border-transparent text-text-muted hover:text-text"
+                    )}
+                >
+                    <Network size={16} />
+                    Network
+                </button>
+            </div>
+
+            {/* Overview Tab Content */}
+            {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 {/* System Info Card */}
                 <div className="bg-surface border border-surface-highlight rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
@@ -258,7 +299,7 @@ export default function HostDetails() {
                 {/* Performance Chart */}
                 <div className="bg-surface border border-surface-highlight rounded-lg p-6 lg:col-span-2 flex flex-col">
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                        <Activity size={18} className="text-brand-green" />
+                        <BarChart3 size={18} className="text-brand-green" />
                         Resource Usage (Live)
                     </h3>
                     <div className="flex-1 w-full min-h-[200px]">
@@ -278,6 +319,7 @@ export default function HostDetails() {
                                         <stop offset="95%" stopColor="#34D399" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
                                 <XAxis dataKey="time" hide />
                                 <YAxis hide domain={[0, 100]} />
                                 <Tooltip
@@ -293,87 +335,90 @@ export default function HostDetails() {
                     </div>
                 </div>
             </div>
+            )}
 
-            {/* Bottom Section: Processes & Network */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Real Processes Table */}
-                <div className="bg-surface border border-surface-highlight rounded-lg p-6">
-                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                        <Terminal size={18} className="text-text-muted" />
-                        Running Processes (Top CPU)
-                    </h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="text-text-muted font-mono bg-surface-highlight/20">
+            {/* Processes Tab Content */}
+            {activeTab === 'processes' && (
+                <div className="bg-surface border border-surface-highlight rounded-lg p-6 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-text flex items-center gap-2">
+                            <List size={18} className="text-text-muted" />
+                            Running Processes ({hostData?.processes?.length || 0})
+                        </h3>
+                        <input
+                            type="text"
+                            placeholder="Filter processes..."
+                            className="bg-background border border-surface-highlight rounded px-3 py-1 text-sm text-text outline-none focus:border-brand-blue"
+                        />
+                    </div>
+                    <div className="overflow-auto border border-surface-highlight rounded-lg max-h-[600px]">
+                        <table className="w-full text-left text-sm relative">
+                            <thead className="text-text-muted font-mono bg-surface-highlight/20 sticky top-0 backdrop-blur z-10">
                                 <tr>
-                                    <th className="p-2">Name</th>
-                                    <th className="p-2">PID</th>
-                                    <th className="p-2">User</th>
-                                    <th className="p-2 text-right">CPU %</th>
+                                    <th className="p-3 border-b border-surface-highlight">Name</th>
+                                    <th className="p-3 border-b border-surface-highlight w-24">PID</th>
+                                    <th className="p-3 border-b border-surface-highlight w-32">Status</th>
+                                    <th className="p-3 border-b border-surface-highlight w-32">User</th>
+                                    <th className="p-3 border-b border-surface-highlight w-24 text-right">CPU</th>
+                                    <th className="p-3 border-b border-surface-highlight w-32 text-right">Memory</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-surface-highlight font-mono">
-                                {(hostData?.processes || []).slice(0, 5).map((proc: any) => (
+                                {(hostData?.processes || []).map((proc: any) => (
                                     <tr key={proc.pid} className="hover:bg-surface-highlight/10">
-                                        <td className="p-2 text-text truncate max-w-[120px]" title={proc.name}>{proc.name}</td>
-                                        <td className="p-2 text-text-muted">{proc.pid}</td>
-                                        <td className="p-2 text-text-muted truncate max-w-[80px]" title={proc.user}>{proc.user}</td>
-                                        <td className="p-2 text-text-muted text-right">{proc.cpu.toFixed(1)}%</td>
+                                        <td className="p-3 text-text font-medium">{proc.name}</td>
+                                        <td className="p-3 text-text-muted">{proc.pid}</td>
+                                        <td className="p-3 text-text-muted">{proc.status || 'Running'}</td>
+                                        <td className="p-3 text-text-muted">{proc.user}</td>
+                                        <td className={cn("p-3 text-right font-bold", proc.cpu > 10 ? "text-brand-orange" : "text-text-muted")}>
+                                            {proc.cpu.toFixed(1)}%
+                                        </td>
+                                        <td className="p-3 text-right text-text-muted">
+                                            {(proc.memory / 1024 / 1024).toFixed(1)} MB
+                                        </td>
                                     </tr>
                                 ))}
-                                {(!hostData?.processes || hostData.processes.length === 0) && (
-                                    <tr>
-                                        <td colSpan={4} className="p-4 text-center text-text-muted">Loading processes...</td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
+            )}
 
-                {/* Real Network Connections Table */}
-                <div className="bg-surface border border-surface-highlight rounded-lg p-6">
+            {/* Network Tab Content */}
+            {activeTab === 'network' && (
+                <div className="bg-surface border border-surface-highlight rounded-lg p-6 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <h3 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
                         <Network size={18} className="text-brand-blue" />
                         Active Network Connections
                     </h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="text-text-muted font-mono bg-surface-highlight/20">
+                    <div className="overflow-auto border border-surface-highlight rounded-lg max-h-[600px]">
+                        <table className="w-full text-left text-sm relative">
+                            <thead className="text-text-muted font-mono bg-surface-highlight/20 sticky top-0 backdrop-blur z-10">
                                 <tr>
-                                    <th className="p-2">Proto</th>
-                                    <th className="p-2">Local</th>
-                                    <th className="p-2">Remote</th>
-                                    <th className="p-2">Status</th>
+                                    <th className="p-3 border-b border-surface-highlight">Protocol</th>
+                                    <th className="p-3 border-b border-surface-highlight">Local Address</th>
+                                    <th className="p-3 border-b border-surface-highlight">Remote Address</th>
+                                    <th className="p-3 border-b border-surface-highlight">Status</th>
+                                    <th className="p-3 border-b border-surface-highlight">PID</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-surface-highlight font-mono">
-                                {(hostData?.connections || []).slice(0, 5).map((conn: any, idx: number) => (
+                                {(hostData?.connections || []).map((conn: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-surface-highlight/10">
-                                        <td className="p-2 text-text-muted">
+                                        <td className="p-3 text-text-muted uppercase">
                                             {conn.type === 1 ? 'TCP' : conn.type === 2 ? 'UDP' : 'UNK'}
                                         </td>
-                                        <td className="p-2 text-text truncate max-w-[120px]" title={`${conn.local_ip}:${conn.local_port}`}>
-                                            {conn.local_ip}:{conn.local_port}
-                                        </td>
-                                        <td className="p-2 text-text-muted truncate max-w-[120px]" title={`${conn.remote_ip}:${conn.remote_port}`}>
-                                            {conn.remote_ip}:{conn.remote_port}
-                                        </td>
-                                        <td className="p-2 text-xs text-brand-green">
-                                            {conn.status}
-                                        </td>
+                                        <td className="p-3 text-text">{conn.local_ip}:{conn.local_port}</td>
+                                        <td className="p-3 text-text-muted">{conn.remote_ip}:{conn.remote_port}</td>
+                                        <td className="p-3 text-brand-green font-medium">{conn.status}</td>
+                                        <td className="p-3 text-text-muted">{conn.fd}</td>
                                     </tr>
                                 ))}
-                                {(!hostData?.connections || hostData.connections.length === 0) && (
-                                    <tr>
-                                        <td colSpan={4} className="p-4 text-center text-text-muted">No active connections (or loading)...</td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
+            )}
         </motion.div>
     );
 }
