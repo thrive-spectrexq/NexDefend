@@ -95,3 +95,13 @@ export interface Playbook {
   name: string;
   description: string;
 }
+
+export interface TopologyData {
+  nodes: any[];
+  edges: any[];
+}
+
+export const getTopology = async (): Promise<TopologyData> => {
+  const response = await apiClient.get('/topology');
+  return response.data;
+};
