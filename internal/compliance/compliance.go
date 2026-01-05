@@ -1,9 +1,11 @@
 package compliance
 
 import (
+	"bufio"
 	"fmt"
 	"log"
-	"math/rand"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -15,36 +17,86 @@ type ComplianceResult struct {
 	Timestamp time.Time `json:"timestamp"` // When the check was executed
 }
 
-// RunComplianceChecks executes predefined compliance checks and returns the results.
+// RunComplianceChecks executes real CIS-style benchmarks
 func RunComplianceChecks() []ComplianceResult {
 	var results []ComplianceResult
 
-	// Simulate compliance checks
-	checks := []string{"Data Encryption", "Access Control", "Vulnerability Management", "System Patching"}
+	results = append(results, checkSSHRootLogin())
+	results = append(results, checkShadowFilePerms())
+	results = append(results, checkIPForwarding())
 
-	for _, check := range checks {
-		// Simulated pass/fail result with random details
-		status := "Pass"
-		if rand.Float64() > 0.8 { // ~20% chance of failure
-			status = "Fail"
-		}
-		result := ComplianceResult{
-			CheckName: check,
-			Status:    status,
-			Details:   fmt.Sprintf("Compliance check %s %sed", check, status),
-			Timestamp: time.Now(),
-		}
-		results = append(results, result)
-		logCompliance(result)
+	for _, res := range results {
+		logCompliance(res)
 	}
 	return results
 }
 
-// logCompliance logs the result of a compliance check for auditing purposes.
+// Check 1: Ensure SSH Root Login is disabled
+func checkSSHRootLogin() ComplianceResult {
+	path := "/etc/ssh/sshd_config"
+	file, err := os.Open(path)
+	if err != nil {
+		return fail("SSH Root Login", fmt.Sprintf("Could not open %s", path))
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		// Look for PermitRootLogin no
+		if strings.HasPrefix(line, "PermitRootLogin") {
+			if strings.Contains(line, "no") {
+				return pass("SSH Root Login", "Root login is disabled.")
+			}
+			return fail("SSH Root Login", fmt.Sprintf("Root login configuration found but not set to 'no': %s", line))
+		}
+	}
+	return fail("SSH Root Login", "PermitRootLogin configuration not found (default might be yes).")
+}
+
+// Check 2: Ensure /etc/shadow permissions are 0000 or 0600 (very restricted)
+func checkShadowFilePerms() ComplianceResult {
+	info, err := os.Stat("/etc/shadow")
+	if err != nil {
+		return fail("Shadow File Permissions", "Could not check /etc/shadow")
+	}
+
+	mode := info.Mode().Perm()
+	// Check if mode is 0000 (0) or 0600 (384) or 0400 (256)
+	if mode == 0 || mode == 0600 || mode == 0400 {
+		return pass("Shadow File Permissions", fmt.Sprintf("Permissions are secure: %v", mode))
+	}
+
+	return fail("Shadow File Permissions", fmt.Sprintf("Permissions are too open: %v", mode))
+}
+
+// Check 3: Ensure IP Forwarding is disabled (for non-routers)
+func checkIPForwarding() ComplianceResult {
+	content, err := os.ReadFile("/proc/sys/net/ipv4/ip_forward")
+	if err != nil {
+		return fail("IP Forwarding", "Could not read /proc/sys/net/ipv4/ip_forward")
+	}
+
+	value := strings.TrimSpace(string(content))
+	if value == "0" {
+		return pass("IP Forwarding", "IP Forwarding is disabled.")
+	}
+	return fail("IP Forwarding", "IP Forwarding is enabled (1).")
+}
+
+// Helpers
+func pass(name, details string) ComplianceResult {
+	return ComplianceResult{CheckName: name, Status: "Pass", Details: details, Timestamp: time.Now()}
+}
+
+func fail(name, details string) ComplianceResult {
+	return ComplianceResult{CheckName: name, Status: "Fail", Details: details, Timestamp: time.Now()}
+}
+
 func logCompliance(result ComplianceResult) {
 	if result.Status == "Fail" {
-		log.Printf("Compliance violation detected: %s - %s", result.CheckName, result.Details)
+		log.Printf("[COMPLIANCE] VIOLATION: %s - %s", result.CheckName, result.Details)
 	} else {
-		log.Printf("Compliance check passed: %s", result.CheckName)
+		log.Printf("[COMPLIANCE] PASS: %s", result.CheckName)
 	}
 }
