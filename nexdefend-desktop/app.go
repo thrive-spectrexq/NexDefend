@@ -3,45 +3,89 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
-	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/db"
-	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/agent"
+	"os"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"nexdefend-desktop/internal/bus"
+	"nexdefend-desktop/internal/ndr"
+	"nexdefend-desktop/internal/search"
 )
 
-// App struct
 type App struct {
-	ctx context.Context
+	ctx     context.Context
+	indexer *search.LocalIndexer
 }
 
-// NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
+// startup is called by Wails when the app loads
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	db.InitDB()
-	agent.StartAgent()
+
+	// 1. Initialize Local Search
+	// We use the user's temp dir for demo purposes.
+	// In prod, use: os.UserConfigDir()
+	dataDir := os.TempDir()
+	idx, err := search.NewIndexer(dataDir)
+	if err != nil {
+		fmt.Printf("Error initializing search: %v\n", err)
+	} else {
+		a.indexer = idx
+	}
+
+	// 2. Start Network Monitor
+	ndr.StartMonitoring()
+
+	// 3. Bridge Event Bus to Frontend
+	// This goroutine listens to Go channel updates and emits them to React
+	go a.bridgeEvents()
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+func (a *App) bridgeEvents() {
+	flowCh := bus.GetBus().Subscribe(bus.EventNetFlow)
+	alertCh := bus.GetBus().Subscribe(bus.EventSecurityAlert)
+
+	for {
+		select {
+		case flow := <-flowCh:
+			// Emit "network-flow" event to Javascript
+			runtime.EventsEmit(a.ctx, "network-flow", flow)
+		case alert := <-alertCh:
+			// Emit "security-alert" event to Javascript
+			runtime.EventsEmit(a.ctx, "security-alert", alert)
+		}
+	}
 }
 
-// GetMetrics returns real metrics from the local SQLite DB
-func (a *App) GetMetrics() map[string]interface{} {
-	var processCount db.Metric
-	// Get the latest process count metric
-	db.DB.Where("type = ?", "process_count").Last(&processCount)
+// --- Exposed Methods callable from React ---
+
+// SearchLogs allows the frontend to query the Bleve index
+func (a *App) SearchLogs(query string) map[string]interface{} {
+	if a.indexer == nil {
+		return map[string]interface{}{"error": "Search engine not ready"}
+	}
+
+	results, err := a.indexer.Search(query)
+	if err != nil {
+		return map[string]interface{}{"error": err.Error()}
+	}
 
 	return map[string]interface{}{
-		"active_threats": 0, // Placeholder
-		"monitored_assets": 1, // Localhost
-		"process_count": processCount.Value,
-		"system_health": "Good",
-		"last_updated": time.Now().Format(time.RFC3339),
+		"total_hits": results.Total,
+		"hits":       results.Hits,
+		"took":       results.Took.String(),
+	}
+}
+
+// GetSystemInfo returns basic host info
+func (a *App) GetSystemInfo() map[string]string {
+	hostname, _ := os.Hostname()
+	return map[string]string{
+		"hostname": hostname,
+		"status":   "Secure",
+		"mode":     "Embedded/Offline",
 	}
 }
