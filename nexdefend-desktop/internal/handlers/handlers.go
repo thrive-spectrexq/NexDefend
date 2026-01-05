@@ -76,6 +76,23 @@ func (a *AppHandler) RunSecurityScan() map[string]interface{} {
 	}
 }
 
+// ScanLocalNetwork triggers the discovery process
+func (a *AppHandler) ScanLocalNetwork() map[string]interface{} {
+	hosts, err := agent.DiscoverLocalNetwork()
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+			"hosts": []agent.DiscoveredHost{},
+		}
+	}
+
+	return map[string]interface{}{
+		"scan_time": time.Now(),
+		"count":     len(hosts),
+		"hosts":     hosts,
+	}
+}
+
 // --- HTTP Handlers (Restored & Updated) ---
 
 type ModuleStat struct {

@@ -1,94 +1,90 @@
 package handlers
 
 import (
-	"encoding/json"
+	"bytes"
+	"context"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/opensearch-project/opensearch-go/v2"
 )
 
-type contextKey string
-const organizationIDKey = contextKey("organizationID")
-
+// GetEventsHandler provides advanced search capabilities
 func GetEventsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, ok := r.Context().Value(organizationIDKey).(int)
-		if !ok {
-			http.Error(w, "Organization ID not found", http.StatusInternalServerError)
-			return
-		}
-
-		opensearchAddr := os.Getenv("OPENSEARCH_ADDR")
-		if opensearchAddr == "" {
-			opensearchAddr = "http://opensearch:9200"
-		}
-
-		osClient, err := opensearch.NewClient(opensearch.Config{
-			Addresses: []string{opensearchAddr},
+		osClient, _ := opensearch.NewClient(opensearch.Config{
+			Addresses: []string{"http://opensearch:9200"},
 		})
-		if err != nil {
-			log.Printf("Failed to create OpenSearch client: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
 
-		queryParam := r.URL.Query().Get("q")
-		var query string
-		if queryParam != "" {
-			query = fmt.Sprintf(`{
+		// 1. Extract Query Parameters
+		q := r.URL.Query().Get("q")         // Search term (e.g., "error", "ssh")
+		startTime := r.URL.Query().Get("start") // ISO8601
+		endTime := r.URL.Query().Get("end")
+		limit := r.URL.Query().Get("limit")
+
+		if limit == "" { limit = "100" }
+		if q == "" { q = "*" } // Match all if empty
+
+		// 2. Build OpenSearch DSL Query
+		// This uses a bool query to combine time range and keyword search
+		// Simplified DSL construction
+		queryBody := fmt.Sprintf(`{
+			"size": %s,
+			"sort": [ { "@timestamp": "desc" } ],
+			"query": {
+				"bool": {
+					"must": [
+						{ "query_string": { "query": "%s" } }
+					]
+				}
+			}
+		}`, limit, escapeQuery(q))
+
+		// Add time range if provided
+		if startTime != "" && endTime != "" {
+			// This is a naive injection of range query into the must array of the JSON string constructed above.
+			// For robustness, a struct-based marshalling or proper JSON builder should be used.
+			// However, adhering to the provided example logic:
+			// We'll reconstruct to include range properly.
+			queryBody = fmt.Sprintf(`{
+				"size": %s,
+				"sort": [ { "@timestamp": "desc" } ],
 				"query": {
 					"bool": {
 						"must": [
 							{ "query_string": { "query": "%s" } },
-							{ "match": { "organization_id": %d } }
+							{ "range": { "@timestamp": { "gte": "%s", "lte": "%s" } } }
 						]
 					}
 				}
-			}`, queryParam, orgID)
-		} else {
-			query = fmt.Sprintf(`{
-				"query": {
-					"bool": {
-						"must": [
-							{ "match_all": {} },
-							{ "match": { "organization_id": %d } }
-						]
-					}
-				}
-			}`, orgID)
+			}`, limit, escapeQuery(q), startTime, endTime)
 		}
 
+		// 3. Execute Search
 		res, err := osClient.Search(
-			osClient.Search.WithIndex("events"),
-			osClient.Search.WithBody(strings.NewReader(query)),
-			osClient.Search.WithSize(100),
-			osClient.Search.WithSort("timestamp:desc"),
+			osClient.Search.WithContext(context.Background()),
+			osClient.Search.WithIndex("nexdefend-events"),
+			osClient.Search.WithBody(strings.NewReader(queryBody)),
 		)
+
 		if err != nil {
-			log.Printf("Failed to search OpenSearch: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Search backend unavailable", http.StatusServiceUnavailable)
 			return
 		}
 		defer res.Body.Close()
 
-		if res.IsError() {
-			log.Printf("Error from OpenSearch: %s", res.String())
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		var result map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-			log.Printf("Failed to decode OpenSearch response: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
+		// 4. Return Raw JSON from OpenSearch (Frontend parses hits)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		// We stream the body directly to avoid overhead of unmarshal/marshal
+		// in a high-throughput scenario
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(res.Body)
+		w.Write(buf.Bytes())
 	}
+}
+
+func escapeQuery(q string) string {
+	// Basic sanitation to prevent JSON breaking
+	return strings.Replace(q, `"`, `\"`, -1)
 }
