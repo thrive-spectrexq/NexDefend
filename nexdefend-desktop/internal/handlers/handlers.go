@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,6 +29,19 @@ type DashboardSummary struct {
 	TotalEvents int64                  `json:"total_events_24h"`
 }
 
+type OllamaRequest struct {
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
+	Stream bool   `json:"stream"`
+}
+
+type OllamaResponse struct {
+	Model     string    `json:"model"`
+	CreatedAt time.Time `json:"created_at"`
+	Response  string    `json:"response"`
+	Done      bool      `json:"done"`
+}
+
 // StartAPIServer starts the embedded HTTP server
 func StartAPIServer() {
 	r := mux.NewRouter()
@@ -47,7 +60,7 @@ func StartAPIServer() {
     // --- NEW: Parity with Cloud API ---
     r.HandleFunc("/api/v1/dashboard/stats", DesktopDashboardStatsHandler).Methods("GET", "OPTIONS")
     r.HandleFunc("/api/v1/topology", DesktopTopologyHandler).Methods("GET", "OPTIONS")
-    r.HandleFunc("/api/v1/ai/chat", DesktopChatHandler).Methods("POST", "OPTIONS")
+    r.HandleFunc("/api/v1/ai/chat", AIHandler).Methods("POST", "OPTIONS") // Updated to use AIHandler which now targets Phi-3
 
 	// Vulnerabilities
 	r.HandleFunc("/api/v1/vulnerabilities", VulnerabilitiesHandler).Methods("GET", "OPTIONS")
@@ -385,71 +398,62 @@ func DesktopTopologyHandler(w http.ResponseWriter, r *http.Request) {
     })
 }
 
-// DesktopChatHandler proxies to local Ollama or falls back
-func DesktopChatHandler(w http.ResponseWriter, r *http.Request) {
-    // 1. Try to call Ollama (Local LLM)
-    var req struct {
-        Query string `json:"query"`
-    }
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+// AIHandler: The Bridge to Local Ollama (Phi-3 Edition)
+func AIHandler(w http.ResponseWriter, r *http.Request) {
+	// 1. Parse the incoming prompt from the frontend
+	var userReq struct {
+		Query string `json:"query"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&userReq); err != nil {
+		userReq.Query = r.FormValue("query")
+	}
 
-    ollamaReq := map[string]interface{}{
-        "model": "mistral",
-        "prompt": "Analyze this system log for threats: " + req.Query,
-        "stream": false,
-    }
-    jsonData, _ := json.Marshal(ollamaReq)
+	if userReq.Query == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"anomaly_score": 0.0,
+			"is_anomaly":    false,
+		})
+		return
+	}
 
-    resp, err := http.Post("http://localhost:11434/api/generate", "application/json", bytes.NewBuffer(jsonData))
+	// 2. Construct Request to Ollama using PHI-3
+	// Phi-3 is optimized for instruction following, so we give it a clear system persona.
+	ollamaPayload := OllamaRequest{
+		Model:  "phi3", // <--- UPDATED to use your installed model
+		Prompt: "You are Sentinel, an expert cybersecurity analyst for the NexDefend platform. Analyze the following system event or query and provide a concise, technical assessment of potential threats:\n\n" + userReq.Query,
+		Stream: false,
+	}
+	jsonData, _ := json.Marshal(ollamaPayload)
 
-    if err == nil {
-        defer resp.Body.Close()
-        body, _ := ioutil.ReadAll(resp.Body)
-        // Parse Ollama response to extract just the text if needed, or forward directly.
-        // Ollama returns {"response": "..."} usually.
-        // We need to match what frontend expects: {"response": "..."}
-        w.Header().Set("Content-Type", "application/json")
-        w.Write(body)
-        return
-    }
+	// 3. Call Local Ollama Instance
+	resp, err := http.Post("http://localhost:11434/api/generate", "application/json", bytes.NewBuffer(jsonData))
 
-    // 2. Fallback if no local AI found
-    json.NewEncoder(w).Encode(map[string]interface{}{
-        "response": "Sentinel AI (Offline Mode): Ollama not detected on port 11434. Using heuristic analysis.",
-    })
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"response":      "Sentinel (Offline): Unable to contact Ollama. Please ensure 'ollama serve' is running.",
+			"anomaly_score": 0.0,
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	// 4. Parse Ollama Response
+	body, _ := io.ReadAll(resp.Body)
+	var ollamaResp OllamaResponse
+	if err := json.Unmarshal(body, &ollamaResp); err != nil {
+		http.Error(w, "Failed to parse AI response", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. Return formatted response to Frontend
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"response":      ollamaResp.Response,
+		"anomaly_score": 0.85, // Mock score for context
+		"is_anomaly":    true,
+	})
 }
 
 // --- AI Mock Handlers ---
-
-func AIHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. Try to call Ollama (Local LLM)
-    ollamaReq := map[string]interface{}{
-        "model": "mistral",
-        "prompt": "Analyze this system log for threats: " + r.FormValue("query"),
-        "stream": false,
-    }
-    jsonData, _ := json.Marshal(ollamaReq)
-
-    resp, err := http.Post("http://localhost:11434/api/generate", "application/json", bytes.NewBuffer(jsonData))
-
-    if err == nil {
-        defer resp.Body.Close()
-        body, _ := ioutil.ReadAll(resp.Body)
-        // Forward Ollama response
-        w.Write(body)
-        return
-    }
-
-    // 2. Fallback if no local AI found
-	json.NewEncoder(w).Encode(map[string]interface{}{
-        "response": "Sentinel AI (Offline Mode): Ollama not detected on port 11434. Using heuristic analysis.",
-		"anomaly_score": 0.0,
-		"is_anomaly": false,
-	})
-}
 
 func AIAnomaliesHandler(w http.ResponseWriter, r *http.Request) {
     var anomalies []map[string]interface{}
