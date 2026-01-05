@@ -3,9 +3,6 @@ package main
 import (
 	"embed"
 
-	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/agent"
-	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/db"
-	"github.com/thrive-spectrexq/NexDefend/nexdefend-desktop/internal/handlers"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -15,15 +12,6 @@ import (
 var assets embed.FS
 
 func main() {
-	// Initialize DB
-	db.InitDB()
-
-	// Start internal Agent
-	agent.StartAgent()
-
-	// Start Embedded API Server (proxies frontend requests)
-	handlers.StartAPIServer()
-
 	// Create an instance of the app structure
 	app := NewApp()
 

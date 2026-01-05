@@ -1,0 +1,3 @@
+/nexdefend-desktop
+/frontend/dist/*
+!/frontend/dist/.keep
