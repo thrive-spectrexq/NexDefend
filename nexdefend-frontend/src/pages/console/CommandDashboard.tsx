@@ -1,220 +1,212 @@
-import {
-  ShieldCheck,
-  AlertTriangle,
-  Wifi,
-  Users,
-  Activity
-} from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { Activity, ShieldAlert, Server, Wifi, Cpu, Lock, Globe, Zap } from 'lucide-react';
+import { GlassCard } from '../../components/common/GlassCard';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import AnomalyList from '../../components/dashboard/AnomalyList';
 import { cn } from '../../lib/utils';
-import { PageTransition } from '../../components/common/PageTransition';
-import { useEffect, useState } from 'react';
 
-// Mock Timeline (keeping static for now as store doesn't have history trend yet)
-const timelineData = Array.from({ length: 24 }, (_, i) => ({
+// Mock Data for Visuals
+const trafficData = Array.from({ length: 24 }, (_, i) => ({
   time: `${i}:00`,
-  value: Math.floor(Math.random() * 50) + 10
+  inbound: Math.floor(Math.random() * 500) + 100,
+  outbound: Math.floor(Math.random() * 300) + 50,
+  alerts: Math.floor(Math.random() * 50),
 }));
 
-function StatCard({ label, value, subtext, icon: Icon, colorClass }: any) {
-    return (
-        <div className="bg-surface border border-surface-highlight p-6 rounded-lg relative overflow-hidden group hover:border-brand-blue/50 transition-colors">
-            <div className={cn("absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity", colorClass)}>
-                <Icon size={64} />
-            </div>
-            <div className="relative z-10">
-                <div className="text-text-muted text-sm uppercase tracking-wider font-semibold mb-2">{label}</div>
-                <div className="text-4xl font-mono font-bold text-text mb-1">{value}</div>
-                {subtext && <div className={cn("text-xs font-mono", colorClass)}>{subtext}</div>}
-            </div>
+const complianceData = [
+    { name: 'PCI-DSS', score: 85 },
+    { name: 'GDPR', score: 92 },
+    { name: 'HIPAA', score: 78 },
+];
+
+const wazuhModules = [
+    { name: 'Security Events', count: 1240, status: 'critical', icon: ShieldAlert },
+    { name: 'Integrity Monitoring', count: 3, status: 'warning', icon: Lock },
+    { name: 'Vulnerability Detector', count: 12, status: 'warning', icon: Zap },
+    { name: 'System Auditing', count: 100, status: 'healthy', icon: Activity },
+];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-surface-darker border border-white/10 p-3 rounded shadow-xl backdrop-blur-md">
+          <p className="text-text font-mono text-xs mb-2">{label}</p>
+          {payload.map((p: any, index: number) => (
+            <p key={index} className="text-xs font-medium" style={{ color: p.color }}>
+              {p.name}: {p.value}
+            </p>
+          ))}
         </div>
-    );
-}
+      );
+    }
+    return null;
+};
 
 export default function CommandDashboard() {
-  const [data, setData] = useState<any>(null);
-
-  useEffect(() => {
-    // Poll for metrics
-    const fetchMetrics = async () => {
-        try {
-            const res = await fetch('http://localhost:8080/api/v1/metrics/dashboard');
-            if (res.ok) {
-                const json = await res.json();
-                setData(json);
-            }
-        } catch (e) {
-            console.error("Failed to fetch dashboard metrics", e);
-        }
-    };
-
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const severityData = [
-    { name: 'Critical', value: data?.severity_breakdown?.critical || 0, color: '#F87171' }, // brand-red
-    { name: 'High', value: data?.severity_breakdown?.high || 0, color: '#FB923C' },     // brand-orange
-    { name: 'Medium', value: data?.severity_breakdown?.medium || 0, color: '#38BDF8' },   // brand-blue
-    { name: 'Low', value: data?.severity_breakdown?.low || 0, color: '#4ADE80' },      // brand-green
-  ];
-
-  const activeThreats = data?.active_threats || 0;
-  const securityScore = data?.security_score || 100;
-
   return (
-    <PageTransition className="space-y-6">
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-            label="Security Score"
-            value={`${securityScore}/100`}
-            subtext="Real-time calculation"
-            icon={ShieldCheck}
-            colorClass={securityScore > 80 ? "text-brand-green" : securityScore > 50 ? "text-brand-orange" : "text-brand-red"}
-        />
-        <StatCard
-            label="Active Threats"
-            value={activeThreats}
-            subtext={`${data?.severity_breakdown?.critical || 0} Critical, ${data?.severity_breakdown?.high || 0} High`}
-            icon={AlertTriangle}
-            colorClass="text-brand-red"
-        />
-        <StatCard
-            label="Online Agents"
-            value="98.5%"
-            subtext="2,431 / 2,468 Online"
-            icon={Wifi}
-            colorClass="text-brand-blue"
-        />
-        <StatCard
-            label="Analysts Online"
-            value="8"
-            subtext="SOC Shift B"
-            icon={Users}
-            colorClass="text-text-muted"
-        />
-      </div>
+    <div className="p-6 space-y-6 bg-surface-darker min-h-full">
 
-      {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96">
-        {/* Severity Breakdown */}
-        <div className="bg-surface border border-surface-highlight rounded-lg p-6 flex flex-col">
-            <h3 className="text-lg font-semibold text-text mb-4">Alert Severity</h3>
-            <div className="flex-1 w-full min-h-0">
+      {/* 1. Top HUD - KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <GlassCard className="relative overflow-hidden">
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="text-text-muted text-xs font-mono uppercase tracking-wider">Security Posture</p>
+                    <h2 className="text-2xl font-bold text-white mt-1">82%</h2>
+                    <p className="text-xs text-brand-green mt-2 flex items-center">
+                        <Activity size={12} className="mr-1" /> +2.4% vs last week
+                    </p>
+                </div>
+                <div className="p-2 bg-brand-blue/10 rounded-lg text-brand-blue">
+                    <ShieldAlert size={20} />
+                </div>
+            </div>
+            {/* Sparkline background */}
+            <div className="absolute bottom-0 left-0 right-0 h-12 opacity-20 pointer-events-none">
                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={severityData}
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            stroke="none"
-                        >
-                            {severityData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                        </Pie>
-                        <Tooltip
-                            contentStyle={{ backgroundColor: '#162032', borderColor: '#1E293B', color: '#E2E8F0' }}
-                            itemStyle={{ color: '#E2E8F0' }}
-                        />
-                    </PieChart>
+                    <AreaChart data={trafficData}>
+                        <Area type="monotone" dataKey="inbound" stroke="#00a3e0" fill="#00a3e0" />
+                    </AreaChart>
                 </ResponsiveContainer>
             </div>
-            <div className="flex justify-center gap-4 text-xs font-mono text-text-muted mt-4">
-                {severityData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span>{item.name} ({item.value})</span>
+        </GlassCard>
+
+        <GlassCard>
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="text-text-muted text-xs font-mono uppercase tracking-wider">Active Agents</p>
+                    <h2 className="text-2xl font-bold text-white mt-1">42<span className="text-text-dim text-lg">/45</span></h2>
+                    <p className="text-xs text-brand-red mt-2 flex items-center">
+                        <Server size={12} className="mr-1" /> 3 Offline
+                    </p>
+                </div>
+                <div className="p-2 bg-brand-green/10 rounded-lg text-brand-green">
+                    <Wifi size={20} />
+                </div>
+            </div>
+        </GlassCard>
+
+        <GlassCard>
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="text-text-muted text-xs font-mono uppercase tracking-wider">Total Events (24h)</p>
+                    <h2 className="text-2xl font-bold text-white mt-1">1.2M</h2>
+                    <p className="text-xs text-text-muted mt-2">14.5k events/sec</p>
+                </div>
+                <div className="p-2 bg-brand-purple/10 rounded-lg text-brand-purple">
+                    <Zap size={20} />
+                </div>
+            </div>
+        </GlassCard>
+
+        <GlassCard>
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="text-text-muted text-xs font-mono uppercase tracking-wider">CPU Utilization</p>
+                    <h2 className="text-2xl font-bold text-white mt-1">34%</h2>
+                    <p className="text-xs text-brand-green mt-2">Healthy</p>
+                </div>
+                <div className="p-2 bg-brand-yellow/10 rounded-lg text-brand-yellow">
+                    <Cpu size={20} />
+                </div>
+            </div>
+        </GlassCard>
+      </div>
+
+      {/* 2. Main Visualization Section (Wazuh Capabilities) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Left: Security Events Over Time (Splunk Style Area Chart) */}
+        <div className="lg:col-span-2">
+            <GlassCard title="Security Events & Traffic" className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trafficData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorInbound" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#00a3e0" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#00a3e0" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorAlerts" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#d93f3c" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#d93f3c" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2b3036" vertical={false} />
+                        <XAxis dataKey="time" stroke="#5c6773" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#5c6773" fontSize={12} tickLine={false} axisLine={false} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Area type="monotone" dataKey="inbound" stroke="#00a3e0" strokeWidth={2} fillOpacity={1} fill="url(#colorInbound)" name="Traffic (MB)" />
+                        <Area type="monotone" dataKey="alerts" stroke="#d93f3c" strokeWidth={2} fillOpacity={1} fill="url(#colorAlerts)" name="Threats" />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </GlassCard>
+        </div>
+
+        {/* Right: Wazuh Modules Status (Honeycomb/List Hybrid) */}
+        <GlassCard title="Wazuh Module Status" className="h-[400px]">
+            <div className="space-y-4">
+                {wazuhModules.map((mod) => (
+                    <div key={mod.name} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                        <div className="flex items-center gap-3">
+                            <div className={cn(
+                                "p-2 rounded-md",
+                                mod.status === 'critical' ? "bg-brand-red/20 text-brand-red" :
+                                mod.status === 'warning' ? "bg-brand-yellow/20 text-brand-yellow" :
+                                "bg-brand-green/20 text-brand-green"
+                            )}>
+                                <mod.icon size={18} />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-medium text-text group-hover:text-white">{mod.name}</h4>
+                                <p className="text-xs text-text-muted">Active Monitoring</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-lg font-bold text-white">{mod.count}</div>
+                            <div className="text-[10px] text-text-dim uppercase">Alerts</div>
+                        </div>
                     </div>
                 ))}
-            </div>
-        </div>
 
-        {/* Threat Timeline */}
-        <div className="bg-surface border border-surface-highlight rounded-lg p-6 lg:col-span-2 flex flex-col">
-            <h3 className="text-lg font-semibold text-text mb-4">Threat Detection Volume (24h)</h3>
-            <div className="flex-1 w-full min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={timelineData}>
-                        <XAxis
-                            dataKey="time"
-                            stroke="#94A3B8"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                        />
-                        <YAxis
-                            stroke="#94A3B8"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                        />
-                        <Tooltip
-                            cursor={{ fill: 'rgba(56, 189, 248, 0.1)' }}
-                            contentStyle={{ backgroundColor: '#162032', borderColor: '#1E293B', color: '#E2E8F0' }}
-                        />
-                        <Bar dataKey="value" fill="#38BDF8" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+                {/* Compliance Mini-Viz */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                    <h4 className="text-xs font-mono uppercase text-text-muted mb-3">Compliance Scores</h4>
+                    <div className="flex gap-2">
+                        {complianceData.map((comp) => (
+                            <div key={comp.name} className="flex-1 bg-surface-dark p-2 rounded text-center border border-white/5">
+                                <div className={cn("text-lg font-bold", comp.score > 90 ? "text-brand-green" : comp.score > 80 ? "text-brand-yellow" : "text-brand-red")}>
+                                    {comp.score}%
+                                </div>
+                                <div className="text-[10px] text-text-dim">{comp.name}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
-        </div>
+        </GlassCard>
       </div>
 
-      {/* Recent System Activity Feed */}
-      <div className="bg-surface border border-surface-highlight rounded-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-text flex items-center gap-2">
-                  <Activity className="text-brand-blue" size={20} />
-                  Recent System Activity
-              </h3>
-          </div>
-          <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                  <thead className="text-text-muted font-mono bg-surface-highlight/20 border-b border-surface-highlight">
-                      <tr>
-                          <th className="px-4 py-3 font-medium">Timestamp</th>
-                          <th className="px-4 py-3 font-medium">Type</th>
-                          <th className="px-4 py-3 font-medium">Description</th>
-                          <th className="px-4 py-3 font-medium text-right">Severity</th>
-                      </tr>
-                  </thead>
-                  <tbody className="divide-y divide-surface-highlight font-mono">
-                       {/* Mock items mixed with dynamic - ideally we fetch incidents here */}
-                      {[
-                          { time: 'Just now', type: 'System', desc: 'Agent Heartbeat Received', severity: 'Info' },
-                          { time: '1 min ago', type: 'Process', desc: 'Process metrics collected', severity: 'Info' },
-                          ...(data?.severity_breakdown?.critical > 0 ? [{ time: '2 mins ago', type: 'Security', desc: 'Critical CPU Usage Detected', severity: 'Critical' }] : []),
-                          { time: '5 mins ago', type: 'Network', desc: 'Network statistics updated', severity: 'Info' },
-                      ].map((event, idx) => (
-                          <tr key={idx} className="hover:bg-surface-highlight/10 group transition-colors">
-                              <td className="px-4 py-3 text-text-muted whitespace-nowrap">{event.time}</td>
-                              <td className="px-4 py-3">
-                                  <span className={cn("flex items-center gap-2",
-                                      event.type === 'Security' ? 'text-brand-red' : 'text-brand-blue'
-                                  )}>
-                                      {event.type === 'Security' ? <AlertTriangle size={14} /> : <Activity size={14} />}
-                                      {event.type}
-                                  </span>
-                              </td>
-                              <td className="px-4 py-3 text-text truncate max-w-xs">{event.desc}</td>
-                              <td className="px-4 py-3 text-right">
-                                  <span className={cn("px-2 py-1 rounded text-xs font-semibold",
-                                      event.severity === 'Critical' ? 'bg-brand-red/20 text-brand-red' :
-                                      event.severity === 'Info' ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-muted'
-                                  )}>
-                                      {event.severity}
-                                  </span>
-                              </td>
-                          </tr>
-                      ))}
-                  </tbody>
-              </table>
-          </div>
+      {/* 3. Bottom: Geo/Threat Map Placeholder & Recent Anomaly List */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <GlassCard title="Global Threat Source" className="min-h-[300px] flex items-center justify-center relative">
+              <div className="absolute inset-0 opacity-30">
+                  {/* Abstract Map Background using simple dots or SVG */}
+                  <div className="w-full h-full bg-[radial-gradient(#2b3036_1px,transparent_1px)] [background-size:16px_16px]"></div>
+              </div>
+              <div className="text-center z-10">
+                <Globe size={48} className="mx-auto text-brand-blue opacity-50 mb-2" />
+                <p className="text-text-muted text-sm">Interactive Geo-Map Loading...</p>
+                <div className="mt-4 flex gap-4 text-xs">
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-brand-red"></div> CN (402)</div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-brand-yellow"></div> RU (150)</div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-brand-blue"></div> US (89)</div>
+                </div>
+              </div>
+          </GlassCard>
+
+          <GlassCard title="Recent Anomalies (AI Detected)" className="lg:col-span-2">
+               <AnomalyList anomalies={[]} />
+          </GlassCard>
       </div>
-    </PageTransition>
+    </div>
   );
 }
