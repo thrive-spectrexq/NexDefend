@@ -40,6 +40,8 @@ CORS(app, origins=cors_origins)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 GO_API_URL = os.getenv("GO_API_URL", "http://localhost:8080/api/v1")
 AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
+# Ensure OLLAMA_HOST is set (e.g., http://host.docker.internal:11434)
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 
 # Existing Metrics
 EVENTS_PROCESSED = Counter('events_processed_total', 'Total number of events processed')
@@ -285,26 +287,35 @@ def chat_copilot():
         if not query:
             return make_response(jsonify({"error": "Query is required"}), 400)
 
-        # In a real implementation, this would:
-        # 1. Fetch context from OpenSearch/Prometheus based on entities in the query (e.g., "server-01").
-        # 2. Construct a prompt for the LLM.
-        # 3. Call OpenAI/Ollama API.
+        logging.info(f"Sending query to Sentinel AI: {query}")
 
-        # For this demonstration/MVP, we mock the intelligence.
-        logging.info(f"Received Sentinel Query: {query}")
+        # Construct a prompt with system context
+        system_prompt = (
+            "You are Sentinel, a cybersecurity AI analyst for NexDefend. "
+            "Analyze the user's query about system health, logs, or threats. "
+            "Be concise, professional, and focus on security insights."
+        )
 
-        response_text = ""
+        full_prompt = f"{system_prompt}\n\nUser: {query}\nSentinel:"
 
-        if "cpu" in query.lower() and "spike" in query.lower():
-            response_text = "Correlating metrics... The spike coincides with a generic massive log ingestion from IP 192.168.1.50. This looks like a potential DoS attack. Recommended Action: Block IP."
-        elif "slow" in query.lower() and "server" in query.lower():
-             response_text = "Analyzing latency... Database query times on 'db-prod-01' have increased by 400% in the last hour. Possible index fragmentation or unoptimized query detected."
-        elif "malware" in query.lower() or "virus" in query.lower():
-             response_text = "Scanning recent alerts... Found critical alert 'Suspicious PowerShell Execution' on host 'hr-workstation-05'. Parent process: explorer.exe. This matches known Emotet behavior."
-        else:
-             response_text = "I'm analyzing the system state. Can you specify which host or metric you are concerned about?"
+        payload = {
+            "model": "mistral", # Ensure this model is pulled in Ollama
+            "prompt": full_prompt,
+            "stream": False
+        }
 
-        return make_response(jsonify({"response": response_text}), 200)
+        try:
+            # Call Real LLM
+            llm_response = requests.post(OLLAMA_URL, json=payload, timeout=30)
+            llm_response.raise_for_status()
+            result = llm_response.json()
+            response_text = result.get("response", "I could not generate a response.")
+
+            return make_response(jsonify({"response": response_text}), 200)
+
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Ollama connection failed: {e}")
+            return make_response(jsonify({"response": "Error: Unable to reach the Neural Core (Ollama). Please ensure the AI model is running."}), 503)
 
     except Exception as e:
         logging.error(f"Error in chat copilot: {e}")

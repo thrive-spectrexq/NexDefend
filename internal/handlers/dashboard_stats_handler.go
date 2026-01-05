@@ -2,30 +2,36 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"math/rand"
+	"strings"
 
+	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
-// GetDashboardStatsHandler aggregates counts for the dashboard honeycomb/list views
+// GetDashboardStatsHandler aggregates real counts from Postgres and OpenSearch
 func GetDashboardStatsHandler(database *db.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// 1. Get Vulnerability Count (Postgres)
+		// 1. Get Real Vulnerability Count (Postgres)
 		var vulnCount int64
 		database.GetDB().Model(&models.Vulnerability{}).Where("status = ?", "Open").Count(&vulnCount)
 
-		// 2. Get Asset Count (Postgres)
+		// 2. Get Real Asset Count (Postgres)
 		var assetCount int64
 		database.GetDB().Model(&models.Asset{}).Count(&assetCount)
 
-		// 3. Mock OpenSearch Aggregations (Replace with real OS client calls in production)
-		// We simulate getting counts for FIM and General Events
-		fimCount := int64(rand.Intn(50))   // Replace with: osClient.Count("event_type:fim")
-		eventCount := int64(rand.Intn(5000) + 1000)
+		// 3. Get Real Event Counts from OpenSearch
+		// In production, inject this client via the struct/config
+		osClient, _ := opensearch.NewClient(opensearch.Config{
+			Addresses: []string{"http://opensearch:9200"},
+		})
 
-		// 4. Construct the Module Stats (Wazuh Style)
+		eventCount := getOpenSearchCount(osClient, "events", "match_all")
+		fimCount := getOpenSearchCount(osClient, "events", "event_type:fim")
+
+		// 4. Construct Real Module Stats
 		modules := []models.ModuleStat{
 			{
 				Name:   "Security Events",
@@ -36,13 +42,13 @@ func GetDashboardStatsHandler(database *db.Database) http.HandlerFunc {
 			{
 				Name:   "Integrity Monitoring",
 				Count:  fimCount,
-				Status: determineStatus(fimCount, 10), // Warning if > 10 changes
+				Status: determineStatus(fimCount, 50),
 				Trend:  "flat",
 			},
 			{
 				Name:   "Vulnerability Detector",
 				Count:  vulnCount,
-				Status: determineStatus(vulnCount, 5), // Warning if > 5 open vulns
+				Status: determineStatus(vulnCount, 10),
 				Trend:  "up",
 			},
 			{
@@ -53,22 +59,36 @@ func GetDashboardStatsHandler(database *db.Database) http.HandlerFunc {
 			},
 		}
 
-		// 5. Construct Compliance Scores (Logic would go here to calculate real percentages)
-		compliance := []models.ComplianceScore{
-			{Standard: "PCI-DSS", Score: 85, Status: "pass"},
-			{Standard: "GDPR", Score: 92, Status: "pass"},
-			{Standard: "HIPAA", Score: 78, Status: "fail"},
-		}
-
 		response := models.DashboardSummary{
 			Modules:    modules,
-			Compliance: compliance,
 			TotalEvents: eventCount,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	}
+}
+
+func getOpenSearchCount(client *opensearch.Client, index string, query string) int64 {
+	q := fmt.Sprintf(`{"query": { "query_string": { "query": "%s" } } }`, query)
+	res, err := client.Count(
+		client.Count.WithIndex(index),
+		client.Count.WithBody(strings.NewReader(q)),
+	)
+	if err != nil {
+		return 0
+	}
+	defer res.Body.Close()
+
+	var r map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return 0
+	}
+
+	if count, ok := r["count"].(float64); ok {
+		return int64(count)
+	}
+	return 0
 }
 
 func determineStatus(count int64, threshold int64) string {
