@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ShieldAlert, Lock, Zap, Server } from 'lucide-react';
 import { GlassCard } from '../../components/common/GlassCard';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { EmbeddedGrafanaPanel } from '../../components/dashboard/EmbeddedGrafanaPanel';
 import AnomalyList from '../../components/dashboard/AnomalyList';
 import { getDashboardStats, type DashboardSummary } from '../../api/apiClient'; // Import API
 import { cn } from '../../lib/utils';
@@ -132,24 +133,16 @@ export default function CommandDashboard() {
       {/* 2. Main Visualization Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Left: Traffic Chart (Remains same for now) */}
+        {/* Left: Security Events Over Time */}
         <div className="lg:col-span-2">
-            <GlassCard title="Security Events & Traffic" className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trafficData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorInbound" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#00a3e0" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#00a3e0" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#2b3036" vertical={false} />
-                        <XAxis dataKey="time" stroke="#5c6773" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#5c6773" fontSize={12} tickLine={false} axisLine={false} />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="inbound" stroke="#00a3e0" strokeWidth={2} fillOpacity={1} fill="url(#colorInbound)" />
-                    </AreaChart>
-                </ResponsiveContainer>
+            <GlassCard title="Live Network Traffic (Suricata/Netflow)" className="h-[400px]" noPadding>
+                {/* Replace 'panelId=10' with the actual ID from your Grafana 'nexdefend.json' dashboard
+                   that shows 'Suricata Alerts Over Time' or 'Network Throughput'
+                */}
+                <EmbeddedGrafanaPanel
+                    src="/d-solo/nexdefend-overview/nexdefend?orgId=1&panelId=10&refresh=5s"
+                    className="w-full h-full"
+                />
             </GlassCard>
         </div>
 
