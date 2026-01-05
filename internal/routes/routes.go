@@ -98,6 +98,9 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	// --- NEW: Network Topology ---
 	api.HandleFunc("/topology", handlers.GetTopologyHandler(database)).Methods("GET")
 
+	// Dashboard & Analytics
+	api.HandleFunc("/dashboard/stats", handlers.GetDashboardStatsHandler(database)).Methods("GET")
+
 	// Handlers to query Python API
 	api.HandleFunc("/python-analysis", handlers.PythonAnalysisHandler(cfg)).Methods("GET")
 	api.HandleFunc("/python-anomalies", handlers.PythonAnalysisHandler(cfg)).Methods("GET")

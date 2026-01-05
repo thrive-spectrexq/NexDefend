@@ -105,3 +105,27 @@ export const getTopology = async (): Promise<TopologyData> => {
   const response = await apiClient.get('/topology');
   return response.data;
 };
+
+export interface ModuleStat {
+  name: string;
+  count: number;
+  status: 'critical' | 'warning' | 'healthy';
+  trend: string;
+}
+
+export interface ComplianceScore {
+  standard: string;
+  score: number;
+  status: 'pass' | 'fail';
+}
+
+export interface DashboardSummary {
+  modules: ModuleStat[];
+  compliance: ComplianceScore[];
+  total_events_24h: number;
+}
+
+export const getDashboardStats = async (): Promise<DashboardSummary> => {
+  const response = await apiClient.get('/dashboard/stats');
+  return response.data;
+};
