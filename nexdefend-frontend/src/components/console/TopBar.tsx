@@ -4,7 +4,7 @@ export function TopBar() {
   return (
     <div className="h-16 bg-surface-dark border-b border-white/5 flex items-center px-6 gap-6 sticky top-0 z-40 shadow-sm">
 
-      {/* Global Search (Splunk Style) */}
+      {/* Global Search */}
       <div className="flex-1 max-w-3xl relative">
         <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

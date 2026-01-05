@@ -1,6 +1,6 @@
 # NexDefend: AI-Powered Systems and Service Monitoring System
 
-NexDefend is an industry-standard **AI-Powered Systems and Service Monitoring System** designed to bridge the gap between traditional monitoring and "Tier 1" enterprise platforms like Splunk or CrowdStrike. It combines real-time metric collection, rule evaluation, and proactive threat detection with a cognitive intelligence layer.
+NexDefend is an industry-standard **AI-Powered Systems and Service Monitoring System** designed to bridge the gap between traditional monitoring and "Tier 1" enterprise platforms. It combines real-time metric collection, rule evaluation, and proactive threat detection with a cognitive intelligence layer.
 
 The platform provides a unified "Single Pane of Glass" dashboard for visualizing the health, performance, and security posture of your infrastructure, capable of running in both a scalable Cloud mode and an offline "Battle Station" Desktop mode.
 
@@ -12,7 +12,7 @@ The platform provides a unified "Single Pane of Glass" dashboard for visualizing
 
 ### 2. Deep Visibility (Interactive Visualization)
 *   **Interactive Network Topology Map**: A dynamic, real-time graph visualization of your infrastructure and asset connections using ReactFlow.
-*   **Splunk-like Visuals**: A high-contrast "Cyber-Tactical" dark theme with Glassmorphism UI, neon data visualization, and a global command bar for rapid navigation.
+*   **Cyber-Tactical Visuals**: A high-contrast dark theme with Glassmorphism UI, neon data visualization, and a global command bar for rapid navigation.
 *   **Process Tree Forensics**: Visualizes parent-child process relationships to trace the root cause of security incidents.
 
 ### 3. Active Defense & Automation
