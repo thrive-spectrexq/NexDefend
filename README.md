@@ -1,220 +1,88 @@
-# NexDefend: AI-Powered System Monitoring and Threat Intelligence Platform
+# NexDefend: AI-Powered Systems and Service Monitoring System
 
-NexDefend is a comprehensive **AI-Powered System Monitoring and Threat Intelligence Platform**. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed. It provides a unified dashboard for visualizing the health and performance of your infrastructure.
+NexDefend is an industry-standard **AI-Powered Systems and Service Monitoring System** designed to bridge the gap between traditional monitoring and "Tier 1" enterprise platforms like Splunk or CrowdStrike. It combines real-time metric collection, rule evaluation, and proactive threat detection with a cognitive intelligence layer.
 
-Built on a modern microservice architecture, NexDefend leverages Go for high-performance data collection, Python for intelligent analytics, Kafka for a resilient event pipeline, and OpenSearch/PostgreSQL for scalable storage.
+The platform provides a unified "Single Pane of Glass" dashboard for visualizing the health, performance, and security posture of your infrastructure, capable of running in both a scalable Cloud mode and an offline "Battle Station" Desktop mode.
 
 ## Key Features
 
-The platform is a collection of specialized services working in concert to provide end-to-end monitoring.
+### 1. Cognitive Intelligence (GenAI & Predictive)
+*   **"Sentinel" GenAI Copilot**: An integrated AI assistant (powered by Ollama or OpenAI) that allows operators to chat with their data. Ask questions like "Why did the CPU spike?" and get correlated answers.
+*   **Predictive Resource Forecasting**: AI-driven trend analysis (Prophet/LSTM) to predict future resource usage (e.g., disk full warnings 24h in advance).
 
-### 1. Data Collection & Monitoring
+### 2. Deep Visibility (Interactive Visualization)
+*   **Interactive Network Topology Map**: A dynamic, real-time graph visualization of your infrastructure and asset connections using ReactFlow.
+*   **Splunk-like Visuals**: A high-contrast "Cyber-Tactical" dark theme with Glassmorphism UI, neon data visualization, and a global command bar for rapid navigation.
+*   **Process Tree Forensics**: Visualizes parent-child process relationships to trace the root cause of security incidents.
 
-*   **Monitoring Agent (nexdefend-agent)**: A lightweight Go agent that provides deep visibility into endpoints and servers. It streams system metrics and events to the pipeline.
-    *   **Cross-Platform Support**: Runs on Linux, Windows, and macOS.
-    *   **Process Monitoring**: Tracks running processes and resource usage.
-    *   **File Integrity Monitoring (FIM)**: Monitors critical files and directories for changes.
-    *   **Network Monitoring**: Tracks network connections and traffic flows.
-    *   **Log Collection**: Collects and forwards system and application logs.
-    *   **Container/Kubernetes Support**: Deploys as a DaemonSet to monitor K8s nodes and pods.
-*   **Network Traffic Monitoring**: Ingests network data (NetFlow, sFlow, etc.) to monitor bandwidth usage and traffic patterns.
-*   **Cloud Connector (nexdefend-cloud-connector)**: Ingests logs and metrics from cloud providers (AWS, Azure, GCP) and SaaS applications.
+### 3. Active Defense & Automation
+*   **Monitoring Agent**: Lightweight Go agent for cross-platform (Linux, Windows, macOS) collection of metrics, logs, FIM, and network flows.
+*   **Automated Response (SOAR)**: Trigger automated playbooks to remediate issues (e.g., block IP, restart service) based on alert logic.
+*   **Active Scanning**: Integrated Nmap scanning for service discovery and vulnerability assessment.
 
-### 2. Intelligent Analysis (nexdefend-ai)
-
-*   **AI-Powered Threat Intelligence Platform**: Ingests and correlates threat feeds (e.g., MISP, OTX) with system metrics to identify potential security risks alongside operational issues.
-*   **Anomaly Detection**: Uses ML models (`IsolationForest`) to detect deviations from normal baseline metrics.
-*   **Automated Alerting**: Automatically generates alerts when anomalies or threshold violations are detected.
-*   **Active Service Scanning**: Exposes a `/scan` endpoint to perform active health checks and service discovery (using Nmap) on target hosts.
-*   **Behavioral Analytics**: Analyzes historical data to identify long-term trends and unusual behavior patterns.
-
-### 3. Alerting & Automation (nexdefend-soar)
-
-*   **Automated Alert Handlers**: A service that consumes alerts and executes defined playbooks.
-*   **Rule Evaluation**: Evaluates rule expressions against incoming data streams to trigger notifications.
-*   **Automated Remediation**: Can trigger scripts or API calls to attempt auto-remediation of known issues (e.g., restarting a service, blocking traffic).
-
-### 4. Visualization & Console (api & nexdefend-frontend)
-
-*   **Monitoring Console**: A high-density dashboard designed for operations teams.
-    *   **Command Dashboard**: A high-level HUD showing system health scores, active alerts, and metric timelines.
-    *   **Alerts Queue**: A real-time view of all active alerts with status tracking and severity filtering.
-    *   **Investigation Graph**: Interactive visualization to map dependencies and event sequences.
-    *   **Host Management**: Inventory view of all monitored targets with status and grouping.
-*   **Global Search**: Instant access to specific hosts, metrics, or logs.
-*   **Real-Time Updates**: WebSocket integration for live dashboard updates.
-*   **Data Storage**:
-    *   **PostgreSQL**: Stores relational data (alerts, users, configurations).
-    *   **OpenSearch**: Stores high-volume raw event data and logs.
-*   **Observability Stack**:
-    *   **Prometheus**: Scrapes internal metrics from NexDefend services.
-    *   **Grafana**: Provides pre-built dashboards for monitoring the platform's own performance.
+### 4. Enterprise Experience (Desktop & Cloud)
+*   **Cloud Mode**: Full microservices architecture (Go, Python, Kafka, OpenSearch) for scalable enterprise deployment.
+*   **Desktop "Offline Battle Station"**: A standalone Wails-based application that runs entirely offline using local SQLite and embedded agents. Ideal for air-gapped environments or tactical analysis.
+*   **Local Intelligence**: The Desktop app integrates with local Ollama instances to provide GenAI capabilities without data leaving the machine.
 
 ## Architecture
 
-NexDefend operates as a distributed system of specialized microservices communicating via HTTP and a central Kafka event bus.
+NexDefend operates as a distributed system of specialized microservices:
 
-```mermaid
-graph TD
-
-%% Global direction
-    direction TB
-
-%% ========= USER & ENDPOINTS =========
-    subgraph U["User & Endpoints"]
-        direction TB
-        F["Browser (React UI)"]
-        A["Monitoring Agent"]
-    end
-
-%% ========= CORE PLATFORM =========
-    subgraph C["Core Platform"]
-        direction LR
-        K["Kafka Bus"]
-        DB["PostgreSQL DB"]
-        OS["OpenSearch"]
-    end
-
-%% ========= SERVICES LAYER =========
-    subgraph SVC["Services Layer"]
-        direction TB
-        API["Core API (Go)"]
-        AI["Analytics Service (Python)"]
-        SOAR["Automation Service (Go)"]
-        I["Ingestor"]
-        CC["Cloud Connector"]
-        NDR["Network Monitor"]
-        P["Prometheus"]
-        G["Grafana"]
-    end
-
-%% ========= CONNECTIONS =========
-
-%% Frontend and Agents
-    F -->|HTTPS API| API
-    A -->|Metrics Stream| K
-    CC -->|Cloud Metrics| K
-    NDR -->|NetFlow| K
-
-%% Ingestor Flow
-    I -->|Consumes| K
-    I -->|Logs| OS
-
-%% AI Service
-    AI -->|Consumes| K
-    AI -->|Creates Alerts| API
-    AI -->|Reads| DB
-
-%% Core API
-    API -->|Reads/Writes| DB
-    API -->|Publishes| K
-    API -->|Proxies Scans| AI
-
-%% SOAR
-    SOAR -->|Consumes Alerts| K
-    SOAR -->|Triggers Actions| AI
-
-%% Observability
-    P -->|Scrapes Metrics| API
-    P -->|Scrapes Metrics| AI
-    G -->|Visualizes| P
-```
-
-### Service Overview
-
-| Service           | Language   | Purpose                                                                                |
-| ----------------- | ---------- | -------------------------------------------------------------------------------------- |
-| `api`             | Go         | The main backend. Handles user auth, data retrieval, and API proxying.                 |
-| `frontend`        | TypeScript | The React-based single-page application for the monitoring console.                    |
-| `ai`              | Python     | Handles compute-heavy analytics, anomaly detection, and active scanning.               |
-| `nexdefend-agent` | Go         | Endpoint agent for collecting metrics, logs, and system events.                        |
-| `nexdefend-soar`  | Go         | Listens for alerts on Kafka and executes automated response playbooks.                 |
-| `nexdefend-cloud-connector` | Go | Ingests logs and metrics from cloud providers.                                       |
-| `db`              | N/A        | PostgreSQL database for storing structured state (alerts, users, etc.).                |
-| `opensearch`      | N/A        | Searchable store for all raw logs and events.                                          |
-| `kafka`/`zookeeper` | N/A        | Central event bus for decoupling services and handling high-throughput data.           |
-| `prometheus`/`grafana` | N/A        | Provides platform-level monitoring and metrics visualization.                          |
+*   **Core API (Go)**: The central nervous system handling auth, data aggregation, and API proxying.
+*   **Analytics Engine (Python)**: Handles heavy lifting for AI/ML, anomaly detection (`IsolationForest`), and LLM integration.
+*   **Frontend (React/TypeScript)**: A high-density, professional monitoring console.
+*   **Event Pipeline**: Kafka-based bus for high-throughput event processing and decoupling.
+*   **Storage**: PostgreSQL for structured data and OpenSearch for massive log retention.
 
 ## Getting Started
 
 ### 1. Prerequisites
 
-*   Docker & Docker Compose
-*   Git
+*   **Docker & Docker Compose** (for Cloud Mode)
+*   **Go 1.21+** & **Node.js 16+** (for Desktop/Dev)
+*   **Ollama**: Required for local "Sentinel" AI features. Install and pull a model (e.g., `ollama run mistral`).
 
-### 2. Clone the Repository
+### 2. Quick Start (Cloud Mode)
+
+Run the full platform stack using Docker:
 
 ```bash
 git clone https://github.com/thrive-spectrexq/NexDefend.git
 cd NexDefend
-```
 
-### 3. Create Environment Files
+# Create environment files (see docs/getting-started.md for templates)
+cp .env.example .env
+cp nexdefend-ai/.env.example nexdefend-ai/.env
 
-You must create two `.env` files.
-
-#### `.env` (in the root directory)
-
-```
-# Database
-DB_USER=nexdefend
-DB_PASSWORD=password
-DB_NAME=nexdefend_db
-DB_HOST=localhost
-DB_PORT=5432
-DB_SSLMODE=disable
-
-# Service Communication
-API_PREFIX=/api/v1
-PYTHON_API=http://localhost:5000
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
-
-# Secrets (MUST change in production)
-JWT_SECRET_KEY=my_super_secure_user_jwt_secret_key_123!@#
-AI_SERVICE_TOKEN=my_secure_service_to_service_token_abc987
-
-# Features
-FIM_PATH=/etc
-```
-
-#### `nexdefend-ai/.env`
-
-```
-# Database
-DB_NAME=nexdefend_db
-DB_USER=nexdefend
-DB_PASSWORD=password
-DB_HOST=localhost
-DB_PORT=5432
-
-# Service Communication
-GO_API_URL=http://localhost:8080/api/v1
-AI_SERVICE_TOKEN=my_secure_service_to_service_token_abc987
-```
-
-### 4. Run with Docker Compose
-
-This is the recommended method to start all services.
-
-```bash
+# Start services
 docker-compose up -d --build
 ```
 
-### 5. Train the Anomaly Model
+Access the dashboard at **http://localhost:3000**.
 
-After the services are running, you must train the initial anomaly detection model.
+### 3. Quick Start (Desktop Mode)
+
+Run the standalone offline application:
 
 ```bash
-curl -X POST http://localhost:5000/train
+cd nexdefend-desktop
+wails build
+./build/bin/nexdefend-desktop  # (or .exe on Windows)
 ```
 
-### 6. Access the Application
+### 4. Access Points
 
 *   **NexDefend Console**: `http://localhost:3000`
 *   **Grafana**: `http://localhost:3001` (admin:grafana)
 *   **Prometheus**: `http://localhost:9090`
 *   **OpenSearch**: `http://localhost:9200`
-*   **OpenSearch Dashboards**: `http://localhost:5601`
+
+## Documentation
+
+*   [Getting Started Guide](docs/getting-started.md)
+*   [Architecture Overview](docs/architecture.md)
+*   [API Documentation](docs/api-documentation.md)
 
 ## License
 
