@@ -8,8 +8,8 @@ interface EmbeddedGrafanaPanelProps {
 }
 
 export const EmbeddedGrafanaPanel: React.FC<EmbeddedGrafanaPanelProps> = ({ src, className, title }) => {
-  // Base Grafana URL (can be configured via env var, defaults to localhost:3000 for dev)
-  const GRAFANA_BASE_URL = import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3000';
+  // Base Grafana URL (can be configured via env var, defaults to localhost:3001 for dev as per docs)
+  const GRAFANA_BASE_URL = import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3001';
 
   // Construct the full URL ensuring kiosk mode and theme are set
   // We assume the incoming 'src' is the path like '/d-solo/...'

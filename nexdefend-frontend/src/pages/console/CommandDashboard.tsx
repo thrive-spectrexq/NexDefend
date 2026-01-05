@@ -146,8 +146,8 @@ export default function CommandDashboard() {
             </GlassCard>
         </div>
 
-        {/* Right: Wazuh Modules Status (Live Data) */}
-        <GlassCard title="Wazuh Module Status" className="h-[400px]">
+        {/* Right: Security Modules Status (Live Data) */}
+        <GlassCard title="Security Module Status" className="h-[400px]">
             <div className="space-y-4">
                 {stats?.modules.map((mod) => {
                     const Icon = getIconForModule(mod.name);
