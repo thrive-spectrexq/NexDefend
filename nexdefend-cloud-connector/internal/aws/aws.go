@@ -1,77 +1,87 @@
-
 package aws
 
 import (
 	"context"
 	"fmt"
-	"time"
+	"log"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-// StartAWSIntegration initializes the AWS integration, fetching logs from S3 and sending them to Kafka.
-func StartAWSIntegration(producer *kafka.Producer, topic string, bucketName string, region string) {
-	fmt.Printf("Starting AWS integration for bucket: %s (Region: %s)...\n", bucketName, region)
+type AWSCollector struct {
+	Client *ec2.Client
+}
 
-	var lastProcessedTime time.Time
+type CloudAsset struct {
+	InstanceID   string `json:"instance_id"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	State        string `json:"state"`
+	PublicIP     string `json:"public_ip"`
+	PrivateIP    string `json:"private_ip"`
+	Region       string `json:"region"`
+}
 
-	go func() {
-		for {
-			// Load the Shared AWS Configuration (~/.aws/config)
-			cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
-			if err != nil {
-				fmt.Printf("Failed to load AWS config: %v\n", err)
-				time.Sleep(10 * time.Second)
-				continue
-			}
+// NewAWSCollector initializes the AWS client
+func NewAWSCollector(region string) (*AWSCollector, error) {
+	// Load config from ~/.aws/config or environment variables (AWS_ACCESS_KEY_ID, etc.)
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("unable to load SDK config: %v", err)
+	}
 
-			// Create an Amazon S3 service client
-			client := s3.NewFromConfig(cfg)
+	return &AWSCollector{
+		Client: ec2.NewFromConfig(cfg),
+	}, nil
+}
 
-			if bucketName == "" {
-				fmt.Println("AWS S3 Bucket name not configured. Skipping AWS integration.")
-				return
-			}
+// FetchAssets retrieves running EC2 instances
+func (c *AWSCollector) FetchAssets() ([]CloudAsset, error) {
+	log.Println("Fetching AWS Assets...")
 
-			// Get the first page of results for ListObjectsV2 for a bucket
-			output, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-				Bucket: &bucketName,
-			})
-			if err != nil {
-				fmt.Printf("Failed to list objects in bucket %s: %v\n", bucketName, err)
-				time.Sleep(10 * time.Second)
-				continue
-			}
+	var assets []CloudAsset
+	input := &ec2.DescribeInstancesInput{}
 
-			var maxTime time.Time
-			if !lastProcessedTime.IsZero() {
-				maxTime = lastProcessedTime
-			}
+	paginator := ec2.NewDescribeInstancesPaginator(c.Client, input)
 
-			for _, object := range output.Contents {
-				if object.LastModified != nil && object.LastModified.After(lastProcessedTime) {
-					key := *object.Key
-					fmt.Printf("Processing new key: %s (Modified: %s)\n", key, object.LastModified)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, fmt.Errorf("failed to describe instances: %v", err)
+		}
 
-					// produce message to kafka
-					producer.Produce(&kafka.Message{
-						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-						Value:          []byte(fmt.Sprintf("New S3 object detected: %s", key)),
-					}, nil)
+		for _, reservation := range page.Reservations {
+			for _, instance := range reservation.Instances {
+				// Only track running instances
+				if instance.State.Name != types.InstanceStateNameRunning {
+					continue
+				}
 
-					if object.LastModified.After(maxTime) {
-						maxTime = *object.LastModified
+				name := "Unknown"
+				for _, tag := range instance.Tags {
+					if *tag.Key == "Name" {
+						name = *tag.Value
+						break
 					}
 				}
+
+				asset := CloudAsset{
+					InstanceID: *instance.InstanceId,
+					Name:       name,
+					Type:       string(instance.InstanceType),
+					State:      string(instance.State.Name),
+					PrivateIP:  aws.ToString(instance.PrivateIpAddress),
+					PublicIP:   aws.ToString(instance.PublicIpAddress),
+				}
+
+				assets = append(assets, asset)
 			}
-
-			lastProcessedTime = maxTime
-
-			time.Sleep(60 * time.Second) // Poll for new logs every 60 seconds
 		}
-	}()
+	}
 
-	fmt.Println("AWS integration running.")
+	log.Printf("Found %d active AWS assets", len(assets))
+	return assets, nil
 }
