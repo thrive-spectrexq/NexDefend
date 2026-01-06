@@ -1,206 +1,108 @@
-import { useState } from 'react';
-import { PageTransition } from '../components/common/PageTransition';
-import { Settings as SettingsIcon, Cloud, Shield, Server, Sliders } from 'lucide-react';
-import { cn } from '../lib/utils';
-
-// Removed legacy CSS imports to rely on Tailwind
-// import './Settings.css';
-// import './Integrations.css';
+import { useEffect, useState } from 'react';
+import { Save, Shield, Database, Activity } from 'lucide-react';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState('general');
-  const [provider, setProvider] = useState('aws');
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
-  const [agentConfig, setAgentConfig] = useState('{\n  "hostname": "FIN-WS-004",\n  "log_level": "info",\n  "modules": ["process", "network", "file"]\n}');
-  const [threatFeed, setThreatFeed] = useState('');
+  const [config, setConfig] = useState({
+    virustotal_key: '',
+    ollama_url: 'http://localhost:11434/api/generate',
+    refresh_rate: 2,
+    auto_block: false,
+    theme: 'dark'
+  });
+  const [status, setStatus] = useState('');
 
-  const handleCloudSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('/api/v1/cloud-credentials', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          provider,
-          credentials_encrypted: `${apiKey}:${apiSecret}` // This is not real encryption
-        })
-      });
-      if (response.ok) {
-        alert('Credentials saved successfully!');
-        setApiKey('');
-        setApiSecret('');
-      } else {
-        alert('Failed to save credentials.');
-      }
-    } catch (error) {
-      console.error('Error saving credentials:', error);
-      alert('An error occurred while saving credentials.');
+  useEffect(() => {
+    if (window.go?.main?.App) {
+      window.go.main.App.GetSettings().then(setConfig);
     }
-  };
+  }, []);
 
-  const handleAgentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // We assume the user enters configuration for a specific hostname.
-    // In a real UI, this would be a selection from a dropdown or a specific config page per agent.
-    // For now, we will try to parse a hostname from the config or prompt for one, but to keep it simple
-    // we'll assume there is a 'hostname' field in the text area JSON, or we default to 'all'.
-
-    try {
-        let configObj;
-        try {
-            configObj = JSON.parse(agentConfig);
-        } catch {
-            alert("Invalid JSON configuration.");
-            return;
-        }
-
-        const hostname = configObj.hostname || "default-agent"; // Fallback if not specified
-
-        const response = await fetch('/api/v1/agent/config', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({
-                hostname: hostname,
-                config: configObj
-            })
-        });
-
-        if (response.ok) {
-            alert('Agent configuration saved!');
-        } else {
-            alert('Failed to save agent configuration.');
-        }
-    } catch (error) {
-        console.error('Error saving agent config:', error);
-        alert('An error occurred.');
+  const handleSave = async () => {
+    if (window.go?.main?.App) {
+      const res = await window.go.main.App.SaveSettings(config);
+      setStatus(res);
+      setTimeout(() => setStatus(''), 3000);
     }
-  };
-
-  const handleThreatFeedSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Currently, there is no backend endpoint for persisting threat feeds in the database
-    // other than the TIP integration which is configured via environment variables or specialized services.
-    // We will log this for now.
-    console.log("Submitting threat feed:", threatFeed);
-    alert('Threat feed submitted (Mock)!');
   };
 
   return (
-    <PageTransition className="space-y-6">
-      <h1 className="text-2xl font-bold text-text flex items-center gap-3">
-          <SettingsIcon className="text-brand-blue" />
-          Configuration
+    <div className="p-8 bg-slate-900 min-h-screen text-white">
+      <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
+        <Shield className="text-blue-400" /> System Configuration
       </h1>
 
-      <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar Tabs */}
-          <div className="w-full md:w-64 flex flex-col gap-1">
-            {[
-                { id: 'general', label: 'General', icon: Sliders },
-                { id: 'integrations', label: 'Cloud Integrations', icon: Cloud },
-                { id: 'agents', label: 'Agents', icon: Server },
-                { id: 'threat-intelligence', label: 'Threat Intel', icon: Shield },
-            ].map((tab) => (
-                <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left",
-                        activeTab === tab.id
-                            ? "bg-brand-blue text-background"
-                            : "text-text-muted hover:bg-surface-highlight hover:text-text"
-                    )}
-                >
-                    <tab.icon size={18} />
-                    {tab.label}
-                </button>
-            ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        {/* API Integrations */}
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Database size={20} /> External Integrations
+          </h2>
+
+          <div className="mb-4">
+            <label className="block text-sm text-slate-400 mb-1">VirusTotal API Key</label>
+            <input
+              type="password"
+              className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 outline-none"
+              value={config.virustotal_key}
+              onChange={e => setConfig({...config, virustotal_key: e.target.value})}
+              placeholder="Enter VT API Key..."
+            />
           </div>
 
-          {/* Content Area */}
-          <div className="flex-1 bg-surface border border-surface-highlight rounded-lg p-6">
-            {activeTab === 'general' && (
-            <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-text mb-4 border-b border-surface-highlight pb-2">General Settings</h2>
-                <div className="text-text-muted">
-                    <p className="mb-4">Global system preferences for the NexDefend console.</p>
-                    <div className="flex items-center justify-between p-4 border border-surface-highlight rounded mb-2">
-                        <span>Dark Mode</span>
-                        <div className="w-10 h-6 bg-brand-blue rounded-full relative cursor-pointer">
-                            <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between p-4 border border-surface-highlight rounded">
-                        <span>Email Notifications</span>
-                        <div className="w-10 h-6 bg-surface-highlight rounded-full relative cursor-pointer">
-                            <div className="absolute left-1 top-1 w-4 h-4 bg-text-muted rounded-full"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            )}
-            {activeTab === 'integrations' && (
-            <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-text mb-4 border-b border-surface-highlight pb-2">Cloud Integrations</h2>
-                <form className="space-y-4" onSubmit={handleCloudSubmit}>
-                <div>
-                    <label htmlFor="provider" className="block text-sm font-medium text-text-muted mb-1">Provider</label>
-                    <select id="provider" name="provider" value={provider} onChange={(e) => setProvider(e.target.value)}
-                        className="w-full bg-background border border-surface-highlight rounded px-3 py-2 text-text focus:border-brand-blue focus:outline-none">
-                        <option value="aws">AWS</option>
-                        <option value="azure">Azure</option>
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="apiKey" className="block text-sm font-medium text-text-muted mb-1">API Key / Access Key ID</label>
-                    <input type="text" id="apiKey" name="apiKey" value={apiKey} onChange={(e) => setApiKey(e.target.value)}
-                        className="w-full bg-background border border-surface-highlight rounded px-3 py-2 text-text focus:border-brand-blue focus:outline-none" placeholder="AKIA..." />
-                </div>
-                <div>
-                    <label htmlFor="apiSecret" className="block text-sm font-medium text-text-muted mb-1">API Secret / Secret Key</label>
-                    <input type="password" id="apiSecret" name="apiSecret" value={apiSecret} onChange={(e) => setApiSecret(e.target.value)}
-                        className="w-full bg-background border border-surface-highlight rounded px-3 py-2 text-text focus:border-brand-blue focus:outline-none" placeholder="••••••••" />
-                </div>
-                <button type="submit" className="px-4 py-2 bg-brand-blue text-background rounded font-semibold hover:bg-brand-blue/90 transition-colors">Save Credentials</button>
-                </form>
-            </div>
-            )}
-            {activeTab === 'agents' && (
-            <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-text mb-4 border-b border-surface-highlight pb-2">Agent Configuration</h2>
-                <form className="space-y-4" onSubmit={handleAgentSubmit}>
-                <div>
-                    <label htmlFor="agentConfig" className="block text-sm font-medium text-text-muted mb-1">JSON Configuration Policy</label>
-                    <textarea id="agentConfig" name="agentConfig" rows={10} value={agentConfig} onChange={(e) => setAgentConfig(e.target.value)}
-                        className="w-full bg-background border border-surface-highlight rounded px-3 py-2 text-text font-mono text-sm focus:border-brand-blue focus:outline-none" />
-                </div>
-                <button type="submit" className="px-4 py-2 bg-brand-blue text-background rounded font-semibold hover:bg-brand-blue/90 transition-colors">Push Configuration</button>
-                </form>
-            </div>
-            )}
-            {activeTab === 'threat-intelligence' && (
-            <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-text mb-4 border-b border-surface-highlight pb-2">Threat Intelligence Feeds</h2>
-                <form className="space-y-4" onSubmit={handleThreatFeedSubmit}>
-                <div>
-                    <label htmlFor="threatFeed" className="block text-sm font-medium text-text-muted mb-1">Threat Feed URL (STIX/TAXII)</label>
-                    <input type="text" id="threatFeed" name="threatFeed" value={threatFeed} onChange={(e) => setThreatFeed(e.target.value)}
-                        className="w-full bg-background border border-surface-highlight rounded px-3 py-2 text-text focus:border-brand-blue focus:outline-none" placeholder="https://..." />
-                </div>
-                <button type="submit" className="px-4 py-2 bg-brand-blue text-background rounded font-semibold hover:bg-brand-blue/90 transition-colors">Add Feed</button>
-                </form>
-            </div>
-            )}
+          <div className="mb-4">
+            <label className="block text-sm text-slate-400 mb-1">Ollama AI URL</label>
+            <input
+              type="text"
+              className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-blue-500 outline-none"
+              value={config.ollama_url}
+              onChange={e => setConfig({...config, ollama_url: e.target.value})}
+            />
           </div>
+        </div>
+
+        {/* Behavior Settings */}
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Activity size={20} /> Agent Behavior
+          </h2>
+
+          <div className="mb-6">
+            <label className="block text-sm text-slate-400 mb-1">Refresh Rate (Seconds)</label>
+            <input
+              type="number"
+              className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+              value={config.refresh_rate}
+              onChange={e => setConfig({...config, refresh_rate: parseInt(e.target.value)})}
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="autoblock"
+              checked={config.auto_block}
+              onChange={e => setConfig({...config, auto_block: e.target.checked})}
+              className="w-5 h-5 rounded bg-slate-700 border-slate-600"
+            />
+            <label htmlFor="autoblock" className="cursor-pointer">
+              <span className="block font-medium">Auto-Response Mode</span>
+              <span className="text-sm text-slate-400">Automatically kill processes flagged as Critical Threats</span>
+            </label>
+          </div>
+        </div>
       </div>
-    </PageTransition>
+
+      <div className="mt-8 flex items-center gap-4">
+        <button
+          onClick={handleSave}
+          className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 transition"
+        >
+          <Save size={18} /> Save Configuration
+        </button>
+        {status && <span className="text-green-400">{status}</span>}
+      </div>
+    </div>
   );
 };
 
