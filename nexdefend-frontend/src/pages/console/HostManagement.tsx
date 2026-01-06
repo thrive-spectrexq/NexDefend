@@ -62,8 +62,31 @@ const statusColors: Record<string, string> = {
     'Reduced': 'bg-brand-orange',
 };
 
+import { useState, useEffect } from 'react';
+
 export default function HostManagement() {
     const navigate = useNavigate();
+    const [localHost, setLocalHost] = useState<any>(null);
+
+    useEffect(() => {
+        if (window.go?.main?.App) {
+            window.go.main.App.GetSystemInfo().then((info) => {
+                setLocalHost({
+                    id: 'LOCAL',
+                    hostname: info.hostname || 'Local Machine',
+                    ip: '127.0.0.1', // Wails doesn't easily give IP without net interfaces check, simplified for now
+                    os: 'Current OS', // GetSystemInfo returns basic info
+                    status: info.status,
+                    version: 'N/A',
+                    agentVersion: 'Embedded',
+                    group: 'Local',
+                    lastSeen: 'Now'
+                });
+            });
+        }
+    }, []);
+
+    const allHosts = localHost ? [localHost, ...hosts] : hosts;
 
     return (
         <div className="flex h-full gap-6">
@@ -122,7 +145,7 @@ export default function HostManagement() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {hosts.map(host => (
+                    {allHosts.map(host => (
                         <div
                             key={host.id}
                             onClick={() => navigate(`/dashboard/hosts/${host.id}`)}

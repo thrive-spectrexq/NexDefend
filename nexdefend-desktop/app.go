@@ -34,9 +34,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
 	// 1. Initialize Local Search
-	// We use the user's temp dir for demo purposes.
-	// In prod, use: os.UserConfigDir()
-	dataDir := os.TempDir()
+	dataDir, _ := os.UserConfigDir()
 	idx, err := search.NewIndexer(dataDir)
 	if err != nil {
 		fmt.Printf("Error initializing search: %v\n", err)
@@ -45,7 +43,7 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	// 2. Initialize Config Store
-	cfgPath := os.TempDir() // Or os.UserConfigDir()
+	cfgPath, _ := os.UserConfigDir()
 	store, err := config.NewStore(cfgPath)
 	if err != nil {
 		fmt.Printf("Error initializing config store: %v\n", err)
