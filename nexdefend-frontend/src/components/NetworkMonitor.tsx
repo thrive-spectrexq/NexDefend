@@ -1,28 +1,31 @@
 import { useEffect, useState } from 'react';
-import { useRiskStore } from '../stores/riskStore';
 
 const NetworkMonitor = () => {
   const [flows, setFlows] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
-  const { calculateRisk } = useRiskStore();
 
   useEffect(() => {
     if (window.runtime) {
       // Listen for NetFlow events from Go
+      // Note: In a real Wails app, ensure to unregister these on unmount if possible to avoid leaks.
+      // For now we assume this component stays mounted or Wails handles it.
+      // But typically we should use EventsOff.
       window.runtime.EventsOn("network-flow", (flow: any) => {
         setFlows((prev) => [flow, ...prev].slice(0, 20)); // Keep last 20
       });
 
-      // Listen for Security Alerts
       window.runtime.EventsOn("security-alert", (alert: any) => {
-        setAlerts((prev) => {
-          const newAlerts = [alert, ...prev];
-          calculateRisk(newAlerts); // Update global risk store
-          return newAlerts;
-        });
+        setAlerts((prev) => [alert, ...prev]);
       });
+
+      return () => {
+          if ((window.runtime as any).EventsOff) {
+              (window.runtime as any).EventsOff("network-flow");
+              (window.runtime as any).EventsOff("security-alert");
+          }
+      }
     }
-  }, [calculateRisk]);
+  }, []);
 
   return (
     <div className="p-6 bg-slate-900 min-h-screen text-white grid grid-cols-1 lg:grid-cols-2 gap-6">

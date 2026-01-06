@@ -27,8 +27,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import HomePage from './pages/HomePage';
 import PrivateRoute from './layouts/PrivateRoute';
+import { useGlobalEvents } from './hooks/useGlobalEvents';
 
 function App() {
+  useGlobalEvents(); // Initialize global event listeners
+
   return (
     <Router>
       <Routes>
