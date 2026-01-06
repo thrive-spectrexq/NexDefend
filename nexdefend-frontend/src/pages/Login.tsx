@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
 import { Shield, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 import { authApiClient } from '../api/apiClient';
@@ -169,6 +169,12 @@ const Login = () => {
                   Protected by NexDefend Identity
                 </span>
               </div>
+            </div>
+
+            <div className="mt-6 grid gap-3">
+               <Link to="/register" className="w-full flex justify-center py-2.5 px-4 border border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors">
+                 Create an Account
+               </Link>
             </div>
           </div>
         </div>

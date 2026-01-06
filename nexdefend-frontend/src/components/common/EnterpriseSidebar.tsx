@@ -59,11 +59,11 @@ const EnterpriseSidebar = () => {
           />
 
           <div className={`space-y-1 mt-1 overflow-hidden transition-all duration-300 ${openSections.sec ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <NavItem to="/" icon={<LayoutGrid size={18} />} label="Security Posture" />
-            <NavItem to="/mission-control" icon={<AlertTriangle size={18} />} label="Mission Control" count={5} activeColor="text-red-400" />
-            <NavItem to="/threat-hunting" icon={<Search size={18} />} label="Threat Hunting" />
-            <NavItem to="/vulnerabilities" icon={<Bug size={18} />} label="Vulnerabilities" />
-            <NavItem to="/playbooks" icon={<Zap size={18} />} label="SOAR Playbooks" />
+            <NavItem to="/dashboard" icon={<LayoutGrid size={18} />} label="Security Posture" end />
+            <NavItem to="/dashboard/mission-control" icon={<AlertTriangle size={18} />} label="Mission Control" count={5} activeColor="text-red-400" />
+            <NavItem to="/dashboard/threat-hunting" icon={<Search size={18} />} label="Threat Hunting" />
+            <NavItem to="/dashboard/vulnerabilities" icon={<Bug size={18} />} label="Vulnerabilities" />
+            <NavItem to="/dashboard/playbooks" icon={<Zap size={18} />} label="SOAR Playbooks" />
           </div>
         </div>
 
@@ -77,9 +77,10 @@ const EnterpriseSidebar = () => {
           />
 
           <div className={`space-y-1 mt-1 overflow-hidden transition-all duration-300 ${openSections.obs ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <NavItem to="/service-map" icon={<Map size={18} />} label="Service Topology" />
-            <NavItem to="/infrastructure" icon={<Server size={18} />} label="Infrastructure" />
-            <NavItem to="/network" icon={<Globe size={18} />} label="Network Traffic" />
+            <NavItem to="/dashboard/service-map" icon={<Map size={18} />} label="Service Topology" />
+            <NavItem to="/dashboard/infrastructure" icon={<Server size={18} />} label="Infrastructure" />
+            <NavItem to="/dashboard/network" icon={<Globe size={18} />} label="Network Traffic" />
+            <NavItem to="/dashboard/processes" icon={<Activity size={18} />} label="Process Explorer" />
           </div>
         </div>
 
@@ -93,9 +94,9 @@ const EnterpriseSidebar = () => {
           />
 
           <div className={`space-y-1 mt-1 overflow-hidden transition-all duration-300 ${openSections.admin ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <NavItem to="/reports" icon={<FileText size={18} />} label="Reports" />
-            <NavItem to="/integrations" icon={<Zap size={18} />} label="Integrations" />
-            <NavItem to="/settings" icon={<Settings size={18} />} label="Configuration" />
+            <NavItem to="/dashboard/reports" icon={<FileText size={18} />} label="Reports" />
+            <NavItem to="/dashboard/integrations" icon={<Zap size={18} />} label="Integrations" />
+            <NavItem to="/dashboard/settings" icon={<Settings size={18} />} label="Configuration" />
           </div>
         </div>
 
