@@ -15,6 +15,7 @@ declare global {
           GetRunningProcesses: () => Promise<any[]>;
           GetProcessDetail: (pid: number) => Promise<any>;
           KillProcess: (pid: number) => Promise<string>;
+          AskSentinel: (query: string) => Promise<string>;
         }
       }
     }
