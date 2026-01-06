@@ -25,6 +25,7 @@ import Integrations from './pages/Integrations'; // Assuming this exists or map 
 // --- Auth ---
 import Login from './pages/Login';
 import Register from './pages/Register';
+import HomePage from './pages/HomePage';
 import PrivateRoute from './layouts/PrivateRoute';
 
 function App() {
@@ -35,8 +36,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Public Landing Page */}
+        <Route path="/" element={<HomePage />} />
+
         {/* Protected Enterprise Routes */}
-        <Route path="/" element={
+        <Route path="/dashboard" element={
           <PrivateRoute>
             <EnterpriseLayout />
           </PrivateRoute>
