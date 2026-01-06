@@ -40,7 +40,8 @@ NexDefend operates as a distributed system of specialized microservices:
 ### 1. Prerequisites
 
 *   **Docker & Docker Compose** (for Cloud Mode)
-*   **Go 1.21+** & **Node.js 16+** (for Desktop/Dev)
+*   **Go 1.21+** & **Node.js 18+** (for Desktop/Dev)
+*   **Wails CLI**: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
 *   **Ollama**: Required for local "Sentinel" AI features. Install and pull a model (e.g., `ollama run mistral`).
 
 ### 2. Quick Start (Cloud Mode)
@@ -63,13 +64,21 @@ Access the dashboard at **http://localhost:3000**.
 
 ### 3. Quick Start (Desktop Mode)
 
-Run the standalone offline application:
+Run the standalone offline application with Embedded Architecture:
 
 ```bash
 cd nexdefend-desktop
+# Install frontend dependencies (if not already done)
+cd ../nexdefend-frontend && npm install && cd ../nexdefend-desktop
+
+# Run in Development Mode (Hot Reloading)
+wails dev
+
+# Build Final Binary
 wails build
-./build/bin/nexdefend-desktop  # (or .exe on Windows)
 ```
+
+The compiled binary will be in `nexdefend-desktop/build/bin/`.
 
 ### 4. Access Points
 

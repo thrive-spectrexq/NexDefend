@@ -4,7 +4,9 @@ This guide provides step-by-step instructions on how to set up and run the NexDe
 
 ### 1. Prerequisites
 
-*   Docker & Docker Compose
+*   Docker & Docker Compose (for Cloud Mode)
+*   Go 1.21+ & Node.js 18+ (for Desktop Mode)
+*   Wails CLI (for Desktop Mode): `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
 *   Git
 
 ### 2. Clone the Repository
@@ -14,7 +16,7 @@ git clone https://github.com/thrive-spectrexq/NexDefend.git
 cd NexDefend
 ```
 
-### 3. Create Environment Files
+### 3. Create Environment Files (Cloud Mode)
 
 You must create two `.env` files.
 
@@ -57,7 +59,7 @@ GO_API_URL=http://localhost:8080/api/v1
 AI_SERVICE_TOKEN=my_secure_service_to_service_token_abc987
 ```
 
-### 4. Run with Docker Compose
+### 4. Run with Docker Compose (Cloud Mode)
 
 This is the recommended method to start all services.
 
@@ -65,11 +67,28 @@ This is the recommended method to start all services.
 docker-compose up -d --build
 ```
 
-### 5. (Optional) Populate Sample Data
+### 5. Run Desktop Application (Desktop Mode)
 
-If the `suricata_events` table is empty, you may need to run a one-time script to populate it from the `sample_eve.json` for the AI model to have data.
+For offline or standalone usage:
 
-### 6. Train the AI Model
+1.  **Configure Wails**: Ensure `nexdefend-desktop/wails.json` points to `../nexdefend-frontend`.
+2.  **Install Frontend Deps**:
+    ```bash
+    cd nexdefend-frontend
+    npm install
+    cd ../nexdefend-desktop
+    ```
+3.  **Run Dev Mode**:
+    ```bash
+    wails dev
+    ```
+4.  **Build Binary**:
+    ```bash
+    wails build
+    ```
+    The output binary will be in `nexdefend-desktop/build/bin/`.
+
+### 6. Train the AI Model (Cloud Mode)
 
 After the services are running, you must train the initial AI model.
 

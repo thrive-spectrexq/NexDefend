@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 
 	"github.com/shirou/gopsutil/v3/process"
@@ -164,4 +168,52 @@ func (a *App) GetRunningProcesses() []ProcessInfo {
 		})
 	}
 	return list
+}
+
+// ChatRequest for Ollama
+type ChatRequest struct {
+    Model  string `json:"model"`
+    Prompt string `json:"prompt"`
+    Stream bool   `json:"stream"`
+}
+
+type ChatResponse struct {
+    Response string `json:"response"`
+}
+
+// AskSentinel sends a prompt to the local AI engine
+func (a *App) AskSentinel(query string) string {
+    // 1. Check if we have context to add
+    // (In a real scenario, you might grab the selected log line or process info here)
+    systemContext := "You are Sentinel, a security AI running locally on NexDefend. Answer briefly and professionally."
+
+    // Get configured URL from store
+    settings := a.GetSettings()
+    url := settings.OllamaURL // e.g. "http://localhost:11434/api/generate"
+
+    // 2. Prepare Payload
+    payload := ChatRequest{
+        Model:  "mistral", // Or "llama3", make sure user has this pulled
+        Prompt: fmt.Sprintf("%s\n\nUser: %s\nSentinel:", systemContext, query),
+        Stream: false,
+    }
+
+    jsonData, _ := json.Marshal(payload)
+
+    // 3. Send Request
+    resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+    if err != nil {
+        return "Error: Could not connect to Local AI (Ollama). Is it running?"
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        return fmt.Sprintf("Error: AI returned status %d", resp.StatusCode)
+    }
+
+    body, _ := io.ReadAll(resp.Body)
+    var result ChatResponse
+    json.Unmarshal(body, &result)
+
+    return result.Response
 }
