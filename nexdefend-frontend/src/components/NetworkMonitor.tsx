@@ -1,21 +1,5 @@
 import { useEffect, useState } from 'react';
 
-// Define the Wails Runtime types (usually auto-generated)
-declare global {
-  interface Window {
-    runtime: {
-      EventsOn: (event: string, callback: (data: any) => void) => void;
-    };
-    go: {
-      main: {
-        App: {
-          SearchLogs: (query: string) => Promise<any>;
-        }
-      }
-    }
-  }
-}
-
 const NetworkMonitor = () => {
   const [flows, setFlows] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);

@@ -10,6 +10,7 @@ import HostManagement from './pages/console/HostManagement'
 import HostDetails from './pages/console/HostDetails'
 import InvestigationView from './pages/console/InvestigationView'
 import Settings from './pages/Settings'
+import ProcessExplorer from './pages/ProcessExplorer'
 import AIDashboardPage from './pages/AIDashboardPage'
 import Support from './pages/console/Support'
 import Alerts from './pages/Alerts'
@@ -44,6 +45,7 @@ function App() {
             <Route path="hosts" element={<HostManagement />} />
             <Route path="hosts/:id" element={<HostDetails />} />
             <Route path="network" element={<NetworkTopology />} />
+            <Route path="processes" element={<ProcessExplorer />} />
             <Route path="vulnerabilities" element={<Vulnerabilities />} />
             <Route path="investigate" element={<InvestigationView />} />
             <Route path="soar" element={<SOARPlaybookEditor />} />
