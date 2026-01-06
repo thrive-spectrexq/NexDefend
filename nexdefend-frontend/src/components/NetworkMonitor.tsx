@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useRiskStore } from '../stores/riskStore';
 
 const NetworkMonitor = () => {
   const [flows, setFlows] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const { calculateRisk } = useRiskStore();
 
   useEffect(() => {
     if (window.runtime) {
@@ -13,11 +15,14 @@ const NetworkMonitor = () => {
 
       // Listen for Security Alerts
       window.runtime.EventsOn("security-alert", (alert: any) => {
-        setAlerts((prev) => [alert, ...prev]);
-        // Optional: Trigger native desktop notification here
+        setAlerts((prev) => {
+          const newAlerts = [alert, ...prev];
+          calculateRisk(newAlerts); // Update global risk store
+          return newAlerts;
+        });
       });
     }
-  }, []);
+  }, [calculateRisk]);
 
   return (
     <div className="p-6 bg-slate-900 min-h-screen text-white grid grid-cols-1 lg:grid-cols-2 gap-6">
