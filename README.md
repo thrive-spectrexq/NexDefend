@@ -1,98 +1,133 @@
-# NexDefend: AI-Powered Systems and Service Monitoring System
+# NexDefend - AI-Powered System Monitoring and Threat Intelligence Platform
 
-NexDefend is an industry-standard **AI-Powered Systems and Service Monitoring System** designed to bridge the gap between traditional monitoring and "Tier 1" enterprise platforms. It combines real-time metric collection, rule evaluation, and proactive threat detection with a cognitive intelligence layer.
+NexDefend is a comprehensive cybersecurity platform combining **EDR** (Endpoint Detection & Response), **XDR** (Extended Detection & Response), **SIEM** (Security Information & Event Management), and **SOAR** (Security Orchestration, Automation, and Response) into a single, cohesive solution.
 
-The platform provides a unified "Single Pane of Glass" dashboard for visualizing the health, performance, and security posture of your infrastructure, capable of running in both a scalable Cloud mode and an offline "Battle Station" Desktop mode.
+Powered by advanced AI and real-time analytics, NexDefend provides deep visibility, automated defense, and predictive intelligence for modern enterprises.
 
-## Key Features
+## Main Features
 
-### 1. Cognitive Intelligence (GenAI & Predictive)
-*   **"Sentinel" GenAI Copilot**: An integrated AI assistant (powered by Ollama or OpenAI) that allows operators to chat with their data. Ask questions like "Why did the CPU spike?" and get correlated answers.
-*   **Predictive Resource Forecasting**: AI-driven trend analysis (Prophet/LSTM) to predict future resource usage (e.g., disk full warnings 24h in advance).
+### 🛡️ System Monitoring
+* **Resource Usage Tracking**: Real-time monitoring of CPU, Memory, Disk, and Network usage across all endpoints.
+* **Process Monitoring**: Deep inspection of running processes to detect anomalies and unauthorized execution.
+* **File Integrity Monitoring (FIM)**: Real-time tracking of changes to critical system files to prevent tampering.
 
-### 2. Deep Visibility (Interactive Visualization)
-*   **Interactive Network Topology Map**: A dynamic, real-time graph visualization of your infrastructure and asset connections using ReactFlow.
-*   **Cyber-Tactical Visuals**: A high-contrast dark theme with Glassmorphism UI, neon data visualization, and a global command bar for rapid navigation.
-*   **Process Tree Forensics**: Visualizes parent-child process relationships to trace the root cause of security incidents.
+### 🔍 Threat Intelligence
+* **AI-Powered Analysis**: Anomaly detection using Isolation Forest and real-time AI scoring of security events.
+* **Threat Hunting**: Advanced search capabilities to uncover hidden threats within your network.
+* **Vulnerability Detection**: Automated scanning (powered by Nmap and Trivy) to identify open ports and CVEs.
 
-### 3. Active Defense & Automation
-*   **Monitoring Agent**: Lightweight Go agent for cross-platform (Linux, Windows, macOS) collection of metrics, logs, FIM, and network flows.
-*   **Automated Response (SOAR)**: Trigger automated playbooks to remediate issues (e.g., block IP, restart service) based on alert logic.
-*   **Active Scanning**: Integrated Nmap scanning for service discovery and vulnerability assessment.
+### 💻 Automated Remediation
+* **Incident Response**: Automated workflow for incident creation, assignment, and tracking.
+* **Auto-Scaling**: (Planned) Dynamic resource adjustment based on load and threat levels.
+* **IT Hygiene**: Automated compliance checks for SSH, Firewall, and System configurations.
 
-### 4. Enterprise Experience (Desktop & Cloud)
-*   **Cloud Mode**: Full microservices architecture (Go, Python, Kafka, OpenSearch) for scalable enterprise deployment.
-*   **Desktop "Offline Battle Station"**: A standalone Wails-based application that runs entirely offline using local SQLite and embedded agents. Ideal for air-gapped environments or tactical analysis.
-*   **Local Intelligence**: The Desktop app integrates with local Ollama instances to provide GenAI capabilities without data leaving the machine.
+### ☁️ Cloud Monitoring
+* **Container Metrics**: Native integration for monitoring Docker and Kubernetes workloads.
+* **Cloud Posture**: Assessment of cloud infrastructure security configurations.
+* **Workload Health**: Continuous health checks for distributed cloud services.
+
+### 🧠 Cognitive Intelligence (GenAI & Predictive)
+* **GenAI Copilot ("Sentinel")**: Context-aware AI assistant powered by Ollama (Mistral) for querying system state and threat insights.
+* **Predictive Forecasting**: Linear regression modeling to forecast resource usage trends for the next 24 hours.
 
 ## Architecture
 
-NexDefend operates as a distributed system of specialized microservices:
+NexDefend follows a modular microservices architecture:
 
-*   **Core API (Go)**: The central nervous system handling auth, data aggregation, and API proxying.
-*   **Analytics Engine (Python)**: Handles heavy lifting for AI/ML, anomaly detection (`IsolationForest`), and LLM integration.
-*   **Frontend (React/TypeScript)**: A high-density, professional monitoring console.
-*   **Event Pipeline**: Kafka-based bus for high-throughput event processing and decoupling.
-*   **Storage**: PostgreSQL for structured data and OpenSearch for massive log retention.
+*   **NexDefend Agent**: A lightweight Go binary running on endpoints, collecting telemetry via eBPF/Netlink/fsnotify and shipping to Kafka.
+*   **NexDefend API (Go)**: The core backend handling ingestion, correlation, and REST API requests.
+*   **NexDefend AI (Python)**: A specialized service for Machine Learning (Isolation Forest) and GenAI (Ollama) processing.
+*   **NexDefend SOAR**: Orchestrates automated responses and playbook execution.
+*   **Data Layer**:
+    *   **Kafka**: High-throughput message bus for raw telemetry.
+    *   **PostgreSQL**: Relational storage for incidents, users, and assets.
+    *   **OpenSearch**: Indexed storage for massive log volumes and fast search.
+*   **Frontend**: A modern React application (Web & Desktop via Wails) for visualization and control.
+
+```mermaid
+graph TD
+    subgraph Endpoints
+        Agent[NexDefend Agent]
+    end
+
+    subgraph "Data Pipeline"
+        Kafka[Kafka Message Bus]
+    end
+
+    subgraph "Core Services"
+        API[NexDefend API (Go)]
+        AI[NexDefend AI (Python)]
+        SOAR[NexDefend SOAR]
+    end
+
+    subgraph "Storage"
+        DB[(PostgreSQL)]
+        Search[(OpenSearch)]
+    end
+
+    subgraph "Interface"
+        Web[Web Dashboard]
+        Desktop[Desktop App (Wails)]
+    end
+
+    Agent -->|Telemetry| Kafka
+    Kafka -->|Ingest| API
+    Kafka -->|Analysis| AI
+    Kafka -->|Triggers| SOAR
+
+    API --> DB
+    API --> Search
+    AI -->|Anomalies| API
+    SOAR -->|Actions| API
+
+    Web --> API
+    Desktop --> API
+```
 
 ## Getting Started
 
-### 1. Prerequisites
+### Prerequisites
+*   Docker & Docker Compose
+*   Go 1.21+
+*   Python 3.10+
+*   Node.js 18+ (for Frontend)
 
-*   **Docker & Docker Compose** (for Cloud Mode)
-*   **Go 1.21+** & **Node.js 18+** (for Desktop/Dev)
-*   **Wails CLI**: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
-*   **Ollama**: Required for local "Sentinel" AI features. Install and pull a model (e.g., `ollama run mistral`).
+### Installation
 
-### 2. Quick Start (Cloud Mode)
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/thrive-spectrexq/NexDefend.git
+    cd NexDefend
+    ```
 
-Run the full platform stack using Docker:
+2.  **Environment Setup**
+    Copy the example environment files:
+    ```bash
+    cp .env.example .env
+    ```
 
-```bash
-git clone https://github.com/thrive-spectrexq/NexDefend.git
-cd NexDefend
+3.  **Start Services**
+    Use Docker Compose to bring up the full stack (API, AI, Database, Kafka, OpenSearch):
+    ```bash
+    docker-compose up -d --build
+    ```
 
-# Create environment files (see docs/getting-started.md for templates)
-cp .env.example .env
-cp nexdefend-ai/.env.example nexdefend-ai/.env
+4.  **Run the Agent (Linux)**
+    Navigate to the agent directory and build/run it:
+    ```bash
+    cd nexdefend-agent
+    go build -o agent main.go linux_watchers.go
+    sudo ./agent
+    ```
 
-# Start services
-docker-compose up -d --build
-```
+5.  **Access the Dashboard**
+    Open your browser and navigate to `http://localhost:3000`.
 
-Access the dashboard at **http://localhost:3000**.
+### Development
 
-### 3. Quick Start (Desktop Mode)
-
-Run the standalone offline application with Embedded Architecture:
-
-```bash
-cd nexdefend-desktop
-# Install frontend dependencies (if not already done)
-cd ../nexdefend-frontend && npm install && cd ../nexdefend-desktop
-
-# Run in Development Mode (Hot Reloading)
-wails dev
-
-# Build Final Binary
-wails build
-```
-
-The compiled binary will be in `nexdefend-desktop/build/bin/`.
-
-### 4. Access Points
-
-*   **NexDefend Console**: `http://localhost:3000`
-*   **Grafana**: `http://localhost:3001` (admin:grafana)
-*   **Prometheus**: `http://localhost:9090`
-*   **OpenSearch**: `http://localhost:9200`
-
-## Documentation
-
-*   [Getting Started Guide](docs/getting-started.md)
-*   [Architecture Overview](docs/architecture.md)
-*   [API Documentation](docs/api-documentation.md)
+*   **Backend (Go)**: Run `go run main.go` from the root.
+*   **AI Service**: Run `python nexdefend-ai/api.py`.
+*   **Frontend**: `cd nexdefend-frontend && npm install && npm run dev`.
 
 ## License
-
-This project is licensed under the GNU General Public License v3.0.
+Proprietary / Closed Source (See LICENSE).

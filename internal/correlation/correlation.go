@@ -42,7 +42,7 @@ func NewCorrelationEngine() *SimpleCorrelationEngine {
 				Name: "Root Login Attempt",
 				Condition: func(e models.CommonEvent) bool {
 					// Check for auth events involving root that failed
-					return e.EventType == "auth" && strings.Contains(fmt.Sprintf("%v", e.Data), "user=root") && strings.Contains(fmt.Sprintf("%v", e.Data), "failed")
+					return e.EventType == "auth" && strings.Contains(fmt.Sprintf("%v", e.RawEvent), "user=root") && strings.Contains(fmt.Sprintf("%v", e.RawEvent), "failed")
 				},
 				Severity:    "High",
 				Description: "Multiple failed login attempts detected for root user.",
@@ -52,7 +52,7 @@ func NewCorrelationEngine() *SimpleCorrelationEngine {
 				Name: "Shadow File Modification",
 				Condition: func(e models.CommonEvent) bool {
 					// Check FIM events for critical files
-					return e.EventType == "fim" && (strings.Contains(fmt.Sprintf("%v", e.Data), "/etc/shadow") || strings.Contains(fmt.Sprintf("%v", e.Data), "/etc/passwd"))
+					return e.EventType == "fim" && (strings.Contains(fmt.Sprintf("%v", e.RawEvent), "/etc/shadow") || strings.Contains(fmt.Sprintf("%v", e.RawEvent), "/etc/passwd"))
 				},
 				Severity:    "Critical",
 				Description: "Critical system authentication file modified.",
