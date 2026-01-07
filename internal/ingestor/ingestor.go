@@ -12,28 +12,54 @@ import (
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
 	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"github.com/thrive-spectrexq/NexDefend/internal/normalizer"
+	"gorm.io/gorm"
 )
 
-// StartIngestor initializes and starts the ingestor service.
-func StartIngestor(correlationEngine correlation.CorrelationEngine) {
-	log.Println("Initializing ingestor service...")
-
-	// --- Kafka Consumer ---
-	kafkaBroker := os.Getenv("KAFKA_BROKER")
-	if kafkaBroker == "" {
-		kafkaBroker = "kafka:9092"
-	}
-
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBroker,
-		"group.id":          "nexdefend-api",
-		"auto.offset.reset": "earliest",
-	})
+// ProcessEvent handles a single normalized event: Correlation + Indexing
+func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correlation.CorrelationEngine, osClient *opensearch.Client, db *gorm.DB) {
+	// Send the event to the correlation engine
+	incident, err := correlationEngine.Correlate(*normalizedEvent)
 	if err != nil {
-		log.Fatalf("Failed to create Kafka consumer: %v", err)
+		log.Printf("Failed to correlate event: %v", err)
 	}
-	defer consumer.Close()
+
+	if incident != nil {
+		log.Printf("Incident created: %v", incident)
+		if result := db.Create(incident); result.Error != nil {
+			log.Printf("Failed to save incident to DB: %v", result.Error)
+		}
+	}
+
+	eventJSON, err := json.Marshal(normalizedEvent)
+	if err != nil {
+		log.Printf("Failed to marshal normalized event to JSON: %v", err)
+		return
+	}
+
+	// Index the event into OpenSearch
+	indexReq := opensearchapi.IndexRequest{
+		Index: "events",
+		Body:  strings.NewReader(string(eventJSON)),
+	}
+
+	res, err := indexReq.Do(context.Background(), osClient)
+	if err != nil {
+		log.Printf("Error getting response from OpenSearch: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Printf("Error indexing document: %s", res.String())
+	}
+}
+
+// StartIngestor initializes and starts the ingestor service.
+// It also accepts a channel for direct injection of events from internal collectors (NDR).
+func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEvents <-chan models.CommonEvent, db *gorm.DB) {
+	log.Println("Initializing ingestor service...")
 
 	// --- OpenSearch Client ---
 	opensearchAddr := os.Getenv("OPENSEARCH_ADDR")
@@ -48,61 +74,58 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine) {
 		log.Fatalf("Failed to create OpenSearch client: %v", err)
 	}
 
-	// --- Consume Loop ---
-	topic := "nexdefend-events"
-	err = consumer.SubscribeTopics([]string{topic}, nil)
-	if err != nil {
-		log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
+	// --- Internal Event Loop (NDR) ---
+	go func() {
+		if internalEvents == nil {
+			return
+		}
+		for event := range internalEvents {
+			ProcessEvent(&event, correlationEngine, osClient, db)
+		}
+	}()
+
+	// --- Kafka Consumer ---
+	kafkaBroker := os.Getenv("KAFKA_BROKER")
+	if kafkaBroker == "" {
+		kafkaBroker = "kafka:9092"
 	}
 
-	log.Println("Ingestor service started. Waiting for messages...")
-
-	for {
-		msg, err := consumer.ReadMessage(-1)
-		if err == nil {
-			normalizedEvent, err := normalizer.NormalizeEvent(msg.Value)
-			if err != nil {
-				log.Printf("Failed to normalize event: %v", err)
-				continue
-			}
-
-			// Send the event to the correlation engine
-			incident, err := correlationEngine.Correlate(*normalizedEvent)
-			if err != nil {
-				log.Printf("Failed to correlate event: %v", err)
-				continue
-			}
-
-			if incident != nil {
-				log.Printf("Incident created: %v", incident)
-			}
-
-			eventJSON, err := json.Marshal(normalizedEvent)
-			if err != nil {
-				log.Printf("Failed to marshal normalized event to JSON: %v", err)
-				continue
-			}
-
-			// Index the event into OpenSearch
-			indexReq := opensearchapi.IndexRequest{
-				Index: "events",
-				Body:  strings.NewReader(string(eventJSON)),
-			}
-
-			res, err := indexReq.Do(context.Background(), osClient)
-			if err != nil {
-				log.Printf("Error getting response from OpenSearch: %s", err)
-				continue
-			}
-			defer res.Body.Close()
-
-			if res.IsError() {
-				log.Printf("Error indexing document: %s", res.String())
-			}
-
-		} else {
-			// The client will automatically try to recover from all errors.
-			log.Printf("Consumer error: %v (%v)\n", err, msg)
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": kafkaBroker,
+		"group.id":          "nexdefend-api",
+		"auto.offset.reset": "earliest",
+	})
+	if err != nil {
+		log.Printf("Failed to create Kafka consumer: %v (Kafka might be down, continuing with internal ingest only)", err)
+		// We don't fatal here to allow standalone API testing without Kafka
+	} else {
+		defer consumer.Close()
+		topic := "nexdefend-events"
+		err = consumer.SubscribeTopics([]string{topic}, nil)
+		if err != nil {
+			log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
 		}
+
+		log.Println("Kafka Ingestor started. Waiting for messages...")
+
+		for {
+			msg, err := consumer.ReadMessage(-1)
+			if err == nil {
+				normalizedEvent, err := normalizer.NormalizeEvent(msg.Value)
+				if err != nil {
+					log.Printf("Failed to normalize event: %v", err)
+					continue
+				}
+				ProcessEvent(normalizedEvent, correlationEngine, osClient, db)
+
+			} else {
+				log.Printf("Consumer error: %v (%v)\n", err, msg)
+			}
+		}
+	}
+
+	// If Kafka failed, we still need to block to keep the goroutine alive for internal events
+	if err != nil {
+		select {}
 	}
 }

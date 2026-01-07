@@ -15,6 +15,7 @@ type Config struct {
 	CORSAllowedOrigins []string
 	JWTSecretKey       []byte // For user JWTs
 	AIServiceToken     string // For service-to-service auth
+	VirusTotalKey      string // For threat intelligence
 }
 
 // LoadConfig loads the application configuration from environment variables
@@ -53,11 +54,17 @@ func LoadConfig() *Config {
 		log.Println("WARNING: AI_SERVICE_TOKEN not set, using insecure default.")
 	}
 
+	vtKey := os.Getenv("VIRUSTOTAL_API_KEY")
+	if vtKey == "" {
+		log.Println("WARNING: VIRUSTOTAL_API_KEY not set, threat intelligence features will be limited.")
+	}
+
 	return &Config{
 		APIPrefix:          apiPrefix,
 		PythonAPI:          pythonAPI,
 		CORSAllowedOrigins: allowedOrigins,
 		JWTSecretKey:       []byte(jwtKey),
 		AIServiceToken:     aiToken,
+		VirusTotalKey:      vtKey,
 	}
 }

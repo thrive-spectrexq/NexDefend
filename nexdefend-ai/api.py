@@ -28,6 +28,7 @@ from ml_anomaly_detection import (
     score_anomalies,
     train_model,
 )
+from forecasting import forecast_resource_usage
 
 init_tracer_provider()
 
@@ -267,6 +268,20 @@ def score():
     except Exception as e:
         logging.error(f"Error during real-time scoring: {e}")
         return make_response(jsonify({"error": "Failed to make real-time score"}), 500)
+
+@app.route("/forecast", methods=["POST"])
+def forecast():
+    try:
+        data = request.get_json()
+        history = data.get("history")
+        if not history:
+            return make_response(jsonify({"error": "History data required"}), 400)
+
+        forecast_data = forecast_resource_usage(history)
+        return make_response(jsonify({"forecast": forecast_data}), 200)
+    except Exception as e:
+        logging.error(f"Error during forecasting: {e}")
+        return make_response(jsonify({"error": "Failed to generate forecast"}), 500)
 
 @app.route("/api-metrics", methods=["GET"])
 def get_api_metrics():

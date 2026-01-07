@@ -20,6 +20,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/ingestor"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"github.com/thrive-spectrexq/NexDefend/internal/ndr"
 	"github.com/thrive-spectrexq/NexDefend/internal/routes"
 	"github.com/thrive-spectrexq/NexDefend/internal/telemetry"
@@ -44,23 +45,28 @@ func main() {
 	database := db.InitDB()
 	defer db.CloseDB()
 
-	correlationEngine := &correlation.MockCorrelationEngine{}
-	go ingestor.StartIngestor(correlationEngine)
+	// Channel for internal events (NetFlow, Suricata) to reach Ingestor
+	internalEvents := make(chan models.CommonEvent, 1000)
+
+	correlationEngine := correlation.NewCorrelationEngine()
+	go ingestor.StartIngestor(correlationEngine, internalEvents, database.GetDB())
 	go metrics.CollectMetrics(database)
 	go handlers.StartActiveAgentCollector(database.GetDB())
 
-	netflowCollector := &ndr.MockNetFlowCollector{}
+	// Use real NetFlow collector on port 2055
+	netflowCollector := ndr.NewNetFlowCollector(2055, internalEvents)
 	if err := netflowCollector.StartCollector(); err != nil {
-		log.Fatalf("Failed to start NetFlow collector: %v", err)
+		log.Printf("Failed to start NetFlow collector: %v", err) // Non-fatal, might be permission issue
 	}
 
-	suricataCollector := &ndr.MockSuricataCollector{}
+	// Use real Suricata collector tailing default log path
+	suricataCollector := ndr.NewSuricataCollector("/var/log/suricata/eve.json", internalEvents)
 	if err := suricataCollector.StartCollector(); err != nil {
-		log.Fatalf("Failed to start Suricata collector: %v", err)
+		log.Printf("Failed to start Suricata collector: %v", err) // Non-fatal, file might not exist yet
 	}
 
 	c := cache.NewCache()
-	tip := &tip.MockTIP{}
+	tip := tip.NewTIP(cfg.VirusTotalKey)
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
 	router := routes.NewRouter(cfg, database, c, tip, adConnector, snowConnector)
