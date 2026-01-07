@@ -1,12 +1,17 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const config = {
-    plugins: [react(), tailwindcss()],
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
     server: {
       port: 5173,
       proxy: {
@@ -17,14 +22,6 @@ export default defineConfig(({ mode }) => {
         '/ws': {
           target: 'ws://localhost:8080',
           ws: true,
-        },
-        '/login': {
-          target: 'http://localhost:8080',
-          changeOrigin: true,
-        },
-        '/register': {
-          target: 'http://localhost:8080',
-          changeOrigin: true,
         },
       },
     },
