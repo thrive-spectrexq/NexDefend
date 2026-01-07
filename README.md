@@ -1,8 +1,6 @@
 # NexDefend - AI-Powered System Monitoring and Threat Intelligence Platform
 
-NexDefend is a comprehensive cybersecurity platform combining **EDR** (Endpoint Detection & Response), **XDR** (Extended Detection & Response), **SIEM** (Security Information & Event Management), and **SOAR** (Security Orchestration, Automation, and Response) into a single, cohesive solution.
-
-Powered by advanced AI and real-time analytics, NexDefend provides deep visibility, automated defense, and predictive intelligence for modern enterprises.
+Powered by advanced AI and real-time analytics, NexDefend provides deep visibility, automated defense, and predictive intelligence for systems and modern enterprises.
 
 ## Main Features
 
@@ -47,27 +45,27 @@ NexDefend follows a modular microservices architecture:
 ```mermaid
 graph TD
     subgraph Endpoints
-        Agent[NexDefend Agent]
+        Agent["NexDefend Agent"]
     end
 
     subgraph "Data Pipeline"
-        Kafka[Kafka Message Bus]
+        Kafka["Kafka Message Bus"]
     end
 
     subgraph "Core Services"
-        API[NexDefend API (Go)]
-        AI[NexDefend AI (Python)]
-        SOAR[NexDefend SOAR]
+        API["NexDefend API (Go)"]
+        AI["NexDefend AI (Python)"]
+        SOAR["NexDefend SOAR"]
     end
 
     subgraph "Storage"
-        DB[(PostgreSQL)]
-        Search[(OpenSearch)]
+        DB["PostgreSQL"]
+        Search["OpenSearch"]
     end
 
     subgraph "Interface"
-        Web[Web Dashboard]
-        Desktop[Desktop App (Wails)]
+        Web["Web Dashboard"]
+        Desktop["Desktop App (Wails)"]
     end
 
     Agent -->|Telemetry| Kafka
