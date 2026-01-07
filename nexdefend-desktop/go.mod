@@ -1,6 +1,6 @@
 module nexdefend-desktop
 
-go 1.24.0
+go 1.21
 
 require (
 	github.com/blevesearch/bleve/v2 v2.5.7
