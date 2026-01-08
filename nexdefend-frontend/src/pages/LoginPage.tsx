@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Box, Link } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '@/store/authSlice';
 
@@ -57,7 +57,7 @@ const LoginPage: React.FC = () => {
         Sign In
       </Button>
       <Box sx={{ textAlign: 'center' }}>
-        <Link href="/register" variant="body2" sx={{ color: 'primary.main' }}>
+        <Link component={RouterLink} to="/register" variant="body2" sx={{ color: 'primary.main' }}>
           {"Don't have an account? Sign Up"}
         </Link>
       </Box>
