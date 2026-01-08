@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Paper, Grid } from '@mui/material';
+import { Typography, Paper, Grid, Box } from '@mui/material';
 import {
   AreaChart,
   Area,
@@ -35,7 +35,7 @@ const NetworkDashboardPage: React.FC = () => {
 
       <Grid container spacing={3}>
         {/* Traffic Volume Area Chart */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3, height: 400 }}>
             <Typography variant="h6" gutterBottom>Network Traffic Volume (24h)</Typography>
             <ResponsiveContainer width="100%" height="100%">
@@ -63,7 +63,7 @@ const NetworkDashboardPage: React.FC = () => {
         </Grid>
 
         {/* Protocol Distribution Line Chart */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3, height: 400 }}>
             <Typography variant="h6" gutterBottom>Protocol Distribution</Typography>
             <ResponsiveContainer width="100%" height="100%">
@@ -84,6 +84,5 @@ const NetworkDashboardPage: React.FC = () => {
     </Box>
   );
 };
-import { Box } from '@mui/material';
 
 export default NetworkDashboardPage;
