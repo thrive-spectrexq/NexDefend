@@ -6,12 +6,10 @@ import {
   Box,
   Link,
   Alert,
-  Divider,
   Card,
   CardContent
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Google as GoogleIcon, Facebook as FacebookIcon } from '@mui/icons-material';
 import { registerUser } from '@/api/auth';
 
 const RegisterPage: React.FC = () => {
@@ -171,40 +169,6 @@ const RegisterPage: React.FC = () => {
                 Already have an account? Sign In
               </Link>
             </Box>
-
-            <Divider sx={{ mb: 3, color: 'text.secondary', fontSize: '0.875rem' }}>or</Divider>
-
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GoogleIcon />}
-              sx={{
-                mb: 1.5,
-                py: 1,
-                borderColor: 'rgba(255,255,255,0.1)',
-                color: 'text.primary',
-                justifyContent: 'center',
-                bgcolor: 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              Sign up with Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FacebookIcon sx={{ color: '#1877F2' }} />}
-              sx={{
-                py: 1,
-                borderColor: 'rgba(255,255,255,0.1)',
-                color: 'text.primary',
-                justifyContent: 'center',
-                bgcolor: 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              Sign up with Facebook
-            </Button>
           </Box>
         </CardContent>
       </Card>

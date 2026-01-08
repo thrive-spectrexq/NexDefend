@@ -6,6 +6,7 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import BuildIcon from '@mui/icons-material/Build';
+import HubIcon from '@mui/icons-material/Hub';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -167,6 +168,16 @@ const HomePage: React.FC = () => {
             features={[
               { title: 'GenAI Copilot ("Sentinel")', description: 'Context-aware AI assistant powered by Ollama (Mistral) for querying system state and threat insights.' },
               { title: 'Predictive Forecasting', description: 'Linear regression modeling to forecast resource usage trends for the next 24 hours.' },
+            ]}
+          />
+          <FeatureSection
+            title="Network Defense"
+            icon={<HubIcon />}
+            delay={0.6}
+            features={[
+              { title: 'Traffic Analysis', description: 'Real-time flow monitoring and visualization of network connections.' },
+              { title: 'Intrusion Detection', description: 'Signature-based detection of malicious network activity using Suricata rules.' },
+              { title: 'DNS Security', description: 'Monitoring for malicious domain requests and DGA patterns.' },
             ]}
           />
         </Grid>
