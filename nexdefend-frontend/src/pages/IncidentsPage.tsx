@@ -1,17 +1,8 @@
-import React from 'react';
-import { Typography, Box } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
-import { v4 as uuidv4 } from 'uuid';
-
-const incidentsData = Array.from({ length: 20 }, () => ({
-  id: uuidv4(),
-  title: ['Data Exfiltration Attempt', 'Ransomware Activity', 'DDoS Attack', 'Insider Threat'][Math.floor(Math.random() * 4)],
-  priority: ['P1', 'P2', 'P3'][Math.floor(Math.random() * 3)],
-  assignee: ['Alice', 'Bob', 'Charlie', 'Unassigned'][Math.floor(Math.random() * 4)],
-  status: ['Open', 'In Progress', 'Closed'][Math.floor(Math.random() * 3)],
-  created: new Date(Date.now() - Math.floor(Math.random() * 500000000)).toLocaleDateString(),
-}));
+import { getIncidents } from '@/api/alerts';
 
 const columns = [
   { id: 'title', label: 'Title', minWidth: 250 },
@@ -39,12 +30,34 @@ const columns = [
 ];
 
 const IncidentsPage: React.FC = () => {
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const data = await getIncidents();
+        setIncidents(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch incidents", err);
+        setError("Failed to load incidents.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchIncidents();
+  }, []);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
+  if (error) return <Alert severity="error">{error}</Alert>;
+
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
       <Typography variant="h4" gutterBottom>
         Incidents Management
       </Typography>
-      <DataTable columns={columns} rows={incidentsData} title="Active Incidents" />
+      <DataTable columns={columns} rows={incidents} title="Active Incidents" />
     </Box>
   );
 };

@@ -1,18 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Typography, Paper, Grid } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-const data = [
-  { name: 'Mon', alerts: 40, incidents: 24 },
-  { name: 'Tue', alerts: 30, incidents: 13 },
-  { name: 'Wed', alerts: 20, incidents: 58 },
-  { name: 'Thu', alerts: 27, incidents: 39 },
-  { name: 'Fri', alerts: 18, incidents: 48 },
-  { name: 'Sat', alerts: 23, incidents: 38 },
-  { name: 'Sun', alerts: 34, incidents: 43 },
-];
+import { getDashboardStats } from '@/api/dashboard';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 
 const DashboardPage: React.FC = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats", err);
+        setError("Failed to load dashboard statistics. Ensure the backend is running.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) return <CircularProgress />;
+  if (error) return <Alert severity="error">{error}</Alert>;
+
+  // Fallback data if stats are missing or empty (for demo purpose if API returns null)
+  const chartData = stats?.activity || [
+    { name: 'Mon', alerts: 0, incidents: 0 },
+    { name: 'Tue', alerts: 0, incidents: 0 },
+    { name: 'Wed', alerts: 0, incidents: 0 },
+    { name: 'Thu', alerts: 0, incidents: 0 },
+    { name: 'Fri', alerts: 0, incidents: 0 },
+    { name: 'Sat', alerts: 0, incidents: 0 },
+    { name: 'Sun', alerts: 0, incidents: 0 },
+  ];
+
   return (
     <div>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -23,19 +50,19 @@ const DashboardPage: React.FC = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6">Total Alerts</Typography>
-            <Typography variant="h3" color="primary">124</Typography>
+            <Typography variant="h3" color="primary">{stats?.total_alerts || 0}</Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6">Active Incidents</Typography>
-            <Typography variant="h3" color="secondary">12</Typography>
+            <Typography variant="h3" color="secondary">{stats?.active_incidents || 0}</Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6">Online Agents</Typography>
-            <Typography variant="h3" sx={{ color: '#4caf50' }}>58</Typography>
+            <Typography variant="h3" sx={{ color: '#4caf50' }}>{stats?.online_agents || 0}</Typography>
           </Paper>
         </Grid>
 
@@ -44,7 +71,7 @@ const DashboardPage: React.FC = () => {
             <Typography variant="h6" gutterBottom>Weekly Activity</Typography>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data}
+                data={chartData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} />

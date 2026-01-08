@@ -31,6 +31,11 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 
 	// --- Public Routes ---
 	router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
+	// Public API Routes
+	router.HandleFunc("/api/v1/auth/register", auth.RegisterHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
+	router.HandleFunc("/api/v1/auth/login", auth.LoginHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
+
+	// Legacy Public Routes (Keep for backward compatibility if needed, or remove)
 	router.HandleFunc("/register", auth.RegisterHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler(database.GetDB(), cfg.JWTSecretKey)).Methods("POST")
 
