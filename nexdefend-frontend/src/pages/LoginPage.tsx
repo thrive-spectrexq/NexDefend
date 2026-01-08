@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, Link, Alert } from '@mui/material';
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Link,
+  Alert,
+  Checkbox,
+  FormControlLabel,
+  Divider,
+  Card,
+  CardContent
+} from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { Google as GoogleIcon, Facebook as FacebookIcon } from '@mui/icons-material';
 import { login } from '@/store/authSlice';
 import type { AppDispatch, RootState } from '@/store';
 
@@ -11,6 +24,7 @@ const LoginPage: React.FC = () => {
   const { loading, error } = useSelector((state: RootState) => state.auth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,47 +35,174 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <Box component="form" onSubmit={handleLogin} sx={{ width: '100%', mt: 1 }}>
-      <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>Sign In</Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="email"
-        label="Email Address"
-        name="email"
-        autoComplete="email"
-        autoFocus
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Password"
-        type="password"
-        id="password"
-        autoComplete="current-password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        disabled={loading}
-        sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1rem' }}
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        bgcolor: 'background.default', // Using the pitch black from theme
+        p: 2
+      }}
+    >
+      <Card
+        sx={{
+          maxWidth: 400,
+          width: '100%',
+          bgcolor: 'background.default', // Matches page background but Card border makes it distinct
+          border: 'none', // As per screenshot, might be floating or just on black. Let's try to match "Sitemark" look.
+          // The screenshot shows a card-like container (or at least a defined width) on a dark bg.
+          // Actually, looking at the screenshot, it looks like a modal or card centered on dark.
+          // Let's stick to standard Card with our new theme override.
+          boxShadow: 'none',
+          backgroundImage: 'none',
+          p: 0,
+        }}
       >
-        {loading ? 'Signing In...' : 'Sign In'}
-      </Button>
-      <Box sx={{ textAlign: 'center' }}>
-        <Link component={RouterLink} to="/register" variant="body2" sx={{ color: 'primary.main' }}>
-          {"Don't have an account? Sign Up"}
-        </Link>
-      </Box>
+        <CardContent sx={{ p: 4 }}>
+          {/* Logo Placeholder */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, color: 'primary.main' }}>
+             {/* Use a generic icon or the text from screenshot if possible. "Sitemark" */}
+             <Box
+               component="span"
+               sx={{
+                 width: 24,
+                 height: 24,
+                 bgcolor: 'primary.main',
+                 borderRadius: '50%',
+                 mr: 1,
+                 display: 'inline-block'
+               }}
+             />
+             <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
+               NexDefend
+             </Typography>
+          </Box>
+
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 3 }}>
+            Sign in
+          </Typography>
+
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+          <Box component="form" onSubmit={handleLogin}>
+            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
+              Email
+            </Typography>
+            <TextField
+              margin="dense"
+              required
+              fullWidth
+              id="email"
+              placeholder="your@email.com"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{
+                sx: { bgcolor: '#09090b' }
+              }}
+            />
+
+            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
+              Password
+            </Typography>
+            <TextField
+              margin="dense"
+              required
+              fullWidth
+              name="password"
+              placeholder="••••••"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              sx={{ mb: 2 }}
+              InputProps={{
+                sx: { bgcolor: '#09090b' }
+              }}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  value="remember"
+                  color="primary"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  sx={{
+                    color: 'text.secondary',
+                    '&.Mui-checked': { color: 'primary.main' },
+                  }}
+                />
+              }
+              label={<Typography variant="body2" color="text.secondary">Remember me</Typography>}
+              sx={{ mb: 2 }}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={loading}
+              sx={{
+                mb: 2,
+                py: 1.2,
+                bgcolor: 'white',
+                color: 'black',
+                '&:hover': { bgcolor: '#e0e0e0' },
+                fontWeight: 'bold'
+              }}
+            >
+              {loading ? 'Signing In...' : 'Sign in'}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Link component={RouterLink} to="/forgot-password" variant="body2" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                Forgot your password?
+              </Link>
+            </Box>
+
+            <Divider sx={{ mb: 3, color: 'text.secondary', fontSize: '0.875rem' }}>or</Divider>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<GoogleIcon />}
+              sx={{
+                mb: 1.5,
+                py: 1,
+                borderColor: 'rgba(255,255,255,0.1)',
+                color: 'text.primary',
+                justifyContent: 'center', // Centered text/icon
+                bgcolor: 'transparent',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' }
+              }}
+            >
+              Sign in with Google
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<FacebookIcon sx={{ color: '#1877F2' }} />}
+              sx={{
+                py: 1,
+                borderColor: 'rgba(255,255,255,0.1)',
+                color: 'text.primary',
+                justifyContent: 'center',
+                bgcolor: 'transparent',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' }
+              }}
+            >
+              Sign in with Facebook
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 };
