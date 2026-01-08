@@ -164,6 +164,15 @@ const LoginPage: React.FC = () => {
                 Forgot your password?
               </Link>
             </Box>
+
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Don't have an account?{' '}
+                <Link component={RouterLink} to="/register" sx={{ color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                  Sign up
+                </Link>
+              </Typography>
+            </Box>
           </Box>
         </CardContent>
       </Card>
