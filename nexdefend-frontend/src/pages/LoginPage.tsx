@@ -1,29 +1,29 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, Link } from '@mui/material';
+import { TextField, Button, Typography, Box, Link, Alert } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/authSlice';
+import type { AppDispatch, RootState } from '@/store';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login API call
-    console.log('Logging in with', email, password);
-    dispatch(login({
-      user: { name: 'Admin', role: 'admin' },
-      token: 'fake-jwt-token'
-    }));
-    navigate('/dashboard');
+    const resultAction = await dispatch(login({ email, password }));
+    if (login.fulfilled.match(resultAction)) {
+      navigate('/dashboard');
+    }
   };
 
   return (
     <Box component="form" onSubmit={handleLogin} sx={{ width: '100%', mt: 1 }}>
       <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>Sign In</Typography>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <TextField
         margin="normal"
         required
@@ -52,9 +52,10 @@ const LoginPage: React.FC = () => {
         type="submit"
         fullWidth
         variant="contained"
+        disabled={loading}
         sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1rem' }}
       >
-        Sign In
+        {loading ? 'Signing In...' : 'Sign In'}
       </Button>
       <Box sx={{ textAlign: 'center' }}>
         <Link component={RouterLink} to="/register" variant="body2" sx={{ color: 'primary.main' }}>

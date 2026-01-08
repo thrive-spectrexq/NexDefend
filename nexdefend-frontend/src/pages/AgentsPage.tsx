@@ -1,18 +1,8 @@
-import React from 'react';
-import { Typography, Box } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
-import { v4 as uuidv4 } from 'uuid';
-
-const agentsData = Array.from({ length: 15 }, (_, i) => ({
-  id: uuidv4(),
-  hostname: `host-${Math.floor(Math.random() * 1000)}`,
-  ip: `192.168.1.${100 + i}`,
-  os: ['Windows 11', 'Ubuntu 22.04', 'macOS 14', 'Windows Server 2022'][Math.floor(Math.random() * 4)],
-  version: '1.2.4',
-  status: ['Online', 'Offline', 'Updating'][Math.floor(Math.random() * 3)],
-  lastSeen: new Date(Date.now() - Math.floor(Math.random() * 60000)).toLocaleTimeString(),
-}));
+import { getAgents } from '@/api/agents';
 
 const columns = [
   { id: 'hostname', label: 'Hostname', minWidth: 150 },
@@ -25,16 +15,38 @@ const columns = [
     minWidth: 120,
     format: (value: string) => <StatusChip status={value} />
   },
-  { id: 'lastSeen', label: 'Last Seen', minWidth: 150 },
+  { id: 'last_seen', label: 'Last Seen', minWidth: 150 },
 ];
 
 const AgentsPage: React.FC = () => {
+  const [agents, setAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const data = await getAgents();
+        setAgents(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch agents", err);
+        setError("Failed to load agents.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
+  if (error) return <Alert severity="error">{error}</Alert>;
+
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
       <Typography variant="h4" gutterBottom>
         Agent Fleet
       </Typography>
-      <DataTable columns={columns} rows={agentsData} title="Registered Agents" />
+      <DataTable columns={columns} rows={agents} title="Registered Agents" />
     </Box>
   );
 };

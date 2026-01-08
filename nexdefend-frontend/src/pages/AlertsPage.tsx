@@ -1,19 +1,8 @@
-import React from 'react';
-import { Typography, Box } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
-import { v4 as uuidv4 } from 'uuid';
-
-// Mock Data
-const alertsData = Array.from({ length: 50 }, () => ({
-  id: uuidv4(),
-  timestamp: new Date(Date.now() - Math.floor(Math.random() * 1000000000)).toLocaleString(),
-  severity: ['Critical', 'High', 'Medium', 'Low'][Math.floor(Math.random() * 4)],
-  ruleName: ['Brute Force', 'Port Scan', 'Malware Detected', 'Unauthorized Access', 'Privilege Escalation'][Math.floor(Math.random() * 5)],
-  source: `192.168.1.${Math.floor(Math.random() * 255)}`,
-  destination: `10.0.0.${Math.floor(Math.random() * 255)}`,
-  status: ['New', 'Investigating', 'Resolved', 'False Positive'][Math.floor(Math.random() * 4)],
-}));
+import { getAlerts } from '@/api/alerts';
 
 const columns = [
   { id: 'timestamp', label: 'Timestamp', minWidth: 170 },
@@ -39,12 +28,35 @@ const columns = [
 ];
 
 const AlertsPage: React.FC = () => {
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const data = await getAlerts();
+        // Ensure data is array
+        setAlerts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch alerts", err);
+        setError("Failed to load alerts.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAlerts();
+  }, []);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
+  if (error) return <Alert severity="error">{error}</Alert>;
+
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
       <Typography variant="h4" gutterBottom>
         Security Alerts
       </Typography>
-      <DataTable columns={columns} rows={alertsData} title="Recent Alerts" />
+      <DataTable columns={columns} rows={alerts} title="Recent Alerts" />
     </Box>
   );
 };

@@ -1,41 +1,43 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, Link } from '@mui/material';
+import { TextField, Button, Typography, Box, Link, Alert } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { login } from '@/store/authSlice';
+import { registerUser } from '@/api/auth';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError("Passwords don't match");
       return;
     }
     setError(null);
-    console.log('Registering with', email, password);
+    setLoading(true);
 
-    // Simulate successful registration and auto-login
-    dispatch(login({
-      user: { name: email.split('@')[0], role: 'admin' },
-      token: 'fake-jwt-token-registered'
-    }));
-    navigate('/dashboard');
+    try {
+        await registerUser(email, password);
+        // On success, redirect to login
+        navigate('/login');
+    } catch (err: any) {
+        setError(err.response?.data?.message || 'Registration failed');
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
     <Box component="form" onSubmit={handleRegister} sx={{ width: '100%', mt: 1 }}>
       <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>Sign Up</Typography>
       {error && (
-        <Typography color="error" variant="body2" sx={{ textAlign: 'center', mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
-        </Typography>
+        </Alert>
       )}
       <TextField
         margin="normal"
@@ -75,9 +77,10 @@ const RegisterPage: React.FC = () => {
         type="submit"
         fullWidth
         variant="contained"
+        disabled={loading}
         sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1rem' }}
       >
-        Sign Up
+        {loading ? 'Signing Up...' : 'Sign Up'}
       </Button>
       <Box sx={{ textAlign: 'center' }}>
         <Link component={RouterLink} to="/login" variant="body2" sx={{ color: 'primary.main' }}>
