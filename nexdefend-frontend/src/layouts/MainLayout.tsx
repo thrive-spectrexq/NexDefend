@@ -16,7 +16,11 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Tooltip,
+  InputBase,
+  Button,
+  Card,
+  CardContent,
+  Chip
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -32,8 +36,12 @@ import {
   Settings as SettingsIcon,
   Terminal as TerminalIcon,
   IntegrationInstructions as IntegrationIcon,
-  Shield as ShieldIcon,
-  NetworkCheck as NetworkIcon,
+  Search as SearchIcon,
+  Notifications as BellIcon,
+  CalendarToday as CalendarIcon,
+  MoreVert as MoreIcon,
+  CheckCircle as CheckCircleIcon,
+  NetworkCheck as NetworkIcon
 } from '@mui/icons-material';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -66,177 +74,238 @@ const MainLayout: React.FC = () => {
     navigate('/login');
   };
 
-  // Navigation Items Structure
+  // Restored Security Navigation
   const menuItems = [
-    {
-      header: 'Overview',
-      items: [
-        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-        { text: 'Console', icon: <TerminalIcon />, path: '/console' },
-        { text: 'Security Overview', icon: <ShieldIcon />, path: '/security-overview' },
-      ],
-    },
-    {
-      header: 'Monitoring',
-      items: [
-        { text: 'Alerts', icon: <AlertIcon />, path: '/alerts' },
-        { text: 'Incidents', icon: <BugIcon />, path: '/incidents' },
-      ],
-    },
-    {
-      header: 'Management',
-      items: [
-        { text: 'Agents', icon: <ComputerIcon />, path: '/agents' },
-        { text: 'Vulnerabilities', icon: <BugIcon />, path: '/vulnerabilities' }, // Reusing BugIcon or find better
-        { text: 'Process Explorer', icon: <AssessmentIcon />, path: '/processes' },
-        { text: 'Rules', icon: <RuleIcon />, path: '/rules' },
-      ],
-    },
-    {
-      header: 'Analytics',
-      items: [
-        { text: 'Data Explorer', icon: <ChartIcon />, path: '/data-explorer' },
-        { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
-      ],
-    },
-     {
-      header: 'Operations',
-      items: [
-        { text: 'Integrations', icon: <IntegrationIcon />, path: '/integrations' },
-        { text: 'Mission Control', icon: <SecurityIcon />, path: '/mission-control' },
-      ],
-    },
-    {
-      header: 'Network',
-      items: [
-        { text: 'Network Topology', icon: <HubIcon />, path: '/topology' },
-        { text: 'Network Dashboard', icon: <NetworkIcon />, path: '/network-dashboard' },
-      ],
-    },
-    {
-      header: 'Settings',
-      items: [
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-      ],
-    },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    { text: 'Alerts', icon: <AlertIcon />, path: '/alerts' },
+    { text: 'Incidents', icon: <BugIcon />, path: '/incidents' },
+    { text: 'Agents', icon: <ComputerIcon />, path: '/agents' },
+    { text: 'Network Topology', icon: <HubIcon />, path: '/topology' },
+    { text: 'Data Explorer', icon: <ChartIcon />, path: '/data-explorer' },
+    { text: 'Console', icon: <TerminalIcon />, path: '/console' },
+  ];
+
+  const secondaryMenuItems = [
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
 
   const drawer = (
-    <div>
-      <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2 }}>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold', color: 'primary.main', letterSpacing: 1 }}>
-          NEXDEFEND
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List>
-        {menuItems.map((section, index) => (
-          <React.Fragment key={index}>
-            <ListItem sx={{ py: 1, px: 2 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
-                {section.header}
-              </Typography>
-            </ListItem>
-            {section.items.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  selected={location.pathname === item.path}
-                  onClick={() => navigate(item.path)}
-                  sx={{
-                    '&.Mui-selected': {
-                      borderRight: '3px solid',
-                      borderColor: 'primary.main',
-                      bgcolor: 'rgba(0, 209, 255, 0.08)',
-                    },
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.05)',
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 40, color: location.pathname === item.path ? 'primary.main' : 'inherit' }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.9rem' }} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {index < menuItems.length - 1 && <Divider sx={{ my: 1, opacity: 0.2 }} />}
-          </React.Fragment>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#050505' }}>
+      {/* Brand Header */}
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ width: 32, height: 32, bgcolor: 'primary.main', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <SecurityIcon sx={{ color: 'black', fontSize: 20 }} />
+        </Box>
+        <Box>
+           <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2 }}>NexDefend</Typography>
+           <Typography variant="caption" color="text.secondary">Security Platform</Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1 }} />
+      </Box>
+
+      {/* Primary Navigation */}
+      <List sx={{ px: 2 }}>
+        {menuItems.map((item) => (
+          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              selected={location.pathname === item.path}
+              onClick={() => navigate(item.path)}
+              sx={{
+                borderRadius: 2,
+                '&.Mui-selected': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'text.primary',
+                  '& .MuiListItemIcon-root': { color: 'text.primary' },
+                },
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+            </ListItemButton>
+          </ListItem>
         ))}
       </List>
-    </div>
+
+      <Divider sx={{ my: 1, mx: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
+
+      {/* Secondary Navigation */}
+      <List sx={{ px: 2 }}>
+        {secondaryMenuItems.map((item) => (
+          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => navigate(item.path)}
+              sx={{
+                borderRadius: 2,
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+
+      <Box sx={{ flexGrow: 1 }} />
+
+      {/* System Status Card */}
+      <Box sx={{ px: 2, pb: 2 }}>
+        <Card sx={{ bgcolor: '#09090b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3 }}>
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, color: 'text.primary' }}>
+               <CheckCircleIcon fontSize="small" sx={{ mr: 1, color: '#4caf50' }} />
+               <Typography variant="subtitle2" fontWeight="bold">System Status</Typography>
+             </Box>
+             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">Services</Typography>
+                <Chip label="Healthy" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: 'rgba(76, 175, 80, 0.2)', color: '#4caf50' }} />
+             </Box>
+             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="caption" color="text.secondary">Agents</Typography>
+                <Typography variant="caption" fontWeight="bold">Active</Typography>
+             </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      {/* User Profile */}
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Avatar
+          alt="Admin User"
+          src="/static/images/avatar/2.jpg"
+          sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}
+        />
+        <Box sx={{ flexGrow: 1 }}>
+           <Typography variant="subtitle2" fontWeight="bold">Admin User</Typography>
+           <Typography variant="caption" color="text.secondary">admin@nexdefend.com</Typography>
+        </Box>
+        <IconButton size="small" onClick={handleOpenUserMenu}>
+          <MoreIcon sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Box>
+
+      <Menu
+          sx={{ mt: '-45px', ml: '60px' }}
+          id="menu-appbar"
+          anchorEl={anchorElUser}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          open={Boolean(anchorElUser)}
+          onClose={handleCloseUserMenu}
+        >
+          <MenuItem onClick={handleCloseUserMenu}>Profile</MenuItem>
+          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+      </Menu>
+
+    </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <CssBaseline />
+
       <AppBar
         position="fixed"
+        elevation={0}
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          bgcolor: 'background.paper',
+          bgcolor: 'background.default',
+          borderBottom: 'none',
           color: 'text.primary',
-          boxShadow: 1,
+          pt: 1
         }}
       >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Admin User" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: 'none' } }}
             >
-              <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/profile'); }}>
-                <Typography textAlign="center">Profile</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                <Typography textAlign="center">Logout</Typography>
-              </MenuItem>
-            </Menu>
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="body2" color="text.secondary">
+              Dashboard &gt; <Typography component="span" variant="body2" color="text.primary">Overview</Typography>
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+             <Box
+               sx={{
+                 display: 'flex',
+                 alignItems: 'center',
+                 bgcolor: '#09090b',
+                 borderRadius: 1,
+                 border: '1px solid rgba(255,255,255,0.1)',
+                 px: 1,
+                 py: 0.5,
+                 width: 250
+               }}
+             >
+               <SearchIcon sx={{ color: 'text.secondary', fontSize: 20, mr: 1 }} />
+               <InputBase
+                 placeholder="Search assets, IP, logs..."
+                 sx={{ color: 'text.primary', fontSize: '0.875rem', width: '100%' }}
+               />
+             </Box>
+
+             <Button
+               variant="outlined"
+               startIcon={<CalendarIcon />}
+               sx={{
+                 borderColor: 'rgba(255,255,255,0.1)',
+                 color: 'text.primary',
+                 textTransform: 'none',
+                 bgcolor: '#09090b',
+                 height: 36,
+                 '&:hover': { borderColor: 'rgba(255,255,255,0.2)', bgcolor: '#09090b' }
+               }}
+             >
+               {new Date().toLocaleDateString()}
+             </Button>
+
+             <IconButton
+                sx={{
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  bgcolor: '#09090b',
+                  borderRadius: 1,
+                  width: 36,
+                  height: 36
+                }}
+             >
+               <BellIcon fontSize="small" />
+             </IconButton>
           </Box>
         </Toolbar>
       </AppBar>
+
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
@@ -249,16 +318,22 @@ const MainLayout: React.FC = () => {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: '1px solid rgba(255,255,255,0.08)' },
           }}
           open
         >
           {drawer}
         </Drawer>
       </Box>
+
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` }, mt: 8 }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: 8
+        }}
       >
         <Outlet />
       </Box>
