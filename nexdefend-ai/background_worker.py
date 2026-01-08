@@ -46,15 +46,15 @@ def on_model_eviction(key, value):
     logging.info(f"Evicting model for user {key}, saving to DB...")
     value.save_to_db()
 
+class SavingTTLCache(TTLCache):
+    def popitem(self):
+        """Override popitem to save model before eviction."""
+        key, value = super().popitem()
+        on_model_eviction(key, value)
+        return key, value
+
 # LRU Cache: Max 1000 users, expire after 1 hour (3600s).
-# Note: TTLCache does not natively support an eviction callback in the constructor in older versions,
-# but we can subclass or just manually check. However, cachetools generic `Cache` supports `popitem`.
-# To keep it simple with `cachetools`, we'll just save periodically or on specific triggers.
-# Actually, for correctness, we should use a custom cache or just ensure we save active models periodically.
-# A simple approach: Iterating over cache values to save is expensive.
-# Let's use a simpler approach: `behavior_models` is the cache.
-# We will run a separate maintenance loop (or check periodically) to save dirty models.
-behavior_models = TTLCache(maxsize=1000, ttl=3600)
+behavior_models = SavingTTLCache(maxsize=1000, ttl=3600)
 
 def calculate_risk_score(severity, event_data):
     """Calculates a risk score for an incident."""

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/rs/cors"
 	"github.com/thrive-spectrexq/NexDefend/internal/auth"
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
@@ -20,7 +21,7 @@ import (
 )
 
 // NewRouter creates and configures a new router
-func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip tip.TIP, adConnector enrichment.ActiveDirectoryConnector, snowConnector enrichment.ServiceNowConnector) *mux.Router {
+func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip tip.TIP, adConnector enrichment.ActiveDirectoryConnector, snowConnector enrichment.ServiceNowConnector, osClient *opensearch.Client) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(func(next http.Handler) http.Handler {
 		return middleware.RateLimiter(next, 100, 200)
@@ -45,7 +46,7 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	api.Use(middleware.AuditLogMiddleware(database))
 
 	// Event Viewing Route
-	api.HandleFunc("/events", handlers.GetEventsHandler()).Methods("GET")
+	api.HandleFunc("/events", handlers.GetEventsHandler(osClient)).Methods("GET")
 
 	// Agent Enrollment
 	api.HandleFunc("/agents/enroll", handlers.EnrollAgentHandler()).Methods("POST")

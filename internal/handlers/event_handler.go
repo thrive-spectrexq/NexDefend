@@ -11,11 +11,12 @@ import (
 )
 
 // GetEventsHandler provides advanced search capabilities
-func GetEventsHandler() http.HandlerFunc {
+func GetEventsHandler(osClient *opensearch.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		osClient, _ := opensearch.NewClient(opensearch.Config{
-			Addresses: []string{"http://opensearch:9200"},
-		})
+		if osClient == nil {
+			http.Error(w, "Search backend not configured", http.StatusServiceUnavailable)
+			return
+		}
 
 		// 1. Extract Query Parameters
 		q := r.URL.Query().Get("q")         // Search term (e.g., "error", "ssh")
