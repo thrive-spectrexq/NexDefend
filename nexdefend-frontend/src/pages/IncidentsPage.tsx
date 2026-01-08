@@ -4,7 +4,7 @@ import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import { v4 as uuidv4 } from 'uuid';
 
-const incidentsData = Array.from({ length: 20 }, (_, i) => ({
+const incidentsData = Array.from({ length: 20 }, () => ({
   id: uuidv4(),
   title: ['Data Exfiltration Attempt', 'Ransomware Activity', 'DDoS Attack', 'Insider Threat'][Math.floor(Math.random() * 4)],
   priority: ['P1', 'P2', 'P3'][Math.floor(Math.random() * 3)],
@@ -32,7 +32,6 @@ const columns = [
     label: 'Status',
     minWidth: 120,
     format: (value: string) => {
-        let statusMap: Record<string, string> = { 'Open': 'error', 'In Progress': 'warning', 'Closed': 'success' };
         return <StatusChip status={value} />;
     }
   },

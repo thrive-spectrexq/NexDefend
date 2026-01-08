@@ -5,7 +5,7 @@ import StatusChip from '@/components/StatusChip';
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock Data
-const alertsData = Array.from({ length: 50 }, (_, i) => ({
+const alertsData = Array.from({ length: 50 }, () => ({
   id: uuidv4(),
   timestamp: new Date(Date.now() - Math.floor(Math.random() * 1000000000)).toLocaleString(),
   severity: ['Critical', 'High', 'Medium', 'Low'][Math.floor(Math.random() * 4)],
@@ -33,11 +33,7 @@ const columns = [
     label: 'Status',
     minWidth: 120,
     format: (value: string) => {
-        let color = 'default';
-        if(value === 'New') color = 'error';
-        if(value === 'Investigating') color = 'warning';
-        if(value === 'Resolved') color = 'success';
-        return <StatusChip status={value} />; // We can customize color mapping in StatusChip if needed
+        return <StatusChip status={value} />;
     }
   },
 ];
