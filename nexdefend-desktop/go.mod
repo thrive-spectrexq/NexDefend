@@ -1,10 +1,13 @@
 module nexdefend-desktop
 
-go 1.21
+go 1.23
+
+toolchain go1.24.3
 
 require (
 	github.com/blevesearch/bleve/v2 v2.5.7
 	github.com/shirou/gopsutil/v3 v3.24.5
+	github.com/stretchr/testify v1.10.0
 	github.com/wailsapp/wails/v2 v2.8.0
 )
 
@@ -29,6 +32,7 @@ require (
 	github.com/blevesearch/zapx/v14 v14.4.2 // indirect
 	github.com/blevesearch/zapx/v15 v15.4.2 // indirect
 	github.com/blevesearch/zapx/v16 v16.2.8 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -47,6 +51,7 @@ require (
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/samber/lo v1.38.1 // indirect
@@ -66,4 +71,5 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
