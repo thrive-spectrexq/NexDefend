@@ -15,6 +15,9 @@ import IncidentsPage from '@/pages/IncidentsPage';
 import AgentsPage from '@/pages/AgentsPage';
 import TopologyPage from '@/pages/TopologyPage';
 import NetworkDashboardPage from '@/pages/NetworkDashboardPage';
+import VulnerabilitiesPage from '@/pages/VulnerabilitiesPage';
+import DataExplorerPage from '@/pages/DataExplorerPage';
+import SettingsPage from '@/pages/SettingsPage';
 
 // Private Route Guard
 const RequireAuth: React.FC = () => {
@@ -49,16 +52,16 @@ const AppRoutes: React.FC = () => {
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/agents" element={<AgentsPage />} />
-            <Route path="/vulnerabilities" element={<GenericPage title="Vulnerabilities" description="Vulnerability scanning results." />} />
+            <Route path="/vulnerabilities" element={<VulnerabilitiesPage />} />
             <Route path="/processes" element={<GenericPage title="Process Explorer" description="Real-time process monitoring." />} />
             <Route path="/rules" element={<GenericPage title="Rules" description="Detection rule configuration." />} />
-            <Route path="/data-explorer" element={<GenericPage title="Data Explorer" description="Log search and analysis." />} />
+            <Route path="/data-explorer" element={<DataExplorerPage />} />
             <Route path="/reports" element={<GenericPage title="Reports" description="Generate and view reports." />} />
             <Route path="/integrations" element={<GenericPage title="Integrations" description="Manage external integrations." />} />
             <Route path="/mission-control" element={<GenericPage title="Mission Control" description="Centralized operations view." />} />
             <Route path="/topology" element={<TopologyPage />} />
             <Route path="/network-dashboard" element={<NetworkDashboardPage />} />
-            <Route path="/settings" element={<GenericPage title="Settings" description="System and user settings." />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<GenericPage title="Profile" description="User profile management." />} />
 
             {/* Catch-all for undefined routes inside protected area */}
