@@ -1,22 +1,42 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Box, Link } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { login } from '@/store/authSlice';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+    setError(null);
     console.log('Registering with', email, password);
-    navigate('/login');
+
+    // Simulate successful registration and auto-login
+    dispatch(login({
+      user: { name: email.split('@')[0], role: 'admin' },
+      token: 'fake-jwt-token-registered'
+    }));
+    navigate('/dashboard');
   };
 
   return (
     <Box component="form" onSubmit={handleRegister} sx={{ width: '100%', mt: 1 }}>
       <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>Sign Up</Typography>
+      {error && (
+        <Typography color="error" variant="body2" sx={{ textAlign: 'center', mb: 2 }}>
+          {error}
+        </Typography>
+      )}
       <TextField
         margin="normal"
         required
@@ -60,7 +80,7 @@ const RegisterPage: React.FC = () => {
         Sign Up
       </Button>
       <Box sx={{ textAlign: 'center' }}>
-        <Link href="/login" variant="body2" sx={{ color: 'primary.main' }}>
+        <Link component={RouterLink} to="/login" variant="body2" sx={{ color: 'primary.main' }}>
           {"Already have an account? Sign In"}
         </Link>
       </Box>
