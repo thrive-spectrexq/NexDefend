@@ -29,9 +29,9 @@ const FeatureSection: React.FC<FeatureSectionProps> = ({ title, icon, features, 
         sx={{
           p: 3,
           height: '100%',
-          bgcolor: 'rgba(15, 23, 42, 0.6)',
+          bgcolor: '#09090b',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 209, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           transition: 'all 0.3s ease',
           '&:hover': {
             borderColor: 'primary.main',
