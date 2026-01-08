@@ -1,167 +1,178 @@
 import React from 'react';
-import { Box, Button, Container, Grid, Typography, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/store';
-import ShieldIcon from '@mui/icons-material/Shield';
-import SpeedIcon from '@mui/icons-material/Speed';
-import AutoGraphIcon from '@mui/icons-material/AutoGraph';
-import SecurityIcon from '@mui/icons-material/Security';
-import MemoryIcon from '@mui/icons-material/Memory';
+import { Box, Container, Grid, Typography, Paper, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { motion } from 'framer-motion';
+import ShieldIcon from '@mui/icons-material/Shield';
+import MemoryIcon from '@mui/icons-material/Memory';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import BuildIcon from '@mui/icons-material/Build';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
-const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; description: string; delay: number }> = ({ icon, title, description, delay }) => (
-  <Grid size={{ xs: 12, md: 4 }}>
+interface FeatureSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  features: { title: string; description: string }[];
+  delay: number;
+}
+
+const FeatureSection: React.FC<FeatureSectionProps> = ({ title, icon, features, delay }) => (
+  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
     >
       <Paper
         sx={{
           p: 3,
           height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          background: 'rgba(10, 25, 41, 0.7)',
+          bgcolor: 'rgba(15, 23, 42, 0.6)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 163, 255, 0.1)',
-          transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+          border: '1px solid rgba(0, 209, 255, 0.1)',
+          transition: 'all 0.3s ease',
           '&:hover': {
-            transform: 'translateY(-5px)',
-            boxShadow: '0 0 20px rgba(0, 163, 255, 0.2)',
-            border: '1px solid rgba(0, 163, 255, 0.3)',
+            borderColor: 'primary.main',
+            boxShadow: '0 0 20px rgba(0, 209, 255, 0.1)',
           },
         }}
       >
-        <Box sx={{ color: 'secondary.main', mb: 2 }}>{icon}</Box>
-        <Typography variant="h6" gutterBottom color="text.primary">
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {description}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'primary.main' }}>
+          {icon}
+          <Typography variant="h6" sx={{ ml: 1, fontWeight: 600 }}>
+            {title}
+          </Typography>
+        </Box>
+        <List>
+          {features.map((feature, index) => (
+            <ListItem key={index} alignItems="flex-start" sx={{ px: 0 }}>
+              <ListItemIcon sx={{ minWidth: 28, mt: 0.5 }}>
+                <CheckCircleIcon sx={{ fontSize: 16, color: 'primary.dark' }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography variant="subtitle2" color="text.primary" fontWeight="bold">
+                    {feature.title}
+                  </Typography>
+                }
+                secondary={
+                  <Typography variant="body2" color="text.secondary">
+                    {feature.description}
+                  </Typography>
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
       </Paper>
     </motion.div>
   </Grid>
 );
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'radial-gradient(circle at 50% 50%, #1a2035 0%, #0a0e17 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Background decoration */}
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+      <Navbar />
+
+      {/* Hero Section */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: 0.1,
-          backgroundImage: 'linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px)',
-          backgroundSize: '50px 50px',
-          pointerEvents: 'none',
+          pt: 20,
+          pb: 12,
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'radial-gradient(circle at 50% 30%, rgba(0, 209, 255, 0.1) 0%, rgba(15, 23, 42, 0) 70%)',
         }}
-      />
-
-      <Container maxWidth="lg" sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 8, position: 'relative', zIndex: 1 }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-        >
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-              <ShieldIcon sx={{ fontSize: 80, color: 'secondary.main', filter: 'drop-shadow(0 0 10px rgba(0,255,255,0.5))' }} />
+      >
+        <Container maxWidth="lg">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <Box sx={{ textAlign: 'center', maxWidth: '900px', mx: 'auto' }}>
+              <ShieldIcon sx={{ fontSize: 64, color: 'primary.main', mb: 3, filter: 'drop-shadow(0 0 15px rgba(0, 209, 255, 0.4))' }} />
+              <Typography
+                variant="h2"
+                component="h1"
+                gutterBottom
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '2.5rem', md: '3.5rem' },
+                  background: 'linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 2
+                }}
+              >
+                AI-Powered System Monitoring and Threat Intelligence Platform
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 4, lineHeight: 1.6, fontWeight: 300 }}>
+                Powered by advanced AI and real-time analytics, NexDefend provides deep visibility, automated defense, and predictive intelligence for systems and modern enterprises.
+              </Typography>
             </Box>
-            <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', background: 'linear-gradient(45deg, #00A3FF 30%, #00FFCC 90%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              NexDefend
-            </Typography>
-            <Typography variant="h4" gutterBottom color="text.secondary" sx={{ fontWeight: 300, mb: 4 }}>
-              Systems and Service Monitoring System
-            </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto', mb: 6, opacity: 0.8 }}>
-              Next-generation observability and security. Unified monitoring, AI-powered threat intelligence, and real-time anomaly detection in a single platform.
-            </Typography>
+          </motion.div>
+        </Container>
+      </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              {isAuthenticated ? (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  size="large"
-                  onClick={() => navigate('/dashboard')}
-                  sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}
-                >
-                  Go to Dashboard
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="large"
-                    onClick={() => navigate('/login')}
-                    sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}
-                  >
-                    Login
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    size="large"
-                    onClick={() => navigate('/register')}
-                    sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}
-                  >
-                    Register
-                  </Button>
-                </>
-              )}
-            </Box>
-          </Box>
-        </motion.div>
-
-        <Grid container spacing={4} sx={{ mt: 4 }}>
-          <FeatureCard
-            icon={<SpeedIcon fontSize="large" />}
-            title="Real-Time Monitoring"
-            description="Instant visibility into system performance, network traffic, and service health with sub-second latency."
-            delay={0.2}
+      {/* Features Grid */}
+      <Container maxWidth="lg" sx={{ mb: 12 }}>
+        <Grid container spacing={3}>
+          <FeatureSection
+            title="System Monitoring"
+            icon={<MemoryIcon />}
+            delay={0.1}
+            features={[
+              { title: 'Resource Usage Tracking', description: 'Real-time monitoring of CPU, Memory, Disk, and Network usage across all endpoints.' },
+              { title: 'Process Monitoring', description: 'Deep inspection of running processes to detect anomalies and unauthorized execution.' },
+              { title: 'File Integrity Monitoring (FIM)', description: 'Real-time tracking of changes to critical system files to prevent tampering.' },
+            ]}
           />
-          <FeatureCard
-            icon={<AutoGraphIcon fontSize="large" />}
-            title="AI Anomaly Detection"
-            description="Leverage advanced machine learning models to detect deviations and potential threats before they escalate."
-            delay={0.4}
-          />
-          <FeatureCard
-            icon={<SecurityIcon fontSize="large" />}
+          <FeatureSection
             title="Threat Intelligence"
-            description="Integrated threat feeds and automated correlation to identify and block malicious actors."
-            delay={0.6}
+            icon={<ShieldIcon />}
+            delay={0.2}
+            features={[
+              { title: 'AI-Powered Analysis', description: 'Anomaly detection using Isolation Forest and real-time AI scoring of security events.' },
+              { title: 'Threat Hunting', description: 'Advanced search capabilities to uncover hidden threats within your network.' },
+              { title: 'Vulnerability Detection', description: 'Automated scanning (powered by Nmap and Trivy) to identify open ports and CVEs.' },
+            ]}
           />
-          <FeatureCard
-            icon={<MemoryIcon fontSize="large" />}
-            title="Deep Observability"
-            description="Process-level insights and network topology mapping for complete infrastructure awareness."
-            delay={0.8}
+          <FeatureSection
+            title="Automated Remediation"
+            icon={<BuildIcon />}
+            delay={0.3}
+            features={[
+              { title: 'Incident Response', description: 'Automated workflow for incident creation, assignment, and tracking.' },
+              { title: 'Auto-Scaling', description: '(Planned) Dynamic resource adjustment based on load and threat levels.' },
+              { title: 'IT Hygiene', description: 'Automated compliance checks for SSH, Firewall, and System configurations.' },
+            ]}
+          />
+          <FeatureSection
+            title="Cloud Monitoring"
+            icon={<CloudQueueIcon />}
+            delay={0.4}
+            features={[
+              { title: 'Container Metrics', description: 'Native integration for monitoring Docker and Kubernetes workloads.' },
+              { title: 'Cloud Posture', description: 'Assessment of cloud infrastructure security configurations.' },
+              { title: 'Workload Health', description: 'Continuous health checks for distributed cloud services.' },
+            ]}
+          />
+          <FeatureSection
+            title="Cognitive Intelligence"
+            icon={<PsychologyIcon />}
+            delay={0.5}
+            features={[
+              { title: 'GenAI Copilot ("Sentinel")', description: 'Context-aware AI assistant powered by Ollama (Mistral) for querying system state and threat insights.' },
+              { title: 'Predictive Forecasting', description: 'Linear regression modeling to forecast resource usage trends for the next 24 hours.' },
+            ]}
           />
         </Grid>
       </Container>
+
+      <Footer />
     </Box>
   );
 };
