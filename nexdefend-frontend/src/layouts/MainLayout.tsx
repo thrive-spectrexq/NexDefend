@@ -29,19 +29,15 @@ import {
   NotificationsActive as AlertIcon,
   BugReport as BugIcon,
   Computer as ComputerIcon,
-  Rule as RuleIcon,
-  Assessment as AssessmentIcon,
   BarChart as ChartIcon,
   Hub as HubIcon,
   Settings as SettingsIcon,
   Terminal as TerminalIcon,
-  IntegrationInstructions as IntegrationIcon,
   Search as SearchIcon,
   Notifications as BellIcon,
   CalendarToday as CalendarIcon,
   MoreVert as MoreIcon,
   CheckCircle as CheckCircleIcon,
-  NetworkCheck as NetworkIcon
 } from '@mui/icons-material';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
