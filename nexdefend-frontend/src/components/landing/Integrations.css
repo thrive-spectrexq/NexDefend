@@ -1,8 +1,0 @@
-.integration-card img {
-  filter: grayscale(100%);
-  transition: filter 0.3s ease;
-}
-
-.integration-card:hover img {
-  filter: grayscale(0%);
-}

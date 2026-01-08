@@ -1,25 +1,10 @@
 @import "tailwindcss";
-@theme {
-    /* Custom colors for Cyber-Tactical theme */
-    --color-background: #0B1120;
-    --color-surface: #162032;
-    --color-surface-highlight: #1E293B;
-    --color-text: #E2E8F0;
-    --color-text-muted: #94A3B8;
 
-    --color-brand-red: #F87171;
-    --color-brand-blue: #38BDF8;
-    --color-brand-green: #4ADE80;
-    --color-brand-orange: #FB923C;
-
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-html, body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Prevent native scrollbars, app handles scrolling */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* App handles scrolling */
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
