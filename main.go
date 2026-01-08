@@ -23,6 +23,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"github.com/thrive-spectrexq/NexDefend/internal/ndr"
 	"github.com/thrive-spectrexq/NexDefend/internal/routes"
+	"github.com/thrive-spectrexq/NexDefend/internal/search"
 	"github.com/thrive-spectrexq/NexDefend/internal/telemetry"
 	"github.com/thrive-spectrexq/NexDefend/internal/tip"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
@@ -69,7 +70,14 @@ func main() {
 	tip := tip.NewTIP(cfg.VirusTotalKey)
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
-	router := routes.NewRouter(cfg, database, c, tip, adConnector, snowConnector)
+
+	osClient, err := search.NewClient()
+	if err != nil {
+		log.Printf("Warning: Failed to create OpenSearch client: %v", err)
+		// We continue, but handlers depending on it will fail gracefully (hopefully)
+	}
+
+	router := routes.NewRouter(cfg, database, c, tip, adConnector, snowConnector, osClient)
 
 	// Add Prometheus metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())

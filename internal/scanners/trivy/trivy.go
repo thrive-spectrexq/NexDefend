@@ -13,6 +13,22 @@ type Scanner interface {
 	Scan(target string) ([]Vulnerability, error)
 }
 
+// MockScanner is a mock implementation of the Scanner interface for testing.
+type MockScanner struct{}
+
+// Scan performs a mock scan.
+func (s *MockScanner) Scan(target string) ([]Vulnerability, error) {
+	return []Vulnerability{
+		{
+			ID:          "CVE-2023-1234",
+			Severity:    "HIGH",
+			Description: "Mock vulnerability",
+			Package:     "openssl",
+			FixedIn:     "3.0.0",
+		},
+	}, nil
+}
+
 // CLIWrapper implements Scanner using the installed Trivy CLI
 type CLIWrapper struct {
 	BinaryPath string
