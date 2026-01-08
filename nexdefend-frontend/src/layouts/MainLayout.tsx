@@ -168,7 +168,7 @@ const MainLayout: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', overflow: 'hidden' }}>
       <CssBaseline />
       <AppBar
         position="fixed"
