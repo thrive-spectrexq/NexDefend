@@ -94,15 +94,9 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <Box sx={{ textAlign: 'center', maxWidth: '900px', mx: 'auto' }}>
-              <img
-                src="/nxfl.png"
-                alt="NexDefend Logo"
-                style={{
-                  height: 120,
-                  marginBottom: 24,
-                  filter: 'drop-shadow(0 0 15px rgba(0, 209, 255, 0.4))'
-                }}
-              />
+              <Typography variant="h1" sx={{ fontWeight: 800, mb: 1, letterSpacing: -1, color: 'common.white' }}>
+                NexDefend
+              </Typography>
               <Typography
                 variant="h2"
                 component="h1"

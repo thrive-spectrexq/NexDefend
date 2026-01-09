@@ -66,7 +66,9 @@ const RegisterPage: React.FC = () => {
         <CardContent sx={{ p: 4 }}>
           {/* Logo Placeholder */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
-             <img src="/nxfl.png" alt="NexDefend" style={{ height: 48, objectFit: 'contain' }} />
+            <Typography variant="h4" fontWeight="800" letterSpacing={-0.5}>
+              NexDefend
+            </Typography>
           </Box>
 
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 3 }}>
