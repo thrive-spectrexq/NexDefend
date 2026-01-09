@@ -37,6 +37,8 @@ import {
   CalendarToday as CalendarIcon,
   MoreVert as MoreIcon,
   CheckCircle as CheckCircleIcon,
+  Speed as SpeedIcon,
+  Storage as StorageIcon,
 } from '@mui/icons-material';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -80,6 +82,11 @@ const MainLayout: React.FC = () => {
     { text: 'Console', icon: <TerminalIcon />, path: '/console' },
   ];
 
+  const monitoringItems = [
+    { text: 'Grafana', icon: <SpeedIcon />, path: '/grafana' },
+    { text: 'Prometheus', icon: <StorageIcon />, path: '/prometheus' },
+  ];
+
   const secondaryMenuItems = [
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
@@ -97,6 +104,37 @@ const MainLayout: React.FC = () => {
       {/* Primary Navigation */}
       <List sx={{ px: 2 }}>
         {menuItems.map((item) => (
+          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              selected={location.pathname === item.path}
+              onClick={() => navigate(item.path)}
+              sx={{
+                borderRadius: 2,
+                '&.Mui-selected': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'text.primary',
+                  '& .MuiListItemIcon-root': { color: 'text.primary' },
+                },
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+
+      <Divider sx={{ my: 1, mx: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
+
+      {/* Monitoring Navigation */}
+      <Typography variant="caption" sx={{ px: 3, color: 'text.secondary', fontWeight: 'bold' }}>
+        MONITORING
+      </Typography>
+      <List sx={{ px: 2 }}>
+        {monitoringItems.map((item) => (
           <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
               selected={location.pathname === item.path}

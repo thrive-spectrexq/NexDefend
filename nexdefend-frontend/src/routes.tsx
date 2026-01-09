@@ -19,6 +19,8 @@ import NetworkDashboardPage from '@/pages/NetworkDashboardPage';
 import VulnerabilitiesPage from '@/pages/VulnerabilitiesPage';
 import DataExplorerPage from '@/pages/DataExplorerPage';
 import SettingsPage from '@/pages/SettingsPage';
+import GrafanaPage from '@/pages/GrafanaPage';
+import PrometheusPage from '@/pages/PrometheusPage';
 
 // Private Route Guard
 const RequireAuth: React.FC = () => {
@@ -64,6 +66,8 @@ const AppRoutes: React.FC = () => {
             <Route path="/network-dashboard" element={<NetworkDashboardPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<GenericPage title="Profile" description="User profile management." />} />
+            <Route path="/grafana" element={<GrafanaPage />} />
+            <Route path="/prometheus" element={<PrometheusPage />} />
 
             {/* Catch-all for undefined routes inside protected area */}
             <Route path="*" element={<GenericPage title="404 Not Found" />} />
