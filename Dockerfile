@@ -8,9 +8,6 @@ RUN go mod download
 
 COPY . .
 
-# --- FIX: Changed the build path ---
-# From: cmd/nexdefend/main.go
-# To:   main.go
 RUN go build -o /nexdefend main.go
 
 EXPOSE 8080
