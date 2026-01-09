@@ -166,6 +166,32 @@ def process_event(event):
                 )
                 del suspicious_processes[pid]
 
+    elif event_type == "flow":
+        flow_data = event.get('flow', {})
+        bytes_transferred = flow_data.get('bytes_toserver', 0) + flow_data.get('bytes_toclient', 0)
+
+        # Anomaly Rule 1: High Data Transfer (Exfiltration) > 100MB
+        if bytes_transferred > 100 * 1024 * 1024:
+            src_ip = event.get("src_ip")
+            dest_ip = event.get("dest_ip")
+            description = f"Network Anomaly: High data volume transfer detected ({bytes_transferred / (1024*1024):.2f} MB) from {src_ip} to {dest_ip}"
+            risk_score = 60 # Medium-High
+            create_incident_in_backend(
+                description,
+                "High",
+                source_ip=src_ip,
+                entity_name=src_ip,
+                risk_score=risk_score,
+                disposition="Not Reviewed"
+            )
+
+        # Anomaly Rule 2: Connection to Rare Ports (Simple heuristic)
+        dest_port = event.get("dest_port")
+        common_ports = [80, 443, 53, 22, 123, 445]
+        if dest_port and dest_port not in common_ports and dest_port < 1024:
+             # Just a warning/logging, maybe not incident unless combined with other signals
+             pass
+
     elif event_type == "alert":
         alert_data = event.get("alert", {})
         signature = alert_data.get("signature")

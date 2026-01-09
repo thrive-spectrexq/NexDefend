@@ -29,6 +29,7 @@ from ml_anomaly_detection import (
     train_model,
 )
 from forecasting import forecast_resource_usage
+from advanced_threat_detection import analyze_process_tree
 
 init_tracer_provider()
 
@@ -294,6 +295,47 @@ def get_api_metrics():
     }
     return make_response(jsonify(metrics), 200)
 
+@app.route("/analyze-process-tree", methods=["POST"])
+def process_tree_analysis():
+    try:
+        data = request.get_json()
+        processes = data.get("processes")
+        if not processes:
+            return make_response(jsonify({"error": "Process list required"}), 400)
+
+        anomalies = analyze_process_tree(processes)
+        return make_response(jsonify({"anomalies": anomalies, "count": len(anomalies)}), 200)
+    except Exception as e:
+        logging.error(f"Error during process tree analysis: {e}")
+        return make_response(jsonify({"error": "Failed to analyze process tree"}), 500)
+
+def fetch_context_data():
+    """Fetches recent incidents and alerts to provide context for the AI."""
+    context = "System Context:\n"
+    try:
+        # Fetch Incidents
+        incident_url = f"{GO_API_URL}/incidents?status=Open&limit=5"
+        headers = {
+            "Authorization": f"Bearer {AI_SERVICE_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        resp = requests.get(incident_url, headers=headers, timeout=5)
+        if resp.status_code == 200:
+            incidents = resp.json()
+            context += f"Recent Open Incidents ({len(incidents)}):\n"
+            for inc in incidents[:5]:
+                context += f"- [{inc.get('severity', 'Unknown')}] {inc.get('description', 'No description')} (ID: {inc.get('id')})\n"
+        else:
+            context += "Unable to fetch recent incidents.\n"
+
+        # Note: We could also fetch recent alerts or metrics here.
+
+    except Exception as e:
+        logging.warning(f"Failed to fetch context data: {e}")
+        context += "Context retrieval failed.\n"
+
+    return context
+
 @app.route("/chat", methods=["POST"])
 def chat_copilot():
     try:
@@ -304,14 +346,18 @@ def chat_copilot():
 
         logging.info(f"Sending query to Sentinel AI: {query}")
 
+        # Fetch Real-time Context
+        context = fetch_context_data()
+
         # Construct a prompt with system context
         system_prompt = (
             "You are Sentinel, a cybersecurity AI analyst for NexDefend. "
             "Analyze the user's query about system health, logs, or threats. "
+            "Use the provided System Context to answer accurately. "
             "Be concise, professional, and focus on security insights."
         )
 
-        full_prompt = f"{system_prompt}\n\nUser: {query}\nSentinel:"
+        full_prompt = f"{system_prompt}\n\n{context}\n\nUser: {query}\nSentinel:"
 
         payload = {
             "model": "mistral", # Ensure this model is pulled in Ollama
