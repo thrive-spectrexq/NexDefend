@@ -128,4 +128,4 @@ graph TD
 *   **Frontend**: `cd nexdefend-frontend && npm install && npm run dev`.
 
 ## License
-Proprietary / Closed Source (See LICENSE).
+This project is licensed under the GNU GENERAL PUBLIC LICENSE.
