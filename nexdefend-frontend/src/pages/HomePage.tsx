@@ -94,7 +94,15 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <Box sx={{ textAlign: 'center', maxWidth: '900px', mx: 'auto' }}>
-              <ShieldIcon sx={{ fontSize: 64, color: 'primary.main', mb: 3, filter: 'drop-shadow(0 0 15px rgba(0, 209, 255, 0.4))' }} />
+              <img
+                src="/nxfl.png"
+                alt="NexDefend Logo"
+                style={{
+                  height: 120,
+                  marginBottom: 24,
+                  filter: 'drop-shadow(0 0 15px rgba(0, 209, 255, 0.4))'
+                }}
+              />
               <Typography
                 variant="h2"
                 component="h1"

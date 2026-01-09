@@ -1,9 +1,8 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import ShieldIcon from '@mui/icons-material/Shield';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -14,10 +13,7 @@ const Navbar: React.FC = () => {
       <Container maxWidth="lg">
         <Toolbar disableGutters>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <ShieldIcon sx={{ color: 'primary.main', mr: 1, fontSize: 32 }} />
-            <Typography variant="h6" component="div" sx={{ fontWeight: 700, letterSpacing: '0.05em', color: 'text.primary' }}>
-              NEXDEFEND
-            </Typography>
+            <img src="/nxfl.png" alt="NexDefend" style={{ height: 40, objectFit: 'contain' }} />
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
