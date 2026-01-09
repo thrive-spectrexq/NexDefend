@@ -7,6 +7,8 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -34,6 +36,11 @@ func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig
 					return
 				}
 
+				// Ignore CHMOD events to reduce noise, unless critical
+				if event.Op&fsnotify.Chmod == fsnotify.Chmod {
+					continue
+				}
+
 				fimEvent := FIMEvent{
 					Path:      event.Name,
 					Operation: event.Op.String(),
@@ -56,6 +63,15 @@ func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig
 					Value:          eventJSON,
 				}, nil)
 
+				// If a new directory is created, watch it
+				if event.Op&fsnotify.Create == fsnotify.Create {
+					info, err := os.Stat(event.Name)
+					if err == nil && info.IsDir() {
+						watcher.Add(event.Name)
+						log.Printf("FIM: Added new directory to watch: %s", event.Name)
+					}
+				}
+
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
@@ -66,11 +82,25 @@ func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig
 	}()
 
 	for _, path := range config.FIMPaths {
-		err = watcher.Add(path)
+		// Recursive add
+		err := filepath.Walk(path, func(walkPath string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				err = watcher.Add(walkPath)
+				if err != nil {
+					log.Printf("Failed to add path to FIM watcher: %v", err)
+				} else {
+					// log.Printf("FIM watching: %s", walkPath) // Verbose
+				}
+			}
+			return nil
+		})
 		if err != nil {
-			log.Printf("Failed to add path to FIM watcher: %v", err)
+			log.Printf("Error walking path %s: %v", path, err)
 		}
-		log.Printf("FIM watcher started on path: %s", path)
+		log.Printf("FIM watcher started on path root: %s", path)
 	}
 
 	<-make(chan struct{})
