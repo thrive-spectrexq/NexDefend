@@ -116,6 +116,11 @@ func NewRouter(cfg *config.Config, database *db.Database, c *cache.Cache, tip ti
 	cloudCredentialHandler := handlers.NewCloudCredentialHandler(database.GetDB())
 	api.HandleFunc("/cloud-credentials", cloudCredentialHandler.CreateCloudCredential).Methods("POST")
 
+	// System Settings
+	settingsHandler := handlers.NewSettingsHandler(database.GetDB())
+	api.HandleFunc("/settings", settingsHandler.GetSettings).Methods("GET")
+	api.HandleFunc("/settings", settingsHandler.UpdateSettings).Methods("PUT")
+
 	// --- Admin Routes ---
 	adminRoutes := api.PathPrefix("").Subrouter()
 	adminRoutes.Use(middleware.RoleMiddleware("admin"))

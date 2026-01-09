@@ -53,8 +53,34 @@ func InitDB() *Database {
 		}
 	}
 
+	// Auto-migrate new models that might not be in init.sql
+	if err := gormDB.AutoMigrate(&models.SystemSettings{}); err != nil {
+		log.Printf("Failed to auto-migrate settings: %v", err)
+	}
+
+	// Seed default settings
+	SeedSettings(gormDB)
+
 	dbInstance = &Database{gormDB}
 	return dbInstance
+}
+
+func SeedSettings(db *gorm.DB) {
+	defaults := []models.SystemSettings{
+		{Key: models.SettingTheme, Value: "dark", Category: "general", Description: "UI Theme (dark/light)"},
+		{Key: models.SettingRefreshInterval, Value: "30", Category: "general", Description: "Dashboard refresh interval in seconds"},
+		{Key: models.SettingEmailEnabled, Value: "false", Category: "notifications", Description: "Enable email alerts"},
+		{Key: models.SettingVirusTotalKey, Value: "", Category: "integrations", Description: "VirusTotal API Key", IsSecret: true},
+		{Key: models.SettingOllamaURL, Value: "http://localhost:11434", Category: "integrations", Description: "Local Ollama Instance URL"},
+	}
+
+	for _, d := range defaults {
+		var count int64
+		db.Model(&models.SystemSettings{}).Where("key = ?", d.Key).Count(&count)
+		if count == 0 {
+			db.Create(&d)
+		}
+	}
 }
 
 // GetDB returns the singleton GORM database instance.
