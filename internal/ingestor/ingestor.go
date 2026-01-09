@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/opensearch-project/opensearch-go/v2"
@@ -15,10 +16,18 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"github.com/thrive-spectrexq/NexDefend/internal/normalizer"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // ProcessEvent handles a single normalized event: Correlation + Indexing
 func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correlation.CorrelationEngine, osClient *opensearch.Client, db *gorm.DB) {
+	// Handle specific event types for DB persistence (Assets, K8s, Cloud)
+	if normalizedEvent.EventType == "cloud_asset" {
+		saveCloudAsset(normalizedEvent, db)
+	} else if normalizedEvent.EventType == "kubernetes_pod" {
+		saveKubernetesPod(normalizedEvent, db)
+	}
+
 	// Send the event to the correlation engine
 	incident, err := correlationEngine.Correlate(*normalizedEvent)
 	if err != nil {
@@ -56,10 +65,53 @@ func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correla
 	}
 }
 
+func saveCloudAsset(event *models.CommonEvent, db *gorm.DB) {
+	// The event.Data is a map[string]interface{}. We need to marshal/unmarshal to CloudAsset struct
+	// or manually map it. Manual is safer but verbose. Let's use JSON intermediate.
+	dataBytes, _ := json.Marshal(event.Data)
+	var asset models.CloudAsset
+	if err := json.Unmarshal(dataBytes, &asset); err != nil {
+		log.Printf("Failed to parse cloud asset data: %v", err)
+		return
+	}
+	asset.DetectedAt = time.Now()
+
+	// Upsert based on InstanceID
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "instance_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"state", "name", "public_ip", "detected_at"}),
+	}).Create(&asset).Error; err != nil {
+		log.Printf("Failed to upsert cloud asset: %v", err)
+	}
+}
+
+func saveKubernetesPod(event *models.CommonEvent, db *gorm.DB) {
+	dataBytes, _ := json.Marshal(event.Data)
+	var pod models.KubernetesPod
+	if err := json.Unmarshal(dataBytes, &pod); err != nil {
+		log.Printf("Failed to parse k8s pod data: %v", err)
+		return
+	}
+	pod.UpdatedAt = time.Now()
+
+	// Upsert based on Name + Namespace
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}, {Name: "namespace"}},
+		DoUpdates: clause.AssignmentColumns([]string{"phase", "node_name", "pod_ip", "updated_at"}),
+	}).Create(&pod).Error; err != nil {
+		log.Printf("Failed to upsert k8s pod: %v", err)
+	}
+}
+
 // StartIngestor initializes and starts the ingestor service.
 // It also accepts a channel for direct injection of events from internal collectors (NDR).
 func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEvents <-chan models.CommonEvent, db *gorm.DB) {
 	log.Println("Initializing ingestor service...")
+
+	// Migrate new tables
+	if err := db.AutoMigrate(&models.CloudAsset{}, &models.KubernetesPod{}); err != nil {
+		log.Printf("Failed to auto-migrate assets: %v", err)
+	}
 
 	// --- OpenSearch Client ---
 	opensearchAddr := os.Getenv("OPENSEARCH_ADDR")

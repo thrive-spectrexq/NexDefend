@@ -113,15 +113,12 @@ func (h *AssetHandler) Heartbeat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update asset status and last heartbeat
-	// We identify the asset by hostname or IP (assuming hostname is unique per org)
-	// In a real scenario, we should use a unique Agent ID or Token.
 	var asset models.Asset
 	if err := h.db.Where("hostname = ?", heartbeatData.Hostname).First(&asset).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// Register new asset if it doesn't exist
 			heartbeatData.Status = "online"
 			heartbeatData.LastHeartbeat = time.Now()
-			// Defaulting OrganizationID to 1 for now
 			heartbeatData.OrganizationID = 1
 
 			if err := h.db.Create(&heartbeatData).Error; err != nil {
@@ -141,7 +138,6 @@ func (h *AssetHandler) Heartbeat(w http.ResponseWriter, r *http.Request) {
 	asset.IPAddress = heartbeatData.IPAddress
 	asset.OSVersion = heartbeatData.OSVersion
 	asset.AgentVersion = heartbeatData.AgentVersion
-	// Keep MAC Address updated if it changes
 	asset.MACAddress = heartbeatData.MACAddress
 
 	if err := h.db.Save(&asset).Error; err != nil {
@@ -151,4 +147,24 @@ func (h *AssetHandler) Heartbeat(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(asset)
+}
+
+// GetCloudAssets returns all cloud assets
+func (h *AssetHandler) GetCloudAssets(w http.ResponseWriter, r *http.Request) {
+	var assets []models.CloudAsset
+	if err := h.db.Find(&assets).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(assets)
+}
+
+// GetKubernetesPods returns all K8s pods
+func (h *AssetHandler) GetKubernetesPods(w http.ResponseWriter, r *http.Request) {
+	var pods []models.KubernetesPod
+	if err := h.db.Find(&pods).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(pods)
 }

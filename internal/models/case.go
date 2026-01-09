@@ -1,20 +1,20 @@
-
 package models
 
 import "time"
 
-// Case represents a case in the system.
 type Case struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Status    string    `json:"status"`
-	Assignee  string    `json:"assignee"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          int       `json:"id" gorm:"primaryKey"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Status      string    `json:"status"`
+	Priority    string    `json:"priority"`
+	AssignedTo  string    `json:"assigned_to"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// CreateCaseRequest represents the request to create a case.
 type CreateCaseRequest struct {
-	Name     string `json:"name"`
-	Assignee string `json:"assignee"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Priority    string `json:"priority"`
 }

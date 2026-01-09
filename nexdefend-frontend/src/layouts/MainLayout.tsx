@@ -39,6 +39,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Speed as SpeedIcon,
   Storage as StorageIcon,
+  Cloud as CloudIcon,
 } from '@mui/icons-material';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -74,6 +75,7 @@ const MainLayout: React.FC = () => {
   // Restored Security Navigation
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    { text: 'Cloud Monitoring', icon: <CloudIcon />, path: '/cloud-monitoring' },
     { text: 'Alerts', icon: <AlertIcon />, path: '/alerts' },
     { text: 'Incidents', icon: <BugIcon />, path: '/incidents' },
     { text: 'Agents', icon: <ComputerIcon />, path: '/agents' },
