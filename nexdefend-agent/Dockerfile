@@ -4,9 +4,7 @@ FROM golang:1.24.3-alpine AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
-# <--- ADDED ---
 # Install C build tools, libpcap, and librdkafka development headers
-# These are required for gopacket and confluent-kafka-go
 RUN apk add --no-cache gcc musl-dev libpcap-dev librdkafka-dev
 
 # Copy the Go module files and download dependencies.
@@ -17,16 +15,12 @@ RUN go mod download
 COPY . .
 
 # Build the application.
-# <--- CHANGED ---
-# Removed CGO_ENABLED=0 to allow C dependencies to build
 RUN GOOS=linux go build -tags "libkafka musl" -o /nexdefend-agent
 
 # Use a minimal image for the final stage.
 FROM alpine:latest
 
 # Install Osquery and runtime C libraries.
-# <--- CHANGED ---
-# Added runtime libraries libpcap and librdkafka
 RUN apk add --no-cache wget tar libpcap librdkafka && \
     wget https://github.com/osquery/osquery/releases/download/5.11.0/osquery-5.11.0_1.linux_x86_64.tar.gz && \
     tar -xzf osquery-5.11.0_1.linux_x86_64.tar.gz && \
