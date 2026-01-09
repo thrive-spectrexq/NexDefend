@@ -1,99 +1,44 @@
 package handlers
 
 import (
-	"encoding/json"
+	"bytes"
 	"io"
-	"log"
 	"net/http"
-
-	"github.com/thrive-spectrexq/NexDefend/internal/config"
 )
 
-var pythonRoutes = map[string]string{
-	"analysis":  "/analysis",
-	"anomalies": "/anomalies",
-	"chat":      "/chat",
+type ProxyChatHandler struct {
+	PythonAPI string
+	Token     string
 }
 
-// ProxyChatHandler forwards the chat request to the Python API
-func ProxyChatHandler(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		pythonURL := cfg.PythonAPI + pythonRoutes["chat"]
-
-		// Create a new request to the Python API
-		req, err := http.NewRequest(r.Method, pythonURL, r.Body)
-		if err != nil {
-			log.Printf("Error creating request to Python API: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		// Copy headers
-		req.Header = r.Header
-
-		// Send the request
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Printf("Error contacting Python API: %v", err)
-			http.Error(w, "Failed to contact AI service", http.StatusBadGateway)
-			return
-		}
-		defer resp.Body.Close()
-
-		// Copy response
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(resp.StatusCode)
-		io.Copy(w, resp.Body)
-	}
+func NewProxyChatHandler(pythonAPI string, token string) *ProxyChatHandler {
+	return &ProxyChatHandler{PythonAPI: pythonAPI, Token: token}
 }
 
-// PythonAnalysisHandler fetches analysis results from the Python API
-func PythonAnalysisHandler(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		results := fetchPythonResults(cfg.PythonAPI, pythonRoutes["analysis"])
-		if results == nil {
-			http.Error(w, "Failed to fetch analysis results", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(results)
-	}
-}
-
-// PythonAnomaliesHandler fetches anomaly results from the Python API
-func PythonAnomaliesHandler(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		results := fetchPythonResults(cfg.PythonAPI, pythonRoutes["anomalies"])
-		if results == nil {
-			http.Error(w, "Failed to fetch anomaly results", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(results)
-	}
-}
-
-// fetchPythonResults queries the Python API for specific endpoint results
-func fetchPythonResults(pythonAPI, endpoint string) map[string]interface{} {
-	resp, err := http.Get(pythonAPI + endpoint)
+func (h *ProxyChatHandler) ProxyChat(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Error fetching Python API results (%s): %v", endpoint, err)
-		return nil
+		http.Error(w, "Error reading request", http.StatusBadRequest)
+		return
+	}
+
+	req, err := http.NewRequest("POST", h.PythonAPI+"/chat", bytes.NewBuffer(body))
+	if err != nil {
+		http.Error(w, "Error creating request", http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+h.Token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Error contacting AI service", http.StatusBadGateway)
+		return
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Error reading Python API response (%s): %v", endpoint, err)
-		return nil
-	}
-
-	var results map[string]interface{}
-	if err := json.Unmarshal(body, &results); err != nil {
-		log.Printf("Error unmarshaling Python API response (%s): %v", endpoint, err)
-		return nil
-	}
-
-	return results
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }

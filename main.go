@@ -67,7 +67,11 @@ func main() {
 	}
 
 	c := cache.NewCache()
-	tip := tip.NewTIP(cfg.VirusTotalKey)
+
+	// Create TIP interface
+	var threatIntel tip.TIP
+	threatIntel = tip.NewTIP(cfg.VirusTotalKey)
+
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
 
@@ -77,7 +81,8 @@ func main() {
 		// We continue, but handlers depending on it will fail gracefully (hopefully)
 	}
 
-	router := routes.NewRouter(cfg, database, c, tip, adConnector, snowConnector, osClient)
+	// Pass threatIntel interface, not the concrete pointer directly if NewRouter expects interface
+	router := routes.NewRouter(cfg, database, c, &threatIntel, adConnector, snowConnector, osClient)
 
 	// Add Prometheus metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())

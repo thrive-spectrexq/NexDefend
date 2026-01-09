@@ -1,3 +1,4 @@
+
 package handlers
 
 import (
@@ -6,6 +7,7 @@ import (
 	"time"
 
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
 type MetricsHandler struct {
@@ -16,31 +18,24 @@ func NewMetricsHandler(db *db.Database) *MetricsHandler {
 	return &MetricsHandler{db: db}
 }
 
-func (h *MetricsHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
-	metricType := r.URL.Query().Get("type")
-	fromStr := r.URL.Query().Get("from")
-	toStr := r.URL.Query().Get("to")
+// GetSystemMetrics returns system metrics for the dashboard
+func (h *MetricsHandler) GetSystemMetrics(w http.ResponseWriter, r *http.Request) {
+	// Parse query params for time range (defaults to last 1 hour)
+	from := time.Now().Add(-1 * time.Hour)
+	to := time.Now()
 
-	from, err := time.Parse(time.RFC3339, fromStr)
-	if err != nil {
-		http.Error(w, "Invalid 'from' timestamp", http.StatusBadRequest)
-		return
+	// Use Organization ID from context or default to 1
+	orgID := 1
+
+	cpuMetrics, _ := h.db.GetSystemMetrics("cpu_load", from, to, orgID)
+	memMetrics, _ := h.db.GetSystemMetrics("memory_usage", from, to, orgID)
+	diskMetrics, _ := h.db.GetSystemMetrics("disk_usage", from, to, orgID)
+
+	response := map[string][]models.SystemMetric{
+		"cpu":    cpuMetrics,
+		"memory": memMetrics,
+		"disk":   diskMetrics,
 	}
 
-	to, err := time.Parse(time.RFC3339, toStr)
-	if err != nil {
-		http.Error(w, "Invalid 'to' timestamp", http.StatusBadRequest)
-		return
-	}
-
-	// In a real application, you would get the organization ID from the user's session
-	organizationID := 1
-
-	metrics, err := h.db.GetSystemMetrics(metricType, from, to, organizationID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(metrics)
+	json.NewEncoder(w).Encode(response)
 }

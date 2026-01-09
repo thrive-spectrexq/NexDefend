@@ -6,74 +6,80 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/opensearch-project/opensearch-go/v2"
+	"gorm.io/gorm"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
+	"github.com/thrive-spectrexq/NexDefend/internal/search"
 )
 
-// GetDashboardStatsHandler aggregates real counts from Postgres and OpenSearch
-func GetDashboardStatsHandler(database *db.Database) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// 1. Get Real Vulnerability Count (Postgres)
-		var vulnCount int64
-		database.GetDB().Model(&models.Vulnerability{}).Where("status = ?", "Open").Count(&vulnCount)
-
-		// 2. Get Real Asset Count (Postgres)
-		var assetCount int64
-		database.GetDB().Model(&models.Asset{}).Count(&assetCount)
-
-		// 3. Get Real Event Counts from OpenSearch
-		// In production, inject this client via the struct/config
-		osClient, _ := opensearch.NewClient(opensearch.Config{
-			Addresses: []string{"http://opensearch:9200"},
-		})
-
-		eventCount := getOpenSearchCount(osClient, "events", "match_all")
-		fimCount := getOpenSearchCount(osClient, "events", "event_type:fim")
-
-		// 4. Construct Real Module Stats
-		modules := []models.ModuleStat{
-			{
-				Name:   "Security Events",
-				Count:  eventCount,
-				Status: "healthy",
-				Trend:  "up",
-			},
-			{
-				Name:   "Integrity Monitoring",
-				Count:  fimCount,
-				Status: determineStatus(fimCount, 50),
-				Trend:  "flat",
-			},
-			{
-				Name:   "Vulnerability Detector",
-				Count:  vulnCount,
-				Status: determineStatus(vulnCount, 10),
-				Trend:  "up",
-			},
-			{
-				Name:   "Active Agents",
-				Count:  assetCount,
-				Status: "healthy",
-				Trend:  "up",
-			},
-		}
-
-		response := models.DashboardSummary{
-			Modules:    modules,
-			TotalEvents: eventCount,
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
-	}
+type GetDashboardStatsHandler struct {
+	db       *db.Database
+	osClient *search.Client
 }
 
-func getOpenSearchCount(client *opensearch.Client, index string, query string) int64 {
+func NewGetDashboardStatsHandler(gormDB *gorm.DB, osClient *search.Client) *GetDashboardStatsHandler {
+	// Wrap gorm.DB into db.Database struct
+	return &GetDashboardStatsHandler{db: &db.Database{DB: gormDB}, osClient: osClient}
+}
+
+// GetStats aggregates real counts from Postgres and OpenSearch
+func (h *GetDashboardStatsHandler) GetStats(w http.ResponseWriter, r *http.Request) {
+	// 1. Get Real Vulnerability Count (Postgres)
+	var vulnCount int64
+	h.db.GetDB().Model(&models.Vulnerability{}).Where("status = ?", "Open").Count(&vulnCount)
+
+	// 2. Get Real Asset Count (Postgres)
+	var assetCount int64
+	h.db.GetDB().Model(&models.Asset{}).Count(&assetCount)
+
+	// 3. Get Real Event Counts from OpenSearch
+	eventCount := h.getOpenSearchCount("events", "match_all")
+	fimCount := h.getOpenSearchCount("events", "event_type:fim")
+
+	// 4. Construct Real Module Stats
+	modules := []models.ModuleStat{
+		{
+			Name:   "Security Events",
+			Count:  eventCount,
+			Status: "healthy",
+			Trend:  "up",
+		},
+		{
+			Name:   "Integrity Monitoring",
+			Count:  fimCount,
+			Status: determineStatus(fimCount, 50),
+			Trend:  "flat",
+		},
+		{
+			Name:   "Vulnerability Detector",
+			Count:  vulnCount,
+			Status: determineStatus(vulnCount, 10),
+			Trend:  "up",
+		},
+		{
+			Name:   "Active Agents",
+			Count:  assetCount,
+			Status: "healthy",
+			Trend:  "up",
+		},
+	}
+
+	response := models.DashboardSummary{
+		Modules:    modules,
+		TotalEvents: eventCount,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *GetDashboardStatsHandler) getOpenSearchCount(index string, query string) int64 {
+	if h.osClient == nil || h.osClient.Client == nil { return 0 }
+
 	q := fmt.Sprintf(`{"query": { "query_string": { "query": "%s" } } }`, query)
-	res, err := client.Count(
-		client.Count.WithIndex(index),
-		client.Count.WithBody(strings.NewReader(q)),
+	res, err := h.osClient.Count(
+		h.osClient.Count.WithIndex(index),
+		h.osClient.Count.WithBody(strings.NewReader(q)),
 	)
 	if err != nil {
 		return 0

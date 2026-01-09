@@ -1,15 +1,20 @@
 
 package case_management
 
-import "github.com/thrive-spectrexq/NexDefend/internal/models"
+import (
+	"time"
 
-// CreateCase creates a new case in the system.
-func CreateCase(createCaseRequest models.CreateCaseRequest) (*models.Case, error) {
-	// In a real implementation, you would create the case in the database.
-	return &models.Case{
-		ID:       1,
-		Name:     createCaseRequest.Name,
-		Status:   "New",
-		Assignee: createCaseRequest.Assignee,
-	}, nil
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
+)
+
+func CreateCase(createCaseRequest models.CreateCaseRequest) (models.Case, error) {
+	newCase := models.Case{
+		Title:       createCaseRequest.Title,
+		Description: createCaseRequest.Description,
+		Priority:    createCaseRequest.Priority,
+		Status:      "Open",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	return newCase, nil
 }

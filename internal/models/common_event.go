@@ -11,5 +11,7 @@ type CommonEvent struct {
 	IPAddress   string      `json:"ip_address"`
 	OSVersion   string      `json:"os_version"`
 	AgentVersion string      `json:"agent_version"`
+	// Use RawEvent internally for now to fix build, will map Data to it or vice-versa
+	Data        interface{} `json:"data"`
 	RawEvent    interface{} `json:"raw_event"`
 }
