@@ -65,21 +65,8 @@ const RegisterPage: React.FC = () => {
       >
         <CardContent sx={{ p: 4 }}>
           {/* Logo Placeholder */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, color: 'primary.main' }}>
-             <Box
-               component="span"
-               sx={{
-                 width: 24,
-                 height: 24,
-                 bgcolor: 'primary.main',
-                 borderRadius: '50%',
-                 mr: 1,
-                 display: 'inline-block'
-               }}
-             />
-             <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
-               NexDefend
-             </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
+             <img src="/nxfl.png" alt="NexDefend" style={{ height: 48, objectFit: 'contain' }} />
           </Box>
 
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 3 }}>

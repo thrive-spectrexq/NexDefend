@@ -25,7 +25,6 @@ import {
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  Security as SecurityIcon,
   NotificationsActive as AlertIcon,
   BugReport as BugIcon,
   Computer as ComputerIcon,
@@ -89,13 +88,7 @@ const MainLayout: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#050505' }}>
       {/* Brand Header */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box sx={{ width: 32, height: 32, bgcolor: 'primary.main', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <SecurityIcon sx={{ color: 'black', fontSize: 20 }} />
-        </Box>
-        <Box>
-           <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2 }}>NexDefend</Typography>
-           <Typography variant="caption" color="text.secondary">Security Platform</Typography>
-        </Box>
+        <img src="/nxfl.png" alt="NexDefend" style={{ height: 40, objectFit: 'contain' }} />
         <Box sx={{ flexGrow: 1 }} />
       </Box>
 
