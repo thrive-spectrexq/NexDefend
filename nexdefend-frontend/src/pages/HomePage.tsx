@@ -166,7 +166,7 @@ const HomePage: React.FC = () => {
             icon={<PsychologyIcon />}
             delay={0.5}
             features={[
-              { title: 'GenAI Copilot ("Sentinel")', description: 'Context-aware AI assistant powered by Ollama (Mistral) for querying system state and threat insights.' },
+              { title: 'GenAI Copilot ("Sentinel")', description: 'Context-aware AI assistant for querying system state and threat insights.' },
               { title: 'Predictive Forecasting', description: 'Linear regression modeling to forecast resource usage trends for the next 24 hours.' },
               { title: 'Anomaly Scoring', description: 'Real-time scoring of events using Isolation Forest to detect deviations from baseline behavior.' },
             ]}
