@@ -5,10 +5,28 @@ import (
 	"log"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
+)
+
+// Prometheus Metrics
+var (
+	cpuLoadMetric = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "system_cpu_load_percent",
+		Help: "Current CPU load in percent",
+	})
+	memoryUsageMetric = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "system_memory_usage_percent",
+		Help: "Current memory usage in percent",
+	})
+	diskUsageMetric = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "system_disk_usage_percent",
+		Help: "Current disk usage in percent",
+	})
 )
 
 // SystemMetrics holds the collected system metrics
@@ -41,6 +59,13 @@ func CollectMetrics(store MetricStore) {
 			log.Printf("Error collecting disk metrics: %v", err)
 			continue
 		}
+
+		// Update Prometheus Metrics
+		if len(cpuLoad) > 0 {
+			cpuLoadMetric.Set(cpuLoad[0])
+		}
+		memoryUsageMetric.Set(memInfo.UsedPercent)
+		diskUsageMetric.Set(diskInfo.UsedPercent)
 
 		// System metrics are associated with the default organization ID 1.
 		// In a multi-tenant environment, this should be configurable or context-aware.
