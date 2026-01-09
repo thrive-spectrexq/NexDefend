@@ -88,7 +88,9 @@ const MainLayout: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#050505' }}>
       {/* Brand Header */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <img src="/nxfl.png" alt="NexDefend" style={{ height: 40, objectFit: 'contain' }} />
+        <Typography variant="h6" fontWeight="bold" sx={{ letterSpacing: 1, color: 'text.primary' }}>
+          NexDefend
+        </Typography>
         <Box sx={{ flexGrow: 1 }} />
       </Box>
 

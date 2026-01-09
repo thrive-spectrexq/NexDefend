@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Button, Box, Container } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Container, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
@@ -13,7 +13,9 @@ const Navbar: React.FC = () => {
       <Container maxWidth="lg">
         <Toolbar disableGutters>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <img src="/nxfl.png" alt="NexDefend" style={{ height: 40, objectFit: 'contain' }} />
+            <Typography variant="h6" fontWeight="bold" sx={{ letterSpacing: 1 }}>
+              NexDefend
+            </Typography>
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
