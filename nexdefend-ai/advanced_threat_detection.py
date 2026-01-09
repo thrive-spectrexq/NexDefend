@@ -17,6 +17,9 @@ def analyze_command_line(command_line):
         r"id",                   # Reconnaissance
         r"cat /etc/shadow",      # Credential dumping
         r"mimikatz",             # Credential dumping
+        r"vssadmin delete shadows", # Ransomware shadow copy deletion
+        r"wbadmin delete catalog",  # Ransomware backup deletion
+        r"bcdedit /set {default} recoveryenabled No", # Ransomware recovery disable
     ]
 
     for pattern in suspicious_patterns:
@@ -61,3 +64,19 @@ def analyze_process_tree(process_list):
                     anomalies.append(f"Suspicious Child Process: {name} spawned by {parent_name} (PID: {p['pid']}, PPID: {ppid})")
 
     return anomalies
+
+def detect_ransomware_activity(filename):
+    """
+    Checks if a filename has a suspicious extension associated with ransomware.
+    """
+    suspicious_extensions = [
+        ".enc", ".encrypted", ".locked", ".crypto", ".ryuk", ".wannacry",
+        ".wcry", ".wnry", ".crypt", ".pay", ".adobee", ".bac", ".micro"
+    ]
+
+    lower_name = filename.lower()
+    for ext in suspicious_extensions:
+        if lower_name.endswith(ext):
+            return True
+
+    return False

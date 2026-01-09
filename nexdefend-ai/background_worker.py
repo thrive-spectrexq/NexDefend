@@ -6,7 +6,7 @@ import requests
 from confluent_kafka import Consumer, KafkaException
 import sys
 import time
-from advanced_threat_detection import analyze_command_line
+from advanced_threat_detection import analyze_command_line, detect_ransomware_activity
 from mitre_attack import get_mitre_technique
 from specialized_models.dga_detector import is_dga
 from ueba.behavior_model import BehaviorModel
@@ -148,6 +148,22 @@ def process_event(event):
         if "/tmp" in cmdline and pid:
             logging.warning(f"Suspicious process detected: {cmdline} (PID: {pid})")
             suspicious_processes[pid] = time.time()
+
+    elif event_type == "file":
+        file_data = event.get("data", {})
+        path = file_data.get("path") or file_data.get("target_path")
+
+        if path and detect_ransomware_activity(path):
+            description = f"Ransomware Activity Detected: Suspicious file extension in {path}"
+            risk_score = 90 # Very High
+            create_incident_in_backend(
+                description,
+                "Critical",
+                entity_name=path,
+                risk_score=risk_score,
+                disposition="Not Reviewed",
+                mitre_technique="T1486" # Data Encrypted for Impact
+            )
 
     elif event_type == "net_connection":
         net_data = event.get('data', {})
