@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Card, CardContent, Chip, Grid, CircularProgress, Alert } from '@mui/material';
 import { Cloud as CloudIcon, Storage as StorageIcon } from '@mui/icons-material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import client from '@/api/client';
 
 const CloudDashboardPage: React.FC = () => {
@@ -33,9 +33,9 @@ const CloudDashboardPage: React.FC = () => {
     { field: 'instance_id', headerName: 'Instance ID', width: 150 },
     { field: 'name', headerName: 'Name', width: 200 },
     { field: 'type', headerName: 'Type', width: 120 },
-    { field: 'state', headerName: 'State', width: 120, renderCell: (params) => (
+    { field: 'state', headerName: 'State', width: 120, renderCell: (params: GridRenderCellParams) => (
         <Chip
-            label={params.value}
+            label={params.value as string}
             size="small"
             color={params.value === 'running' ? 'success' : 'default'}
             variant="outlined"
@@ -48,9 +48,9 @@ const CloudDashboardPage: React.FC = () => {
   const k8sColumns: GridColDef[] = [
     { field: 'name', headerName: 'Pod Name', width: 250 },
     { field: 'namespace', headerName: 'Namespace', width: 150 },
-    { field: 'phase', headerName: 'Phase', width: 120, renderCell: (params) => (
+    { field: 'phase', headerName: 'Phase', width: 120, renderCell: (params: GridRenderCellParams) => (
         <Chip
-            label={params.value}
+            label={params.value as string}
             size="small"
             color={params.value === 'Running' ? 'success' : params.value === 'Failed' ? 'error' : 'warning'}
         />
@@ -70,7 +70,7 @@ const CloudDashboardPage: React.FC = () => {
         </Box>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <Card sx={{ bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' }}>
                     <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -82,7 +82,7 @@ const CloudDashboardPage: React.FC = () => {
                     </CardContent>
                 </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <Card sx={{ bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' }}>
                     <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -102,7 +102,7 @@ const CloudDashboardPage: React.FC = () => {
                 <DataGrid
                     rows={cloudAssets}
                     columns={cloudColumns}
-                    getRowId={(row) => row.instance_id}
+                    getRowId={(row: any) => row.instance_id}
                     sx={{ border: '1px solid rgba(255,255,255,0.08)', color: 'text.secondary' }}
                 />
             </Box>
@@ -114,7 +114,7 @@ const CloudDashboardPage: React.FC = () => {
                 <DataGrid
                     rows={k8sPods}
                     columns={k8sColumns}
-                    getRowId={(row) => `${row.namespace}-${row.name}`}
+                    getRowId={(row: any) => `${row.namespace}-${row.name}`}
                     sx={{ border: '1px solid rgba(255,255,255,0.08)', color: 'text.secondary' }}
                 />
             </Box>
