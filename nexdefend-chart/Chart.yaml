@@ -3,3 +3,12 @@ name: nexdefend
 description: A Helm chart for deploying the NexDefend platform on Kubernetes.
 version: 0.1.0
 appVersion: "1.0.0"
+dependencies:
+  - name: postgresql
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: kafka
+    version: 26.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled
