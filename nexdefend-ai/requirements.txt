@@ -25,7 +25,7 @@ MarkupSafe==3.0.2
 packaging==25.0
 scipy==1.16.1
 threadpoolctl==3.6.0
-urllib3==2.5.0
+urllib3==2.6.3
 Werkzeug==3.1.5
 confluent-kafka
 pytest
