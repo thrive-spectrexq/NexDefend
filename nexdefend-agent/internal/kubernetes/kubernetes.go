@@ -50,7 +50,9 @@ func StartKubernetesWatcher(producer *kafka.Producer, topic string) {
 		for range ticker.C {
 			log.Println("Collecting Kubernetes Pod metrics...")
 
-			pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			pods, err := clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+			cancel()
 			if err != nil {
 				log.Printf("Failed to list pods: %v", err)
 				continue
@@ -84,9 +86,11 @@ func StartKubernetesWatcher(producer *kafka.Producer, topic string) {
 			}
 
 			// Also watch for Events (Warnings, Errors)
-			events, err := clientset.CoreV1().Events("").List(context.TODO(), metav1.ListOptions{
+			ctxEvents, cancelEvents := context.WithTimeout(context.Background(), 10*time.Second)
+			events, err := clientset.CoreV1().Events("").List(ctxEvents, metav1.ListOptions{
 				FieldSelector: "type!=Normal", // Only interested in warnings/errors
 			})
+			cancelEvents()
 			if err != nil {
 				continue
 			}

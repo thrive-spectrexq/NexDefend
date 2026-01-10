@@ -30,7 +30,9 @@ type CloudAsset struct {
 // NewAWSCollector initializes the AWS client
 func NewAWSCollector(region string) (*AWSCollector, error) {
 	// Load config from ~/.aws/config or environment variables (AWS_ACCESS_KEY_ID, etc.)
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("unable to load SDK config: %v", err)
 	}
@@ -50,7 +52,9 @@ func (c *AWSCollector) FetchAssets() ([]CloudAsset, error) {
 	paginator := ec2.NewDescribeInstancesPaginator(c.Client, input)
 
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(context.TODO())
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		page, err := paginator.NextPage(ctx)
+		cancel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to describe instances: %v", err)
 		}

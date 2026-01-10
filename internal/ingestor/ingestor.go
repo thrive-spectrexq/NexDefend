@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -53,6 +54,7 @@ func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correla
 		Body:  strings.NewReader(string(eventJSON)),
 	}
 
+	// Use background context as this is fire-and-forget from worker's perspective
 	res, err := indexReq.Do(context.Background(), osClient)
 	if err != nil {
 		log.Printf("Error getting response from OpenSearch: %s", err)
@@ -126,13 +128,32 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 		log.Fatalf("Failed to create OpenSearch client: %v", err)
 	}
 
+	// --- Worker Pool ---
+	numWorkers := 10 // Can be configurable
+	jobQueue := make(chan *models.CommonEvent, 1000)
+	var wg sync.WaitGroup
+
+	// Start workers
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for event := range jobQueue {
+				ProcessEvent(event, correlationEngine, osClient, db)
+			}
+		}(i)
+	}
+
 	// --- Internal Event Loop (NDR) ---
 	go func() {
 		if internalEvents == nil {
 			return
 		}
 		for event := range internalEvents {
-			ProcessEvent(&event, correlationEngine, osClient, db)
+			// Make a copy or pass pointer, channel sends copy by value so &event is local to loop
+			// To be safe, we create a new variable
+			evt := event
+			jobQueue <- &evt
 		}
 	}()
 
@@ -168,15 +189,18 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 					log.Printf("Failed to normalize event: %v", err)
 					continue
 				}
-				ProcessEvent(normalizedEvent, correlationEngine, osClient, db)
+				jobQueue <- normalizedEvent
 
 			} else {
 				log.Printf("Consumer error: %v (%v)\n", err, msg)
+				// Small backoff to prevent tight loop logging on hard failures
+				time.Sleep(1 * time.Second)
 			}
 		}
 	}
 
-	// If Kafka failed, we still need to block to keep the goroutine alive for internal events
+	// If Kafka failed to start, we still need to keep the main goroutine (and workers) alive for internal events
+	// In the Kafka success case, the loop above blocks forever.
 	if err != nil {
 		select {}
 	}
