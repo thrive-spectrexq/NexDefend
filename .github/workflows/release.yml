@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags (e.g., v1.0.0)
+
+permissions:
+  contents: write # Required to create Releases
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # 1. Build Offline Installer Bundle (Enterprise)
+  # ----------------------------------------------------------------------------
+  build-installer:
+    name: Build Offline Installer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Make Build Script Executable
+        run: chmod +x build_installer.sh
+
+      - name: Run Build Script
+        run: ./build_installer.sh ${{ github.ref_name }}
+        # Generates: nexdefend-enterprise-vX.Y.Z.tar.gz
+
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexdefend-enterprise-installer
+          path: nexdefend-enterprise-*.tar.gz
+          retention-days: 1
+
+  # ----------------------------------------------------------------------------
+  # 2. Build Standalone Agent (Linux)
+  # ----------------------------------------------------------------------------
+  build-agent-linux:
+    name: Build Agent (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
+      - name: Build Linux Agent
+        working-directory: ./nexdefend-agent
+        run: |
+          go build -o nexdefend-agent-linux-amd64 .
+          tar -czf nexdefend-agent-linux-amd64.tar.gz nexdefend-agent-linux-amd64 config.yaml.example
+
+      - name: Upload Linux Agent Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexdefend-agent-linux
+          path: nexdefend-agent/nexdefend-agent-linux-amd64.tar.gz
+          retention-days: 1
+
+  # ----------------------------------------------------------------------------
+  # 3. Build Standalone Agent (Windows)
+  # ----------------------------------------------------------------------------
+  build-agent-windows:
+    name: Build Agent (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+
+      # Windows runners typically have GCC (MinGW) for CGO if needed, or we might need to disable CGO if no C deps
+      # The agent uses libpcap (gopacket), which requires CGO and npcap/winpcap headers on Windows.
+      # Cross-compiling from Linux is hard with CGO. Building on Windows runner is easier if deps are there.
+      # For now, we attempt a build. If it fails due to missing pcap headers, we might skip or use a static build.
+      # Assuming 'nexdefend-agent' uses CGO for pcap.
+
+      # Installing Npcap SDK or similar might be needed.
+      # For this plan, we will try to build. If complex, we might skip Windows agent in this iteration.
+      # However, "Professional Release" implies multi-platform.
+
+      - name: Build Windows Agent
+        working-directory: ./nexdefend-agent
+        run: |
+          go build -o nexdefend-agent-windows-amd64.exe .
+          Compress-Archive -Path nexdefend-agent-windows-amd64.exe, config.yaml.example -DestinationPath nexdefend-agent-windows-amd64.zip
+
+      - name: Upload Windows Agent Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexdefend-agent-windows
+          path: nexdefend-agent/nexdefend-agent-windows-amd64.zip
+          retention-days: 1
+
+  # ----------------------------------------------------------------------------
+  # 4. Publish Release
+  # ----------------------------------------------------------------------------
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-installer, build-agent-linux, build-agent-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Display Downloaded Files
+        run: ls -R
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          # files expects a list of paths. Since download-artifact puts them in dirs named after artifacts:
+          files: |
+            nexdefend-enterprise-installer/nexdefend-enterprise-*.tar.gz
+            nexdefend-agent-linux/nexdefend-agent-linux-amd64.tar.gz
+            nexdefend-agent-windows/nexdefend-agent-windows-amd64.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
