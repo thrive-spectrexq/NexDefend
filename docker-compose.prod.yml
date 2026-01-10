@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # --- Core Application ---
+  api:
+    image: nexdefend-api:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-nexdefend}
+      - DB_PASSWORD=${DB_PASSWORD:-secure_password}
+      - DB_NAME=${DB_NAME:-nexdefend_db}
+      - DB_SSLMODE=disable
+      - PYTHON_API=http://ai:5000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    volumes:
+      - ./configs/sample_eve.json:/var/log/suricata/eve.json
+      - suricata_logs:/var/log/suricata
+    networks:
+      - nexdefend-net
+
+  frontend:
+    image: nexdefend-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"  # Expose on port 80 (Standard Web)
+    depends_on:
+      - api
+    networks:
+      - nexdefend-net
+
+  ai:
+    image: nexdefend-ai:latest
+    restart: unless-stopped
+    environment:
+      - DB_HOST=db
+      - DB_PASSWORD=${DB_PASSWORD:-secure_password}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    networks:
+      - nexdefend-net
+
+  # --- Infrastructure ---
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-nexdefend}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
+      POSTGRES_DB: ${DB_NAME:-nexdefend_db}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Mount your init.sql to automatically create schema on first run
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nexdefend} -d ${DB_NAME:-nexdefend_db}"]
+      interval: 5s
+      retries: 5
+    networks:
+      - nexdefend-net
+
+  suricata:
+    image: jasonish/suricata:latest
+    command: -i eth0 -D -v --eve-log-output /var/log/suricata/eve.json
+    cap_add: [NET_ADMIN, NET_RAW, SYS_NICE]
+    network_mode: "service:api" # Monitor API traffic
+    volumes:
+      - suricata_logs:/var/log/suricata
+
+  # --- Monitoring & Search ---
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    environment:
+      - discovery.type=single-node
+      - "DISABLE_SECURITY_PLUGIN=true"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    networks:
+      - nexdefend-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.87.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./configs/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    networks:
+      - nexdefend-net
+
+volumes:
+  db_data:
+  opensearch_data:
+  suricata_logs:
+
+networks:
+  nexdefend-net:
