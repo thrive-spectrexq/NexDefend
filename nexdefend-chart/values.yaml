@@ -1,45 +1,33 @@
 # Default values for nexdefend-chart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
 replicaCount: 1
 
-# -- Image settings for all services.
-# Important: You must build and push your service images to a container registry.
-# Replace 'your-registry' with your actual container registry (e.g., docker.io/yourusername).
 image:
   pullPolicy: IfNotPresent
-  # -- Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "latest" # In production, replace this with a specific version (e.g., v1.0.0)
 
-# -- Service account configuration.
 serviceAccount:
-  # -- Specifies whether a service account should be created.
   create: true
-  # -- Annotations to add to the service account.
   annotations: {}
-  # -- The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template.
   name: ""
 
-# -- Pod security context.
-podSecurityContext: {}
-  # fsGroup: 2000
+# -- Global Security Context (Applied to all pods)
+podSecurityContext:
+  fsGroup: 2000
 
-# -- Security context for containers.
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+# -- Container Security Context (Matches our new non-root Dockerfiles)
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000 # Matches the UID of 'appuser' usually created in Alpine
 
 # ==============================================================================
-# Service-specific configurations
+# Service Configurations
 # ==============================================================================
 
-# -- Configuration for the main Go API service.
 api:
   name: nexdefend-api
   image:
@@ -49,27 +37,19 @@ api:
     port: 8080
   environment:
     PYTHON_API: "http://nexdefend-ai:5000"
-    CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://nexdefend.vercel.app"
-    FIM_PATH: "/etc"
+    # In K8s, CORS should point to the Ingress host, not localhost
+    CORS_ALLOWED_ORIGINS: "https://nexdefend.yourdomain.com"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
-  # -- Environment variables sourced from the global configmap
-  configMapEnv:
-    - name: DB_HOST
-      key: dbHost
-  # -- Environment variables sourced from the global secret
-  secretEnv:
-    - name: DB_USER
-      key: dbUser
-    - name: DB_PASSWORD
-      key: dbPassword
-    - name: DB_NAME
-      key: dbName
-    - name: JWT_SECRET_KEY
-      key: jwtSecretKey
-    - name: AI_SERVICE_TOKEN
-      key: aiServiceToken
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  probes:
+    enabled: true
 
-# -- Configuration for the Python AI/ML service.
 ai:
   name: nexdefend-ai
   image:
@@ -79,64 +59,81 @@ ai:
     port: 5000
   environment:
     GO_API_URL: "http://nexdefend-api:8080/api/v1"
-    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
-  # -- Environment variables sourced from the global configmap
-  configMapEnv:
-    - name: DB_HOST
-      key: dbHost
-    - name: DB_PORT
-      key: dbPort
-  # -- Environment variables sourced from the global secret
-  secretEnv:
-    - name: DB_USER
-      key: dbUser
-    - name: DB_PASSWORD
-      key: dbPassword
-    - name: DB_NAME
-      key: dbName
-    - name: AI_SERVICE_TOKEN
-      key: aiServiceToken
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
 
-# -- Configuration for the React Frontend service.
+soar:
+  name: nexdefend-soar
+  image:
+    repository: your-registry/nexdefend-soar
+  service:
+    type: ClusterIP
+    port: 8080 # Container listens on 8080
+  environment:
+    KAFKA_BROKER: "nexdefend-kafka:9092"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+cloudConnector:
+  name: nexdefend-cloud-connector
+  image:
+    repository: your-registry/nexdefend-cloud-connector
+  # No service/ports needed as it is a consumer
+  environment:
+    KAFKA_BROKER: "nexdefend-kafka:9092"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
 frontend:
   name: nexdefend-frontend
   image:
     repository: your-registry/nexdefend-frontend
   service:
     type: ClusterIP
-    port: 5173
-  environment:
-    REACT_APP_API_URL: "http://nexdefend-api:8080/api/v1"
-    REACT_APP_AI_API_URL: "http://nexdefend-ai:5000"
+    port: 80 # Production builds usually serve on 80
   ingress:
-    enabled: true
+    enabled: false
     className: "nginx"
-    annotations: {}
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
     hosts:
-      - host: chart-example.local
+      - host: nexdefend.local
         paths:
           - path: /
             pathType: ImplementationSpecific
-    tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
 
 # ==============================================================================
-# External service configurations (placeholders)
+# External / Sub-chart Configuration
 # ==============================================================================
 
-# -- Global environment variables (non-secret)
-# These will be placed in a ConfigMap and shared across services.
+# Enable sub-charts
+postgresql:
+  enabled: true
+  auth:
+    username: nexdefend
+    database: nexdefend_db
+    # password: set via --set postgresql.auth.password during install
+
+kafka:
+  enabled: true
+  provisioning:
+    enabled: true
+    topics:
+      - name: incidents
+        partitions: 1
+        replicationFactor: 1
+
+# Configuration mapped into the ConfigMap
 config:
-  dbHost: "db" # For internal K8s service, use the service name. For external, use the full URL.
+  dbHost: "nexdefend-postgresql" # Points to the sub-chart service
   dbPort: "5432"
-
-# -- External database configuration
-# IMPORTANT: For production, use a managed database service (e.g., AWS RDS, Google Cloud SQL).
-# The connection details should be stored in a Kubernetes Secret, not here.
-database:
-  host: "nexdefend-postgresql" # Example if running Postgres in-cluster
-  port: 5432
