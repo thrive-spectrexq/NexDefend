@@ -3,6 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ "main" ]
+    tags: [ 'v*' ] # Trigger workflow on version tags (e.g., v1.0.0)
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -12,16 +13,14 @@ on:
       - 'docs/**'
       - '**.md'
 
-# Concurrency: Cancel old builds on the same branch when new code is pushed
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Security: Grant strict least privileges
 permissions:
-  contents: read
-  packages: write # Required if you use GHCR
-  security-events: write # Required for uploading Trivy results
+  contents: write # Required to create Releases
+  packages: write
+  security-events: write
 
 jobs:
   # ============================================================================
@@ -37,7 +36,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.3'
-          cache: true # Automatically caches Go modules
+          cache: true
 
       - name: Install Dependencies
         run: sudo apt-get update && sudo apt-get install -y librdkafka-dev
@@ -49,7 +48,6 @@ jobs:
           args: --timeout=5m
 
       - name: Test
-        # CGO_ENABLED=1 is required for librdkafka
         run: CGO_ENABLED=1 go test -tags musl -race -v ./...
 
   # ============================================================================
@@ -68,7 +66,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip' # Caches pip dependencies
+          cache: 'pip'
 
       - name: Install Dependencies
         run: |
@@ -105,13 +103,13 @@ jobs:
         run: npm ci
 
       - name: Type Check
-        run: npm run type-check # Assumes you have this script, or use 'tsc --noEmit'
+        run: npm run type-check
 
       - name: Build
         run: npm run build
 
   # ============================================================================
-  # 4. MICROSERVICES (Go: SOAR, Agent, Connector)
+  # 4. MICROSERVICES
   # ============================================================================
   test-microservices:
     name: Service ${{ matrix.service }}
@@ -136,7 +134,59 @@ jobs:
         run: CGO_ENABLED=1 go test -tags "libkafka musl" -v ./...
 
   # ============================================================================
-  # 5. DOCKER BUILD & SECURITY SCAN
+  # 5. DESKTOP APP (Windows Build) -- NEW
+  # ============================================================================
+  build-desktop:
+    name: Desktop App (Windows)
+    runs-on: windows-latest
+    needs: [test-api, test-frontend] # Wait for tests to pass
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          # Cache based on the desktop module
+          cache-dependency-path: nexdefend-desktop/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          # Wails builds the frontend located here
+          cache-dependency-path: nexdefend-frontend/package-lock.json
+
+      # Match Wails version from go.mod (v2.8.0)
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.8.0
+
+      - name: Build Windows App
+        working-directory: ./nexdefend-desktop
+        # Builds using wails.json config, targeting Windows
+        run: |
+          wails build -platform windows/amd64 -clean
+
+      # Uploads the .exe so you can download it from the "Actions" tab in GitHub
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexdefend-desktop-windows
+          path: nexdefend-desktop/build/bin/nexdefend-desktop.exe
+          if-no-files-found: error
+
+      # Automatically creates a Release if a tag (e.g., v1.0.0) was pushed
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: nexdefend-desktop/build/bin/nexdefend-desktop.exe
+          draft: false
+          prerelease: false
+
+  # ============================================================================
+  # 6. DOCKER BUILD & SECURITY SCAN
   # ============================================================================
   build-images:
     name: Docker Build & Scan
@@ -155,43 +205,23 @@ jobs:
           - service: soar
             context: nexdefend-soar
             dockerfile: nexdefend-soar/Dockerfile
-          # Add other services as needed
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      # Security: Scan image for vulnerabilities before pushing
-      - name: Build and Export to Docker
+      - name: Build and Export
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          load: true # Load into local Docker daemon for scanning
+          load: true
           tags: nexdefend/${{ matrix.service }}:test
-
-      - name: Run Trivy Vulnerability Scanner
+      - name: Run Trivy Scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'nexdefend/${{ matrix.service }}:test'
           format: 'table'
-          exit-code: '1' # Fail build on critical vulnerabilities
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-
-      # Uncomment to push to a registry
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-      #
-      # - name: Push to Registry
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: ${{ matrix.context }}
-      #     file: ${{ matrix.dockerfile }}
-      #     push: true
-      #     tags: your-registry/nexdefend-${{ matrix.service }}:latest
