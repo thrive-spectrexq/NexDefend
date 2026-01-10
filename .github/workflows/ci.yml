@@ -1,145 +1,197 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+
+# Concurrency: Cancel old builds on the same branch when new code is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Security: Grant strict least privileges
+permissions:
+  contents: read
+  packages: write # Required if you use GHCR
+  security-events: write # Required for uploading Trivy results
 
 jobs:
-  build_and_test:
-    name: Build & Test
+  # ============================================================================
+  # 1. CORE API (Go)
+  # ============================================================================
+  test-api:
+    name: API (Go)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.24.3'
+          cache: true # Automatically caches Go modules
 
-      - name: Build Go
-        run: go build -v ./...
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y librdkafka-dev
 
-      - name: Run Go Tests
-        run: go test -v ./...
-
-      - name: Lint Go
-        uses: golangci/golangci-lint-action@v4
+      - name: Lint (golangci-lint)
+        uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.59
+          version: latest
+          args: --timeout=5m
+
+      - name: Test
+        # CGO_ENABLED=1 is required for librdkafka
+        run: CGO_ENABLED=1 go test -tags musl -race -v ./...
+
+  # ============================================================================
+  # 2. AI SERVICE (Python)
+  # ============================================================================
+  test-ai:
+    name: AI (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./nexdefend-ai
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+          cache: 'pip' # Caches pip dependencies
 
-      - name: Install Python Dependencies
-        run: pip install -r nexdefend-ai/requirements.txt
-
-      - name: Lint Python
+      - name: Install Dependencies
         run: |
-          pip install flake8
-          flake8 nexdefend-ai/
+          sudo apt-get install -y nmap
+          pip install -r requirements.txt
+          pip install pytest flake8
 
-      - name: Run Python Tests
-        run: |
-          pip install pytest
-          pytest nexdefend-ai/
+      - name: Lint
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Test
+        run: pytest
+
+  # ============================================================================
+  # 3. FRONTEND (React)
+  # ============================================================================
+  test-frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./nexdefend-frontend
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexdefend-frontend/package-lock.json
 
-      - name: Install Frontend Dependencies
-        run: npm install --prefix nexdefend-frontend
+      - name: Install Dependencies
+        run: npm ci
 
-      - name: Lint Frontend
-        run: npm run lint --prefix nexdefend-frontend
+      - name: Type Check
+        run: npm run type-check # Assumes you have this script, or use 'tsc --noEmit'
 
-      - name: Run Frontend Tests
-        run: npm test -- --watch=false --prefix nexdefend-frontend
+      - name: Build
+        run: npm run build
 
-  scan_api:
-    name: Scan API
+  # ============================================================================
+  # 4. MICROSERVICES (Go: SOAR, Agent, Connector)
+  # ============================================================================
+  test-microservices:
+    name: Service ${{ matrix.service }}
     runs-on: ubuntu-latest
-    needs: build_and_test
+    strategy:
+      matrix:
+        service: [nexdefend-soar, nexdefend-agent, nexdefend-cloud-connector]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build an image from Dockerfile
-        run: |
-          docker build -t nexdefend-api-image .
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          cache: true
 
-      - name: Run Trivy vulnerability scanner
+      - name: Install System Deps
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev librdkafka-dev
+
+      - name: Test ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: CGO_ENABLED=1 go test -tags "libkafka musl" -v ./...
+
+  # ============================================================================
+  # 5. DOCKER BUILD & SECURITY SCAN
+  # ============================================================================
+  build-images:
+    name: Docker Build & Scan
+    needs: [test-api, test-ai, test-frontend, test-microservices]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        include:
+          - service: api
+            context: .
+            dockerfile: Dockerfile
+          - service: ai
+            context: nexdefend-ai
+            dockerfile: nexdefend-ai/Dockerfile
+          - service: soar
+            context: nexdefend-soar
+            dockerfile: nexdefend-soar/Dockerfile
+          # Add other services as needed
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Security: Scan image for vulnerabilities before pushing
+      - name: Build and Export to Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true # Load into local Docker daemon for scanning
+          tags: nexdefend/${{ matrix.service }}:test
+
+      - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'nexdefend-api-image'
+          image-ref: 'nexdefend/${{ matrix.service }}:test'
           format: 'table'
-          exit-code: '1'
+          exit-code: '1' # Fail build on critical vulnerabilities
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
-  scan_ai:
-    name: Scan AI
-    runs-on: ubuntu-latest
-    needs: build_and_test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build an image from Dockerfile
-        run: |
-          docker build -t nexdefend-ai-image ./nexdefend-ai
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'nexdefend-ai-image'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-  scan_frontend:
-    name: Scan Frontend
-    runs-on: ubuntu-latest
-    needs: build_and_test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build an image from Dockerfile
-        run: |
-          docker build -t nexdefend-frontend-image ./nexdefend-frontend
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'nexdefend-frontend-image'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-  tag:
-    name: Automatic Version Tagging
-    runs-on: ubuntu-latest
-    needs: [build_and_test, scan_api, scan_ai, scan_frontend]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.67.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
+      # Uncomment to push to a registry
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+      #
+      # - name: Push to Registry
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ${{ matrix.context }}
+      #     file: ${{ matrix.dockerfile }}
+      #     push: true
+      #     tags: your-registry/nexdefend-${{ matrix.service }}:latest
