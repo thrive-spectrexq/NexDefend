@@ -7,13 +7,13 @@ import {
   Typography,
   TextField,
   Grid,
-  Divider,
   IconButton,
   Alert,
 } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchPlaybooks, savePlaybooks, Playbook, PlaybookAction } from '@/api/soar';
+import { fetchPlaybooks, savePlaybooks } from '@/api/soar';
+import type { Playbook, PlaybookAction } from '@/api/soar';
 
 const PlaybookEditorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -131,7 +131,7 @@ const PlaybookEditorPage: React.FC = () => {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ bgcolor: 'background.paper', mb: 3 }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2 }}>General Info</Typography>
@@ -162,7 +162,7 @@ const PlaybookEditorPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card sx={{ bgcolor: 'background.paper' }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -182,7 +182,7 @@ const PlaybookEditorPage: React.FC = () => {
                   </Box>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField
                         select
                         label="Type"
@@ -199,7 +199,7 @@ const PlaybookEditorPage: React.FC = () => {
                         <option value="kill_process">Kill Process</option>
                       </TextField>
                     </Grid>
-                    <Grid item xs={12} sm={8}>
+                    <Grid size={{ xs: 12, sm: 8 }}>
                         {/* Dynamic Params Editing - Simplified for now */}
                         {Object.entries(action.params).map(([key, value]) => (
                              <TextField

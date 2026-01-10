@@ -7,14 +7,13 @@ import {
   Typography,
   Grid,
   Chip,
-  IconButton,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, PlayArrow as RunIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { fetchPlaybooks, Playbook } from '@/api/soar';
-import GenericPage from '@/components/GenericPage';
+import { fetchPlaybooks } from '@/api/soar';
+import type { Playbook } from '@/api/soar';
 
 const PlaybooksPage: React.FC = () => {
   const navigate = useNavigate();
@@ -78,7 +77,7 @@ const PlaybooksPage: React.FC = () => {
       ) : (
         <Grid container spacing={3}>
           {playbooks.map((playbook) => (
-            <Grid item xs={12} md={6} lg={4} key={playbook.id}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={playbook.id}>
               <Card sx={{ bgcolor: 'background.paper', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
