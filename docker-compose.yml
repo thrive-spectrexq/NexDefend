@@ -3,25 +3,22 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      # Database
       DB_USER: ${DB_USER:-nexdefend}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       DB_NAME: ${DB_NAME:-nexdefend_db}
       DB_HOST: db
       DB_SSLMODE: disable
-      # Service Communication
       PYTHON_API: http://ai:5000
       CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,https://nexdefend.vercel.app
-      # Secrets (MUST change in production)
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-default_secret_key}"
       AI_SERVICE_TOKEN: "${AI_SERVICE_TOKEN:-default_token}"
-      # Features
       FIM_PATH: /etc
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
     volumes:
@@ -35,21 +32,19 @@ services:
     build:
       context: nexdefend-ai
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "5000:5000"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      # Database
       DB_USER: ${DB_USER:-nexdefend}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       DB_NAME: ${DB_NAME:-nexdefend_db}
       DB_HOST: db
       DB_PORT: 5432
-      # Service Communication
       GO_API_URL: http://api:8080/api/v1
-      # Secrets (MUST match 'api' service)
       AI_SERVICE_TOKEN: "${AI_SERVICE_TOKEN:-default_token}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
     networks:
@@ -75,6 +70,7 @@ services:
 
   db:
     image: postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-nexdefend}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
@@ -94,6 +90,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.47.2
+    restart: unless-stopped
     ports:
       - "9090:9090"
     volumes:
@@ -106,6 +103,7 @@ services:
 
   grafana:
     image: grafana/grafana:10.0.3
+    restart: unless-stopped
     ports:
       - "3001:3000"
     volumes:
@@ -124,6 +122,7 @@ services:
     build:
       context: nexdefend-agent
       dockerfile: Dockerfile
+    restart: unless-stopped
     depends_on:
       - kafka
     environment:
@@ -147,6 +146,7 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.2.0
+    restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKeeper_TICK_TIME: 2000
@@ -155,6 +155,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.2.0
+    restart: unless-stopped
     depends_on:
       - zookeeper
     ports:
@@ -172,6 +173,7 @@ services:
   opensearch:
     image: opensearchproject/opensearch:latest
     container_name: opensearch
+    restart: unless-stopped
     environment:
       - cluster.name=opensearch-cluster
       - node.name=opensearch
@@ -198,6 +200,8 @@ services:
     build:
       context: nexdefend-soar
       dockerfile: Dockerfile
+    restart: unless-stopped
+    # Maps Host 8081 to Container 8080 (as defined in main.go)
     ports:
       - "8081:8080"
     networks:
@@ -206,6 +210,7 @@ services:
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:latest
     container_name: opensearch-dashboards
+    restart: unless-stopped
     ports:
       - 5601:5601
     environment:
@@ -229,6 +234,7 @@ services:
     build:
       context: nexdefend-cloud-connector
       dockerfile: Dockerfile
+    restart: unless-stopped
     depends_on:
       - kafka
     env_file:
@@ -239,8 +245,10 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
+    restart: unless-stopped
+    # Maps Host 8082 to Container 8080 (cAdvisor default)
     ports:
-      - "8082:8080" # Changed from 8081 to avoid conflict with SOAR
+      - "8082:8080" 
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -252,6 +260,7 @@ services:
   pg_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
     container_name: pg_exporter
+    restart: unless-stopped
     ports:
       - "9187:9187"
     environment:
@@ -262,6 +271,7 @@ services:
   kafka_exporter:
     image: danielqsj/kafka-exporter
     container_name: kafka_exporter
+    restart: unless-stopped
     ports:
       - "9308:9308"
     command: --kafka.server=kafka:9092
@@ -271,6 +281,7 @@ services:
   alertmanager:
     image: prom/alertmanager
     container_name: alertmanager
+    restart: unless-stopped
     ports:
       - "9093:9093"
     volumes:
