@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, Paper, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Container, Grid, Typography, Paper, List, ListItem, ListItemIcon, ListItemText, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 import ShieldIcon from '@mui/icons-material/Shield';
 import MemoryIcon from '@mui/icons-material/Memory';
@@ -8,9 +8,187 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import BuildIcon from '@mui/icons-material/Build';
 import HubIcon from '@mui/icons-material/Hub';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+// --- Hero Animation Component ---
+const HeroAnimation: React.FC = () => {
+  const theme = useTheme();
+  const primaryColor = theme.palette.primary.main || '#00d1ff';
+
+  return (
+    <Box sx={{ position: 'relative', width: '100%', height: { xs: '350px', md: '500px' }, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+
+      {/* Background Glow */}
+      <Box
+        component={motion.div}
+        animate={{ opacity: [0.3, 0.5, 0.3], scale: [1, 1.1, 1] }}
+        transition={{ duration: 4, repeat: Infinity }}
+        sx={{
+          position: 'absolute',
+          width: '300px',
+          height: '300px',
+          background: `radial-gradient(circle, ${primaryColor}22 0%, transparent 70%)`,
+          filter: 'blur(40px)',
+          zIndex: 0
+        }}
+      />
+
+      {/* Outer Rotating Radar Ring */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        style={{ position: 'absolute', zIndex: 1 }}
+      >
+        <Box sx={{
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          border: `1px dashed ${primaryColor}33`,
+          borderTopColor: primaryColor,
+          boxShadow: `0 0 20px ${primaryColor}11`
+        }} />
+      </motion.div>
+
+      {/* Inner Counter-Rotating Ring */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        style={{ position: 'absolute', zIndex: 1 }}
+      >
+        <Box sx={{
+          width: '280px',
+          height: '280px',
+          borderRadius: '50%',
+          border: `1px solid ${primaryColor}22`,
+          borderLeft: `2px solid ${primaryColor}`,
+        }} />
+      </motion.div>
+
+      {/* Orbiting Cloud Node */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        style={{ position: 'absolute', width: '340px', height: '340px', zIndex: 2 }}
+      >
+        <Paper
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translate(-50%, -50%) rotate(-360deg)', // Counter rotate to keep icon upright
+            p: 1.5,
+            borderRadius: '50%',
+            bgcolor: '#09090b',
+            border: `1px solid ${primaryColor}`,
+          }}
+        >
+          <motion.div animate={{ rotate: -360 }} transition={{ duration: 12, repeat: Infinity, ease: "linear" }}>
+             <CloudQueueIcon sx={{ color: primaryColor, fontSize: 24 }} />
+          </motion.div>
+        </Paper>
+      </motion.div>
+
+      {/* Orbiting Memory Node */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 12, delay: 6, repeat: Infinity, ease: "linear" }}
+        style={{ position: 'absolute', width: '340px', height: '340px', zIndex: 2 }}
+      >
+        <Paper
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            p: 1.5,
+            borderRadius: '50%',
+            bgcolor: '#09090b',
+            border: `1px solid ${primaryColor}`,
+          }}
+        >
+           <motion.div animate={{ rotate: -360 }} transition={{ duration: 12, repeat: Infinity, ease: "linear" }}>
+              <MemoryIcon sx={{ color: primaryColor, fontSize: 24 }} />
+           </motion.div>
+        </Paper>
+      </motion.div>
+
+      {/* Scanning Radar Sector */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        style={{
+          position: 'absolute',
+          width: '280px',
+          height: '280px',
+          zIndex: 1,
+          borderRadius: '50%',
+          background: `conic-gradient(from 0deg, transparent 0deg, transparent 270deg, ${primaryColor}22 360deg)`
+        }}
+      />
+
+      {/* Detected Threat Disappearing (Simulation) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0, x: 80, y: -50 }}
+        animate={{
+          opacity: [0, 1, 1, 0],
+          scale: [0, 1, 1, 0],
+          color: ['#ff4444', '#ff4444', '#00d1ff', '#00d1ff']
+        }}
+        transition={{ duration: 4, repeat: Infinity, repeatDelay: 1 }}
+        style={{ position: 'absolute', zIndex: 2 }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <BugReportIcon sx={{ fontSize: 30 }} />
+          <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.6rem', mt: -0.5 }}>
+            THREAT
+          </Typography>
+        </Box>
+      </motion.div>
+
+      {/* Central Shield Core */}
+      <motion.div
+        animate={{ scale: [1, 1.1, 1], filter: [`drop-shadow(0 0 10px ${primaryColor}66)`, `drop-shadow(0 0 25px ${primaryColor})`, `drop-shadow(0 0 10px ${primaryColor}66)`] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        style={{ position: 'absolute', zIndex: 10 }}
+      >
+        <ShieldIcon sx={{ fontSize: 100, color: primaryColor }} />
+      </motion.div>
+
+      {/* Decorative Particles */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          style={{
+            position: 'absolute',
+            width: 4,
+            height: 4,
+            background: primaryColor,
+            borderRadius: '50%',
+            top: '50%',
+            left: '50%',
+          }}
+          animate={{
+            x: [0, Math.cos(i * 60 * (Math.PI / 180)) * 180],
+            y: [0, Math.sin(i * 60 * (Math.PI / 180)) * 180],
+            opacity: [1, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            delay: i * 0.3,
+            ease: "easeOut"
+          }}
+        />
+      ))}
+    </Box>
+  );
+};
+
+// --- Feature Section Component (Unchanged) ---
 interface FeatureSectionProps {
   title: string;
   icon: React.ReactNode;
@@ -72,6 +250,7 @@ const FeatureSection: React.FC<FeatureSectionProps> = ({ title, icon, features, 
   </Grid>
 );
 
+// --- Main Page Component ---
 const HomePage: React.FC = () => {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
@@ -80,43 +259,62 @@ const HomePage: React.FC = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          pt: 20,
+          pt: { xs: 12, md: 20 },
           pb: 12,
           position: 'relative',
           overflow: 'hidden',
-          background: 'radial-gradient(circle at 50% 30%, rgba(0, 209, 255, 0.1) 0%, rgba(15, 23, 42, 0) 70%)',
+          background: 'radial-gradient(circle at 50% 30%, rgba(0, 209, 255, 0.05) 0%, rgba(15, 23, 42, 0) 70%)',
         }}
       >
         <Container maxWidth="lg">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-          >
-            <Box sx={{ textAlign: 'center', maxWidth: '900px', mx: 'auto' }}>
-              <Typography variant="h1" sx={{ fontWeight: 800, mb: 1, letterSpacing: -1, color: 'common.white' }}>
-                NexDefend
-              </Typography>
-              <Typography
-                variant="h2"
-                component="h1"
-                gutterBottom
-                sx={{
-                  fontWeight: 800,
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  mb: 2
-                }}
+          <Grid container spacing={4} alignItems="center">
+
+            {/* Left Column: Text Content */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
               >
-                AI-Powered System Monitoring and Threat Intelligence Platform
-              </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ mb: 4, lineHeight: 1.6, fontWeight: 300 }}>
-                Powered by advanced AI and real-time analytics, NexDefend provides deep visibility, automated defense, and predictive intelligence for systems and modern enterprises.
-              </Typography>
-            </Box>
-          </motion.div>
+                <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+                  <Typography variant="h1" sx={{ fontWeight: 800, mb: 1, letterSpacing: -1, color: 'common.white', fontSize: { xs: '3rem', md: '4.5rem' } }}>
+                    NexDefend
+                  </Typography>
+                  <Typography
+                    variant="h2"
+                    component="h1"
+                    gutterBottom
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: { xs: '2rem', md: '3rem' },
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 2,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    AI-Powered System Monitoring and Threat Intelligence Platform
+                  </Typography>
+                  <Typography variant="h6" color="text.secondary" sx={{ mb: 4, lineHeight: 1.6, fontWeight: 300, maxWidth: '600px', mx: { xs: 'auto', md: 0 } }}>
+                    Powered by advanced AI and real-time analytics, NexDefend provides deep visibility, automated defense, and predictive intelligence for systems and modern enterprises.
+                  </Typography>
+                </Box>
+              </motion.div>
+            </Grid>
+
+            {/* Right Column: Animation */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, x: 30 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <HeroAnimation />
+              </motion.div>
+            </Grid>
+
+          </Grid>
         </Container>
       </Box>
 
