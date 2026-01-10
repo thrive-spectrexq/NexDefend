@@ -13,6 +13,9 @@ spec:
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
+      annotations:
+        # Restart pod if config changes
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/name: {{ .Values.api.name }}
         app.kubernetes.io/instance: {{ .Release.Name }}
@@ -39,19 +42,20 @@ spec:
             - configMapRef:
                 name: {{ include "nexdefend.fullname" . }}-config
             - secretRef:
-                name: nexdefend-secrets # As per instructions, this is a pre-created secret
-          # livenessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /readyz
-          #     port: http
-          resources: {}
-          #  limits:
-          #    cpu: 100m
-          #    memory: 128Mi
-          #  requests:
-          #    cpu: 100m
-          #    memory: 128Mi
+                name: nexdefend-secrets
+          {{- if .Values.api.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health # Ensure your Go API has this route!
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
