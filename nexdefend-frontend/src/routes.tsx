@@ -22,6 +22,8 @@ import SettingsPage from '@/pages/SettingsPage';
 import GrafanaPage from '@/pages/GrafanaPage';
 import PrometheusPage from '@/pages/PrometheusPage';
 import CloudDashboardPage from '@/pages/CloudDashboardPage';
+import PlaybooksPage from '@/pages/PlaybooksPage';
+import PlaybookEditorPage from '@/pages/PlaybookEditorPage';
 
 // Private Route Guard
 const RequireAuth: React.FC = () => {
@@ -70,6 +72,9 @@ const AppRoutes: React.FC = () => {
             <Route path="/grafana" element={<GrafanaPage />} />
             <Route path="/prometheus" element={<PrometheusPage />} />
             <Route path="/cloud-monitoring" element={<CloudDashboardPage />} />
+            <Route path="/playbooks" element={<PlaybooksPage />} />
+            <Route path="/playbooks/new" element={<PlaybookEditorPage />} />
+            <Route path="/playbooks/edit/:id" element={<PlaybookEditorPage />} />
 
             {/* Catch-all for undefined routes inside protected area */}
             <Route path="*" element={<GenericPage title="404 Not Found" />} />
