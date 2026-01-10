@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.0"
+VERSION=${1:-"1.0.0"}
 BUNDLE_DIR="nexdefend_installer"
 
 echo "🚀 Building NexDefend Enterprise v${VERSION}..."
@@ -44,6 +44,7 @@ cp database/init.sql $BUNDLE_DIR/database/
 cp otel-collector-config.yaml $BUNDLE_DIR/configs/
 cp sample_eve.json $BUNDLE_DIR/configs/
 cp install.sh $BUNDLE_DIR/
+cp install.ps1 $BUNDLE_DIR/
 
 # 5. Compress Final Bundle
 echo "📦 Finalizing Bundle..."
