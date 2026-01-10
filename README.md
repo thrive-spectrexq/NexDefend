@@ -30,17 +30,17 @@ Powered by advanced AI and real-time analytics, NexDefend provides deep visibili
 
 ## Architecture
 
-NexDefend follows a modular microservices architecture:
+NexDefend follows a modular microservices architecture designed for scalability and offline deployment:
 
-*   **NexDefend Agent**: A lightweight Go binary running on endpoints, collecting telemetry via eBPF/Netlink/fsnotify and shipping to Kafka.
-*   **NexDefend API (Go)**: The core backend handling ingestion, correlation, and REST API requests.
-*   **NexDefend AI (Python)**: A specialized service for Machine Learning (Isolation Forest) and GenAI (Ollama) processing.
-*   **NexDefend SOAR**: Orchestrates automated responses and playbook execution.
-*   **Data Layer**:
-    *   **Kafka**: High-throughput message bus for raw telemetry.
-    *   **PostgreSQL**: Relational storage for incidents, users, and assets.
-    *   **OpenSearch**: Indexed storage for massive log volumes and fast search.
-*   **Frontend**: A modern React application (Web & Desktop via Wails) for visualization and control.
+* **NexDefend Agent**: A lightweight Go binary running on endpoints (Linux/Windows/macOS), collecting telemetry via eBPF/Netlink/WMI and shipping to Kafka.
+* **NexDefend API (Go)**: The core backend handling ingestion, correlation, and REST API requests.
+* **NexDefend AI (Python)**: A specialized service for Machine Learning (Isolation Forest) and GenAI (Ollama) processing.
+* **NexDefend SOAR**: Orchestrates automated responses and playbook execution.
+* **Data Layer**:
+    * **Kafka**: High-throughput message bus for raw telemetry.
+    * **PostgreSQL**: Relational storage for incidents, users, and assets.
+    * **OpenSearch**: Indexed storage for massive log volumes and fast search.
+* **Frontend**: A modern React application (served via Nginx) for visualization and control.
 
 ```mermaid
 graph TD
@@ -64,8 +64,7 @@ graph TD
     end
 
     subgraph "Interface"
-        Web["Web Dashboard"]
-        Desktop["Desktop App (Wails)"]
+        Web["Web Dashboard (React/Nginx)"]
     end
 
     Agent -->|Telemetry| Kafka
@@ -79,53 +78,97 @@ graph TD
     SOAR -->|Actions| API
 
     Web --> API
-    Desktop --> API
 ```
 
 ## Getting Started
 
 ### Prerequisites
-*   Docker & Docker Compose
-*   Go 1.21+
-*   Python 3.10+
-*   Node.js 18+ (for Frontend)
+* Docker Desktop (Windows/Mac) or Docker Engine (Linux)
+* Go 1.21+ (For building the Agent)
 
-### Installation
+### 📦 Option 1: Enterprise Offline Deployment (Production)
+This method creates a standalone, air-gapped installer (.tar.gz) that contains all Docker images, configurations, and scripts required to run NexDefend without an internet connection.
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/thrive-spectrexq/NexDefend.git
-    cd NexDefend
-    ```
+#### 1. Build the Installer (On an Online Machine)
+Run the build script to compile the code and package all Docker images:
 
-2.  **Environment Setup**
-    Copy the example environment files:
-    ```bash
-    cp .env.example .env
-    ```
+```bash
+chmod +x build_installer.sh
+./build_installer.sh
+```
+This will generate a large file named `nexdefend-enterprise-v1.0.0.tar.gz`.
 
-3.  **Start Services**
-    Use Docker Compose to bring up the full stack (API, AI, Database, Kafka, OpenSearch):
-    ```bash
-    docker-compose up -d --build
-    ```
+#### 2. Install (On the Target Machine)
+Transfer the .tar.gz file to your server or PC.
 
-4.  **Run the Agent (Linux)**
-    Navigate to the agent directory and build/run it:
-    ```bash
-    cd nexdefend-agent
-    go build -o agent main.go linux_watchers.go
-    sudo ./agent
-    ```
+**Linux:**
 
-5.  **Access the Dashboard**
-    Open your browser and navigate to `http://localhost:3000`.
+```bash
+tar -xzf nexdefend-enterprise-v1.0.0.tar.gz
+cd nexdefend_installer
+sudo ./install.sh
+```
 
-### Development
+**Windows (PowerShell as Admin):**
 
-*   **Backend (Go)**: Run `go run main.go` from the root.
-*   **AI Service**: Run `python nexdefend-ai/api.py`.
-*   **Frontend**: `cd nexdefend-frontend && npm install && npm run dev`.
+1. Extract the archive using 7-Zip or tar.
+2. Open PowerShell and navigate to the `nexdefend_installer` folder.
+3. Run the installer:
+
+```powershell
+.\install.ps1
+```
+
+**Access the Platform:** Open your browser and navigate to `http://localhost`.
+
+### 🛠️ Option 2: Development Setup (Online)
+For active development with hot-reloading and source access.
+
+**Clone the Repository**
+
+```bash
+git clone https://github.com/thrive-spectrexq/NexDefend.git
+cd NexDefend
+```
+
+**Environment Setup**
+Copy the example environment files:
+
+```bash
+cp .env.example .env
+```
+
+**Start Services**
+
+```bash
+docker-compose up -d --build
+```
+Note: The frontend will be available at `http://localhost:3000` (Dev Mode).
+
+## 🖥️ Deploying the Agent
+The agent must be compiled for the target operating system.
+
+### Linux
+```bash
+cd nexdefend-agent
+go build -o agent main.go main_linux.go
+sudo ./agent
+```
+
+### Windows
+Open PowerShell in `nexdefend-agent`.
+
+Build the binary:
+
+```powershell
+go build -o agent.exe main.go main_windows.go
+```
+
+Run as Administrator:
+
+```powershell
+.\agent.exe
+```
 
 ## License
 This project is licensed under the GNU GENERAL PUBLIC LICENSE.

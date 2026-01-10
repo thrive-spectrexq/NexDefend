@@ -38,15 +38,5 @@ export default defineConfig(({ mode }) => {
     define: {} as any
   }
 
-  // If we are in 'desktop' mode (passed via command line --mode desktop),
-  // we hardcode the API URLs to point to the local Wails backend.
-  if (mode === 'desktop') {
-    config.define = {
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify('http://localhost:8080/api/v1'),
-      'import.meta.env.VITE_AUTH_BASE_URL': JSON.stringify('http://localhost:8080/api/v1/auth'),
-      'import.meta.env.VITE_AI_API_URL': JSON.stringify('http://localhost:5000'),
-    }
-  }
-
   return config
 })
