@@ -1,34 +1,35 @@
-# Use the official Golang image to create a build artifact.
+# Stage 1: Builder
 FROM golang:1.24.3-alpine AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Install C build tools, libpcap, and librdkafka development headers
 RUN apk add --no-cache gcc musl-dev libpcap-dev librdkafka-dev
 
-# Copy the Go module files and download dependencies.
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code.
 COPY . .
 
-# Build the application.
-RUN GOOS=linux go build -tags "libkafka musl" -o /nexdefend-agent
+RUN CGO_ENABLED=1 GOOS=linux go build -tags "libkafka musl" -o /nexdefend-agent
 
-# Use a minimal image for the final stage.
+# Stage 2: Runtime
 FROM alpine:latest
 
-# Install Osquery and runtime C libraries.
+# Install runtime dependencies including Osquery
 RUN apk add --no-cache wget tar libpcap librdkafka && \
     wget https://github.com/osquery/osquery/releases/download/5.11.0/osquery-5.11.0_1.linux_x86_64.tar.gz && \
     tar -xzf osquery-5.11.0_1.linux_x86_64.tar.gz && \
     find . -name osqueryd -exec mv {} /usr/bin/osqueryd \; && \
-    chmod +x /usr/bin/osqueryd
+    chmod +x /usr/bin/osqueryd && \
+    rm osquery-5.11.0_1.linux_x86_64.tar.gz
 
-# Copy the binary from the builder stage.
+# Create user
+RUN adduser -D -g '' appuser
+
 COPY --from=builder /nexdefend-agent /nexdefend-agent
 
-# Set the command to run the application.
+# NOTE: If osqueryd needs to access system logs/processes, you may need to run as root.
+# Uncomment the next line only if strict security is required and tested:
+# USER appuser
+
 CMD ["/bin/sh", "-c", "/usr/bin/osqueryd & /nexdefend-agent"]
