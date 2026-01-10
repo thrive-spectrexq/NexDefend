@@ -1,8 +1,6 @@
-# Build stage
-# Assumes you are using a Go 1.24+ alpine image
+# Stage 1: Builder
 FROM golang:1.24.3-alpine AS builder
 
-# 1. ADD THIS LINE to install C build tools and librdkafka-dev
 RUN apk add --no-cache gcc musl-dev librdkafka-dev
 
 WORKDIR /app
@@ -12,21 +10,23 @@ RUN go mod download
 
 COPY . .
 
-# 2. MODIFY THIS LINE: Remove CGO_ENABLED=0
-# Old: RUN CGO_ENABLED=0 GOOS=linux go build -o /nexdefend-soar
-# New:
-RUN GOOS=linux go build -tags "libkafka musl" -o /nexdefend-soar
+# Build with correct tags
+RUN CGO_ENABLED=1 GOOS=linux go build -tags "libkafka musl" -o /nexdefend-soar
 
-# Final stage
+# Stage 2: Runtime
 FROM alpine:latest
 
-# 3. ADD THIS LINE to install the runtime library
 RUN apk add --no-cache librdkafka
+
+RUN adduser -D -g '' appuser
 
 WORKDIR /
 
 COPY --from=builder /nexdefend-soar /nexdefend-soar
 
-# Assuming it has an EXPOSE and CMD line, leave them as-is
-# EXPOSE 8082 
+USER appuser
+
+# Matches the port defined in main.go (8080)
+EXPOSE 8080 
+
 CMD ["/nexdefend-soar"]
