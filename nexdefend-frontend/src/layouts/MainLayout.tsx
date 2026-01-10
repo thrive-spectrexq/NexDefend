@@ -78,6 +78,7 @@ const MainLayout: React.FC = () => {
     { text: 'Cloud Monitoring', icon: <CloudIcon />, path: '/cloud-monitoring' },
     { text: 'Alerts', icon: <AlertIcon />, path: '/alerts' },
     { text: 'Incidents', icon: <BugIcon />, path: '/incidents' },
+    { text: 'Playbooks', icon: <TerminalIcon />, path: '/playbooks' },
     { text: 'Agents', icon: <ComputerIcon />, path: '/agents' },
     { text: 'Network Topology', icon: <HubIcon />, path: '/topology' },
     { text: 'Data Explorer', icon: <ChartIcon />, path: '/data-explorer' },
