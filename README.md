@@ -121,7 +121,7 @@ sudo ./install.sh
 
 **Access the Platform:** Open your browser and navigate to `http://localhost`.
 
-### 🛠️ Option 2: Development Setup (Online)
+### Option 2: Development Setup (Online)
 For active development with hot-reloading and source access.
 
 **Clone the Repository**
@@ -171,4 +171,4 @@ Run as Administrator:
 ```
 
 ## License
-This project is licensed under the [GNU General Public License](GNU General Public License).
+This project is licensed under the [GNU General Public License](LICENSE).
