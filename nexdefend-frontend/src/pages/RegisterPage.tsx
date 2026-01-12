@@ -6,10 +6,16 @@ import {
   Box,
   Link,
   Alert,
-  Card,
-  CardContent
+  Paper,
+  InputAdornment
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+    EmailOutlined as EmailIcon,
+    LockOutlined as LockIcon,
+    AppRegistration as RegIcon
+} from '@mui/icons-material';
 import { registerUser } from '@/api/auth';
 
 const RegisterPage: React.FC = () => {
@@ -31,7 +37,6 @@ const RegisterPage: React.FC = () => {
 
     try {
         await registerUser(email, password);
-        // On success, redirect to login
         navigate('/login');
     } catch (err: any) {
         setError(err.response?.data?.message || 'Registration failed');
@@ -43,124 +48,137 @@ const RegisterPage: React.FC = () => {
   return (
     <Box
       sx={{
+        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        bgcolor: 'background.default',
+        bgcolor: '#0B1120',
+        background: `radial-gradient(circle at 80% 20%, rgba(245, 0, 87, 0.08) 0%, transparent 40%),
+                     radial-gradient(circle at 20% 80%, rgba(0, 209, 255, 0.08) 0%, transparent 40%), #0B1120`,
         p: 2
       }}
     >
-      <Card
-        sx={{
-          maxWidth: 400,
-          width: '100%',
-          bgcolor: 'background.default',
-          border: 'none',
-          boxShadow: 'none',
-          backgroundImage: 'none',
-          p: 0,
-        }}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        style={{ width: '100%', maxWidth: '450px' }}
       >
-        <CardContent sx={{ p: 4 }}>
-          {/* Logo Placeholder */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
-            <Typography variant="h4" fontWeight="800" letterSpacing={-0.5}>
-              NexDefend
+        <Paper
+          elevation={24}
+          sx={{
+            p: 5,
+            bgcolor: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: 4,
+          }}
+        >
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box sx={{
+                display: 'inline-flex',
+                p: 2,
+                borderRadius: '50%',
+                bgcolor: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                mb: 2
+            }}>
+                <RegIcon sx={{ fontSize: 32, color: 'text.primary' }} />
+            </Box>
+            <Typography variant="h4" fontWeight="800" gutterBottom>
+              Get Started
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Create your account to start monitoring your infrastructure.
             </Typography>
           </Box>
 
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 3 }}>
-            Sign up
-          </Typography>
-
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
           <Box component="form" onSubmit={handleRegister}>
-            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
-              Email
-            </Typography>
             <TextField
               margin="dense"
               required
               fullWidth
               id="email"
-              placeholder="your@email.com"
+              label="Email Address"
+              placeholder="name@company.com"
               name="email"
               autoComplete="email"
-              autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
               InputProps={{
-                sx: { bgcolor: '#09090b' }
+                startAdornment: <InputAdornment position="start"><EmailIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment>,
+                sx: { bgcolor: 'rgba(0,0,0,0.2)' }
               }}
+              sx={{ mb: 2 }}
             />
 
-            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
-              Password
-            </Typography>
             <TextField
               margin="dense"
               required
               fullWidth
               name="password"
-              placeholder="••••••"
+              label="Password"
+              placeholder="Create a password"
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 2 }}
               InputProps={{
-                sx: { bgcolor: '#09090b' }
+                startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment>,
+                sx: { bgcolor: 'rgba(0,0,0,0.2)' }
               }}
+              sx={{ mb: 2 }}
             />
 
-            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
-              Confirm Password
-            </Typography>
             <TextField
               margin="dense"
               required
               fullWidth
               name="confirmPassword"
-              placeholder="••••••"
+              label="Confirm Password"
+              placeholder="Repeat password"
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              sx={{ mb: 2 }}
               InputProps={{
-                sx: { bgcolor: '#09090b' }
+                startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" sx={{ color: 'text.secondary' }} /></InputAdornment>,
+                sx: { bgcolor: 'rgba(0,0,0,0.2)' }
               }}
+              sx={{ mb: 4 }}
             />
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              size="large"
               disabled={loading}
               sx={{
-                mb: 2,
-                py: 1.2,
-                bgcolor: 'white',
-                color: 'black',
-                '&:hover': { bgcolor: '#e0e0e0' },
-                fontWeight: 'bold'
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                textTransform: 'none',
+                boxShadow: '0 0 15px rgba(255, 255, 255, 0.1)',
               }}
             >
-              {loading ? 'Signing Up...' : 'Sign Up'}
+              {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
 
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Link component={RouterLink} to="/login" variant="body2" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
-                Already have an account? Sign In
-              </Link>
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Already have an account?{' '}
+                <Link component={RouterLink} to="/login" fontWeight="bold" sx={{ color: 'primary.main', textDecoration: 'none' }}>
+                  Sign In
+                </Link>
+              </Typography>
             </Box>
           </Box>
-        </CardContent>
-      </Card>
+        </Paper>
+      </motion.div>
     </Box>
   );
 };
