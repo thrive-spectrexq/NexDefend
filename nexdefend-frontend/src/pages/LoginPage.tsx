@@ -8,11 +8,20 @@ import {
   Alert,
   Checkbox,
   FormControlLabel,
-  Card,
-  CardContent
+  InputAdornment,
+  IconButton,
+  Paper
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion } from 'framer-motion';
+import {
+  LockOutlined as LockIcon,
+  EmailOutlined as EmailIcon,
+  Visibility,
+  VisibilityOff,
+  Bolt as BoltIcon
+} from '@mui/icons-material';
 import { login } from '@/store/authSlice';
 import type { AppDispatch, RootState } from '@/store';
 
@@ -20,8 +29,10 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -35,135 +46,189 @@ const LoginPage: React.FC = () => {
   return (
     <Box
       sx={{
+        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        bgcolor: 'background.default', // Using the pitch black from theme
-        p: 2
+        position: 'relative',
+        overflow: 'hidden',
+        bgcolor: '#0B1120',
+        backgroundImage: `
+          radial-gradient(circle at 50% 50%, rgba(0, 209, 255, 0.1) 0%, transparent 50%),
+          radial-gradient(at 0% 0%, rgba(245, 0, 87, 0.05) 0px, transparent 50%)
+        `
       }}
     >
-      <Card
+      {/* Animated Background Elements */}
+      <Box
+        component={motion.div}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 150, repeat: Infinity, ease: "linear" }}
         sx={{
-          maxWidth: 400,
-          width: '100%',
-          bgcolor: 'background.default', // Matches page background but Card border makes it distinct
-          border: 'none', // As per screenshot, might be floating or just on black. Let's try to match "Sitemark" look.
-          // The screenshot shows a card-like container (or at least a defined width) on a dark bg.
-          // Actually, looking at the screenshot, it looks like a modal or card centered on dark.
-          // Let's stick to standard Card with our new theme override.
-          boxShadow: 'none',
-          backgroundImage: 'none',
-          p: 0,
+          position: 'absolute',
+          width: '150vw',
+          height: '150vw',
+          background: 'conic-gradient(from 0deg, transparent 0deg, rgba(0, 209, 255, 0.03) 180deg, transparent 360deg)',
+          top: '-25vw',
+          left: '-25vw',
+          zIndex: 0,
+          pointerEvents: 'none'
         }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        style={{ width: '100%', maxWidth: '420px', zIndex: 1, padding: '20px' }}
       >
-        <CardContent sx={{ p: 4 }}>
-          {/* Logo Placeholder */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'center' }}>
-            <Typography variant="h4" fontWeight="800" letterSpacing={-0.5}>
-              NexDefend
+        <Paper
+          elevation={24}
+          sx={{
+            p: 5,
+            bgcolor: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 4,
+            boxShadow: '0 0 40px rgba(0,0,0,0.5)'
+          }}
+        >
+          {/* Header */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+            >
+                <Box sx={{
+                    display: 'inline-flex',
+                    p: 2,
+                    borderRadius: '50%',
+                    bgcolor: 'rgba(0, 209, 255, 0.1)',
+                    mb: 2,
+                    boxShadow: '0 0 20px rgba(0, 209, 255, 0.2)'
+                }}>
+                    <BoltIcon sx={{ fontSize: 40, color: '#00D1FF' }} />
+                </Box>
+            </motion.div>
+            <Typography variant="h4" fontWeight="800" color="white" gutterBottom>
+              Welcome Back
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Enter your credentials to access the secure console.
             </Typography>
           </Box>
 
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 3 }}>
-            Sign in
-          </Typography>
-
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && (
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+               <Alert severity="error" sx={{ mb: 3, bgcolor: 'rgba(211, 47, 47, 0.1)', color: '#ff8a80', border: '1px solid #ff5252' }}>
+                 {error}
+               </Alert>
+            </motion.div>
+          )}
 
           <Box component="form" onSubmit={handleLogin}>
-            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
-              Email
-            </Typography>
             <TextField
-              margin="dense"
+              margin="normal"
               required
               fullWidth
               id="email"
-              placeholder="your@email.com"
+              label="Email Address"
               name="email"
               autoComplete="email"
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
               InputProps={{
-                sx: { bgcolor: '#09090b' }
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+                sx: { bgcolor: 'rgba(0,0,0,0.2)' }
               }}
+              sx={{ mb: 2 }}
             />
 
-            <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500, color: 'text.secondary' }}>
-              Password
-            </Typography>
             <TextField
-              margin="dense"
+              margin="normal"
               required
               fullWidth
               name="password"
-              placeholder="••••••"
-              type="password"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 2 }}
               InputProps={{
-                sx: { bgcolor: '#09090b' }
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: 'text.secondary' }}>
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                sx: { bgcolor: 'rgba(0,0,0,0.2)' }
               }}
+              sx={{ mb: 1 }}
             />
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  value="remember"
-                  color="primary"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  sx={{
-                    color: 'text.secondary',
-                    '&.Mui-checked': { color: 'primary.main' },
-                  }}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <FormControlLabel
+                control={
+                    <Checkbox
+                    value="remember"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    sx={{ color: 'text.secondary', '&.Mui-checked': { color: 'primary.main' } }}
+                    />
+                }
+                label={<Typography variant="body2" color="text.secondary">Remember me</Typography>}
                 />
-              }
-              label={<Typography variant="body2" color="text.secondary">Remember me</Typography>}
-              sx={{ mb: 2 }}
-            />
+                <Link component={RouterLink} to="/forgot-password" variant="body2" color="primary.main" underline="hover">
+                    Forgot password?
+                </Link>
+            </Box>
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              size="large"
               disabled={loading}
               sx={{
-                mb: 2,
-                py: 1.2,
-                bgcolor: 'white',
-                color: 'black',
-                '&:hover': { bgcolor: '#e0e0e0' },
-                fontWeight: 'bold'
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                textTransform: 'none',
+                background: 'linear-gradient(45deg, #00D1FF, #0099FF)',
+                boxShadow: '0 0 20px rgba(0, 209, 255, 0.4)',
+                '&:hover': {
+                    boxShadow: '0 0 30px rgba(0, 209, 255, 0.6)',
+                }
               }}
             >
-              {loading ? 'Signing In...' : 'Sign in'}
+              {loading ? 'Authenticating...' : 'Sign In'}
             </Button>
 
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Link component={RouterLink} to="/forgot-password" variant="body2" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
-                Forgot your password?
-              </Link>
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Don't have an account?{' '}
-                <Link component={RouterLink} to="/register" sx={{ color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
-                  Sign up
+                New to NexDefend?{' '}
+                <Link component={RouterLink} to="/register" fontWeight="bold" sx={{ color: 'primary.main', textDecoration: 'none' }}>
+                  Create an account
                 </Link>
               </Typography>
             </Box>
           </Box>
-        </CardContent>
-      </Card>
+        </Paper>
+      </motion.div>
     </Box>
   );
 };
