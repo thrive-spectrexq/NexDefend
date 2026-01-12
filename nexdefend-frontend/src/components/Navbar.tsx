@@ -1,42 +1,147 @@
-import React from 'react';
-import { AppBar, Toolbar, Button, Box, Container, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { AppBar, Toolbar, Button, Box, Container, Typography, useScrollTrigger, Slide, Stack, IconButton } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import MenuIcon from '@mui/icons-material/Menu';
+import BoltIcon from '@mui/icons-material/Bolt';
 import type { RootState } from '@/store';
 
-const Navbar: React.FC = () => {
+interface Props {
+  window?: () => Window;
+}
+
+const HideOnScroll = (props: { children: React.ReactElement; window?: () => Window }) => {
+  const { children, window } = props;
+  const trigger = useScrollTrigger({ target: window ? window() : undefined });
+  return (
+    <Slide appear={false} direction="down" in={!trigger}>
+      {children}
+    </Slide>
+  );
+};
+
+const Navbar: React.FC<Props> = (props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-  return (
-    <AppBar position="fixed" sx={{ bgcolor: 'rgba(10, 25, 41, 0.8)', backdropFilter: 'blur(10px)', boxShadow: 'none', borderBottom: '1px solid rgba(0, 163, 255, 0.1)' }}>
-      <Container maxWidth="lg">
-        <Toolbar disableGutters>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <Typography variant="h6" fontWeight="bold" sx={{ letterSpacing: 1 }}>
-              NexDefend
-            </Typography>
-          </Box>
+  // State for changing navbar appearance on scroll
+  const [scrolled, setScrolled] = useState(false);
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {isAuthenticated ? (
-              <Button variant="contained" color="primary" onClick={() => navigate('/dashboard')}>
-                Dashboard
-              </Button>
-            ) : (
-              <>
-                <Button color="inherit" onClick={() => navigate('/login')}>
-                  Login
-                </Button>
-                <Button variant="outlined" color="primary" onClick={() => navigate('/register')}>
-                  Register
-                </Button>
-              </>
-            )}
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 50;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrolled]);
+
+  const isHomePage = location.pathname === '/';
+
+  return (
+    <HideOnScroll {...props}>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          bgcolor: scrolled || !isHomePage ? 'rgba(15, 23, 42, 0.8)' : 'transparent',
+          backdropFilter: scrolled || !isHomePage ? 'blur(16px)' : 'none',
+          borderBottom: scrolled || !isHomePage ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid transparent',
+          transition: 'all 0.3s ease-in-out',
+          py: 1
+        }}
+      >
+        <Container maxWidth="xl">
+          <Toolbar disableGutters>
+            {/* Logo Section */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexGrow: 1,
+                    cursor: 'pointer',
+                    '&:hover .logo-icon': { color: '#00D1FF', transform: 'scale(1.1)' }
+                }}
+                onClick={() => navigate('/')}
+            >
+              <BoltIcon className="logo-icon" sx={{ mr: 1, fontSize: 32, color: 'white', transition: 'all 0.3s ease' }} />
+              <Typography
+                variant="h5"
+                sx={{
+                    fontWeight: 800,
+                    letterSpacing: -0.5,
+                    background: 'linear-gradient(90deg, #fff 0%, #94a3b8 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                }}
+              >
+                NexDefend
+              </Typography>
+            </Box>
+
+            {/* Desktop Menu */}
+            <Stack direction="row" spacing={1} sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+                {!isAuthenticated && (
+                    <>
+                        <Button color="inherit" onClick={() => navigate('/')} sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}>Product</Button>
+                        <Button color="inherit" onClick={() => navigate('/')} sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}>Solutions</Button>
+                        <Button color="inherit" onClick={() => navigate('/')} sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}>Pricing</Button>
+
+                        <Box sx={{ width: 1, height: 24, bgcolor: 'rgba(255,255,255,0.2)', mx: 2 }} />
+
+                        <Button
+                            color="inherit"
+                            onClick={() => navigate('/login')}
+                            sx={{ fontWeight: 600 }}
+                        >
+                            Sign In
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => navigate('/register')}
+                            sx={{
+                                borderRadius: '50px',
+                                px: 3,
+                                boxShadow: '0 0 15px rgba(0, 209, 255, 0.3)',
+                                '&:hover': { boxShadow: '0 0 25px rgba(0, 209, 255, 0.5)' }
+                            }}
+                        >
+                            Get Started
+                        </Button>
+                    </>
+                )}
+
+                {isAuthenticated && (
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => navigate('/dashboard')}
+                        sx={{ borderRadius: '50px' }}
+                    >
+                        Dashboard
+                    </Button>
+                )}
+            </Stack>
+
+            {/* Mobile Menu Icon */}
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              sx={{ display: { xs: 'flex', md: 'none' }, ml: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+          </Toolbar>
+        </Container>
+      </AppBar>
+    </HideOnScroll>
   );
 };
 
