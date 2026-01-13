@@ -131,6 +131,10 @@ func NewRouter(
 	protected.HandleFunc("/cases", caseHandler.GetCases).Methods("GET")
 	protected.HandleFunc("/cases", caseHandler.CreateCase).Methods("POST")
 
+	// User Profile
+	protected.HandleFunc("/auth/profile", authHandler.GetProfile).Methods("GET")
+	protected.HandleFunc("/auth/profile", authHandler.UpdateProfile).Methods("PUT")
+
 	// CORS Handler
 	cWrapper := cors.New(cors.Options{
 		AllowedOrigins:   cfg.CORSAllowedOrigins,

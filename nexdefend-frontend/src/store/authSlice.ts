@@ -3,7 +3,7 @@ import { loginUser } from '@/api/auth';
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: { name: string; role: string } | null;
+  user: { name: string; username?: string; role: string } | null;
   token: string | null;
   loading: boolean;
   error: string | null;
@@ -52,7 +52,11 @@ const authSlice = createSlice({
         // Adjust based on actual backend response structure
         // If backend returns { token: "..." }, we store it.
         state.token = action.payload.token;
-        state.user = { name: action.payload.username || 'Admin', role: 'admin' };
+        state.user = {
+            name: action.payload.username || 'Admin',
+            username: action.payload.username || 'Admin',
+            role: 'admin'
+        };
         localStorage.setItem('token', action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {

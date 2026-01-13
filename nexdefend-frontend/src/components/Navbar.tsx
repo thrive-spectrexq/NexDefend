@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { AppBar, Toolbar, Button, Box, Container, Typography, useScrollTrigger, Slide, Stack, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Container, Typography, useScrollTrigger, Slide, Stack, IconButton, Menu, MenuItem, Avatar, Tooltip } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import MenuIcon from '@mui/icons-material/Menu';
 import BoltIcon from '@mui/icons-material/Bolt';
+import { logout } from '@/store/authSlice';
 import type { RootState } from '@/store';
 
 interface Props {
@@ -23,7 +24,11 @@ const HideOnScroll = (props: { children: React.ReactElement; window?: () => Wind
 const Navbar: React.FC<Props> = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  // User Menu State
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // State for changing navbar appearance on scroll
   const [scrolled, setScrolled] = useState(false);
@@ -117,14 +122,38 @@ const Navbar: React.FC<Props> = (props) => {
                 )}
 
                 {isAuthenticated && (
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => navigate('/dashboard')}
-                        sx={{ borderRadius: '50px' }}
-                    >
-                        Dashboard
-                    </Button>
+                    <>
+                        <Button
+                            variant="text"
+                            color="inherit"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Dashboard
+                        </Button>
+                        <Tooltip title="Account Settings">
+                            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 1 }}>
+                                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '1rem' }}>
+                                    {user?.username?.charAt(0).toUpperCase() || 'U'}
+                                </Avatar>
+                            </IconButton>
+                        </Tooltip>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={() => setAnchorEl(null)}
+                            slotProps={{ paper: { sx: { bgcolor: '#0f172a', border: '1px solid #1e293b' } } }}
+                        >
+                            <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>Profile</MenuItem>
+                            <MenuItem onClick={() => { setAnchorEl(null); navigate('/settings'); }}>Settings</MenuItem>
+                            <MenuItem onClick={() => {
+                                setAnchorEl(null);
+                                dispatch(logout());
+                                navigate('/');
+                            }}>
+                                Logout
+                            </MenuItem>
+                        </Menu>
+                    </>
                 )}
             </Stack>
 
