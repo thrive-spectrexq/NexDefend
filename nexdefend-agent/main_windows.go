@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	startPlatformSpecificModules = func(producer *kafka.Producer, eventsTopic string, config *AgentConfig) {
-		go winevent.StartWinEventLogWatcher(producer, eventsTopic)
+	startPlatformSpecificModules = func(getProducer ProducerProvider, eventsTopic string, config *AgentConfig) {
+		go winevent.StartWinEventLogWatcher(getProducer, eventsTopic)
 	}
 }

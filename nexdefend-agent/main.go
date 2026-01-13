@@ -71,8 +71,11 @@ type AgentConfig struct {
 	CollectionIntervalSec int      `json:"collection_interval_sec"`
 }
 
+// ProducerProvider is a function that returns the current Kafka producer safely.
+type ProducerProvider func() *kafka.Producer
+
 var (
-	startPlatformSpecificModules func(producer *kafka.Producer, eventsTopic string, config *AgentConfig)
+	startPlatformSpecificModules func(getProducer ProducerProvider, eventsTopic string, config *AgentConfig)
 	EventsSent                   = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "nexdefend_agent_events_sent_total",
 		Help: "Total number of events sent by the agent.",
@@ -108,35 +111,79 @@ func main() {
 	eventsTopic := "nexdefend-events"
 	flowsTopic := "nexdefend-flows"
 
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
-	if err != nil {
-		log.Fatalf("Failed to create Kafka producer: %v", err)
-	}
-	defer producer.Close()
+	var producer *kafka.Producer
+	var producerMutex sync.RWMutex
 
-	go func() {
-		for e := range producer.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				if ev.TopicPartition.Error != nil {
-					log.Printf("Delivery failed: %v\n", ev.TopicPartition)
-					// Enqueue the message on failure
-					if err := secureQueue.Enqueue(ev.Value); err != nil {
-						log.Printf("Failed to enqueue message: %v", err)
+	// Helper to safely get producer
+	getProducer := func() *kafka.Producer {
+		producerMutex.RLock()
+		defer producerMutex.RUnlock()
+		return producer
+	}
+
+	// Helper to set producer safely
+	setProducer := func(p *kafka.Producer) {
+		producerMutex.Lock()
+		defer producerMutex.Unlock()
+		producer = p
+	}
+
+	// Helper to start event handler
+	startEventHandler := func(p *kafka.Producer) {
+		go func() {
+			for e := range p.Events() {
+				switch ev := e.(type) {
+				case *kafka.Message:
+					if ev.TopicPartition.Error != nil {
+						log.Printf("Delivery failed: %v\n", ev.TopicPartition)
+						// Enqueue the message on failure
+						if err := secureQueue.Enqueue(ev.Value); err != nil {
+							log.Printf("Failed to enqueue message: %v", err)
+						}
 					}
 				}
 			}
-		}
-	}()
+		}()
+	}
 
-	go processQueue(producer, eventsTopic, secureQueue)
+	// Initial connection attempt
+	initProducer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+	if err != nil {
+		log.Printf("Failed to create Kafka producer: %v. Running in offline mode.", err)
+		// Start background reconnection routine
+		go func() {
+			for {
+				time.Sleep(30 * time.Second)
+				log.Println("Attempting to reconnect Kafka producer...")
+				newProducer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+				if err == nil {
+					log.Println("Kafka producer reconnected successfully.")
+					setProducer(newProducer)
+					startEventHandler(newProducer)
+					return
+				}
+				log.Printf("Reconnection failed: %v", err)
+			}
+		}()
+	} else {
+		setProducer(initProducer)
+		defer func() {
+			p := getProducer()
+			if p != nil {
+				p.Close()
+			}
+		}()
+		startEventHandler(initProducer)
+	}
 
-	startPlatformSpecificModules(producer, eventsTopic, config)
+	go processQueue(getProducer, eventsTopic, secureQueue)
+
+	startPlatformSpecificModules(getProducer, eventsTopic, config)
 	go startHeartbeat()
-	go startFlowMonitor(producer, flowsTopic)
+	go startFlowMonitor(getProducer, flowsTopic, secureQueue)
 
 	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" {
-		go kubernetes.StartKubernetesWatcher(producer, eventsTopic)
+		go kubernetes.StartKubernetesWatcher(getProducer, eventsTopic)
 	}
 
 	go startResponseConsumer()
@@ -177,23 +224,40 @@ func main() {
 				continue
 			}
 
-			producer.Produce(&kafka.Message{
-				TopicPartition: kafka.TopicPartition{Topic: &eventsTopic, Partition: kafka.PartitionAny},
-				Value:          eventJSON,
-			}, nil)
-			EventsSent.WithLabelValues("process").Inc()
+			p := getProducer()
+			if p != nil {
+				p.Produce(&kafka.Message{
+					TopicPartition: kafka.TopicPartition{Topic: &eventsTopic, Partition: kafka.PartitionAny},
+					Value:          eventJSON,
+				}, nil)
+				EventsSent.WithLabelValues("process").Inc()
+			} else {
+				// Queue offline events
+				if err := secureQueue.Enqueue(eventJSON); err != nil {
+					log.Printf("Failed to enqueue process event: %v", err)
+				}
+			}
 		}
 
-		producer.Flush(15 * 1000)
+		p := getProducer()
+		if p != nil {
+			p.Flush(15 * 1000)
+		}
 		time.Sleep(time.Duration(config.CollectionIntervalSec) * time.Second)
 	}
 }
 
-func processQueue(producer *kafka.Producer, topic string, q *queue.SecureQueue) {
+func processQueue(getProducer ProducerProvider, topic string, q *queue.SecureQueue) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
+		producer := getProducer()
+		if producer == nil {
+			// In offline mode, just accumulate.
+			continue
+		}
+
 		for {
 			data, err := q.Dequeue()
 			if err != nil {
@@ -204,10 +268,20 @@ func processQueue(producer *kafka.Producer, topic string, q *queue.SecureQueue) 
 				break // Queue is empty
 			}
 
-			producer.Produce(&kafka.Message{
+			err = producer.Produce(&kafka.Message{
 				TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 				Value:          data,
 			}, nil)
+
+			if err != nil {
+				// Local queue full or other immediate error
+				log.Printf("Failed to produce message from queue: %v", err)
+				// Re-enqueue to avoid data loss
+				if eqErr := q.Enqueue(data); eqErr != nil {
+					log.Printf("CRITICAL: Failed to re-enqueue message after produce failure: %v", eqErr)
+				}
+				break // Stop processing queue for now
+			}
 		}
 	}
 }
@@ -322,7 +396,7 @@ func getAgentConfig() *AgentConfig {
 	return &config
 }
 
-func startFlowMonitor(producer *kafka.Producer, topic string) {
+func startFlowMonitor(getProducer ProducerProvider, topic string, secureQueue *queue.SecureQueue) {
 	iface := os.Getenv("NETWORK_INTERFACE")
 	if iface == "" {
 		iface = "eth0"
@@ -376,11 +450,24 @@ func startFlowMonitor(producer *kafka.Producer, topic string) {
 					continue
 				}
 
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          eventJSON,
-				}, nil)
-				EventsSent.WithLabelValues("flow").Inc()
+				producer := getProducer()
+				if producer != nil {
+					err = producer.Produce(&kafka.Message{
+						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+						Value:          eventJSON,
+					}, nil)
+				}
+
+				if producer == nil || err != nil {
+					if err != nil {
+						log.Printf("Flow produce failed: %v", err)
+					}
+					if qErr := secureQueue.Enqueue(eventJSON); qErr != nil {
+						log.Printf("Failed to enqueue flow event: %v", qErr)
+					}
+				} else {
+					EventsSent.WithLabelValues("flow").Inc()
+				}
 			}
 		}
 	}()
@@ -426,20 +513,32 @@ func startResponseConsumer() {
 		kafkaBroker = "kafka:9092"
 	}
 
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBroker,
-		"group.id":          "nexdefend-agent-responses",
-		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		log.Fatalf("Failed to create Kafka consumer for responses: %v", err)
+	var consumer *kafka.Consumer
+	var err error
+
+	// Retry loop for initial connection
+	for {
+		consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
+			"bootstrap.servers": kafkaBroker,
+			"group.id":          "nexdefend-agent-responses",
+			"auto.offset.reset": "earliest",
+		})
+		if err == nil {
+			break
+		}
+		log.Printf("Failed to create Kafka consumer for responses: %v. Retrying in 10s...", err)
+		time.Sleep(10 * time.Second)
 	}
 	defer consumer.Close()
 
 	topic := "nexdefend-agent-responses"
-	err = consumer.SubscribeTopics([]string{topic}, nil)
-	if err != nil {
-		log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
+	for {
+		err = consumer.SubscribeTopics([]string{topic}, nil)
+		if err == nil {
+			break
+		}
+		log.Printf("Failed to subscribe to topic %s: %v. Retrying in 10s...", topic, err)
+		time.Sleep(10 * time.Second)
 	}
 
 	log.Println("Response consumer started. Waiting for commands...")

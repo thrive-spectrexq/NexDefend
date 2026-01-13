@@ -28,7 +28,7 @@ type PodMetric struct {
 }
 
 // StartKubernetesWatcher starts the Kubernetes watcher.
-func StartKubernetesWatcher(producer *kafka.Producer, topic string) {
+func StartKubernetesWatcher(getProducer func() *kafka.Producer, topic string) {
 	log.Println("Starting Kubernetes watcher...")
 
 	config, err := rest.InClusterConfig()
@@ -79,10 +79,13 @@ func StartKubernetesWatcher(producer *kafka.Producer, topic string) {
 					continue
 				}
 
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          eventJSON,
-				}, nil)
+				producer := getProducer()
+				if producer != nil {
+					producer.Produce(&kafka.Message{
+						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+						Value:          eventJSON,
+					}, nil)
+				}
 			}
 
 			// Also watch for Events (Warnings, Errors)
@@ -113,10 +116,13 @@ func StartKubernetesWatcher(producer *kafka.Producer, topic string) {
 
 					eventJSON, err := json.Marshal(event)
 					if err == nil {
-						producer.Produce(&kafka.Message{
-							TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-							Value:          eventJSON,
-						}, nil)
+						producer := getProducer()
+						if producer != nil {
+							producer.Produce(&kafka.Message{
+								TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+								Value:          eventJSON,
+							}, nil)
+						}
 					}
 				}
 			}
