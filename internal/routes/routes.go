@@ -39,6 +39,7 @@ func NewRouter(
 	settingsHandler := handlers.NewSettingsHandler(database.GetDB())
 	metricsHandler := handlers.NewMetricsHandler(database)
 	scanHandler := handlers.NewScanHandler()
+	hostHandler := handlers.NewHostHandler(database.GetDB())
 
 	// Proxies
 	chatHandler := handlers.NewProxyChatHandler(cfg.PythonAPI, cfg.AIServiceToken)
@@ -86,6 +87,7 @@ func NewRouter(
 	protected.HandleFunc("/assets/{id}", assetHandler.GetAsset).Methods("GET")
 	protected.HandleFunc("/assets/{id}", assetHandler.UpdateAsset).Methods("PUT")
 	protected.HandleFunc("/assets/{id}", assetHandler.DeleteAsset).Methods("DELETE")
+	protected.HandleFunc("/assets/{id}/details", hostHandler.GetHostDetails).Methods("GET")
 
 	// Incidents (DB Managed)
 	protected.HandleFunc("/incidents", incidentHandler.GetIncidents).Methods("GET")
