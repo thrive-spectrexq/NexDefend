@@ -21,7 +21,7 @@ scrape_configs:
       - targets: ['ai:5000']
   - job_name: 'nexdefend-soar'
     static_configs:
-      - targets: ['nexdefend-soar:8081']
+      - targets: ['nexdefend-soar:8080']
   - job_name: 'nexdefend-agent'
     static_configs:
       - targets: ['nexdefend-agent:8082']
