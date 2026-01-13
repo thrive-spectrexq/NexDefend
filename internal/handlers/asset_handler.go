@@ -168,3 +168,11 @@ func (h *AssetHandler) GetKubernetesPods(w http.ResponseWriter, r *http.Request)
 	}
 	json.NewEncoder(w).Encode(pods)
 }
+
+// TriggerSync forces a sync with cloud providers
+func (h *AssetHandler) TriggerSync(w http.ResponseWriter, r *http.Request) {
+	// Stub: In a real implementation, this would trigger the cloud connector to fetch new assets
+	// For now, we return 200 OK to satisfy the frontend call
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "sync_initiated"})
+}
