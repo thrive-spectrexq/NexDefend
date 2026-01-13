@@ -54,8 +54,8 @@ func InitDB() *Database {
 	}
 
 	// Auto-migrate new models that might not be in init.sql
-	if err := gormDB.AutoMigrate(&models.SystemSettings{}); err != nil {
-		log.Printf("Failed to auto-migrate settings: %v", err)
+	if err := gormDB.AutoMigrate(&models.SystemSettings{}, &models.SystemMetric{}, &models.Asset{}); err != nil {
+		log.Printf("Failed to auto-migrate models: %v", err)
 	}
 
 	// Seed default settings
