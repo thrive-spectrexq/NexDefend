@@ -1,21 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Switch,
-  TextField,
-  Button,
-  Grid,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Tabs,
-  Tab
+  Box, Paper, Typography, Switch, TextField, Button, Grid, Alert, Snackbar, CircularProgress, Tabs, Tab
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import BuildIcon from '@mui/icons-material/Build'; // Icon for initialization
 import client from '../api/client';
 
 interface Setting {
@@ -35,20 +24,13 @@ interface TabPanelProps {
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
+    <div role="tabpanel" hidden={value !== index} {...other}>
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
 
 const SettingsPage: React.FC = () => {
-  const theme = useTheme();
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,7 +42,7 @@ const SettingsPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await client.get<Setting[]>('/settings');
-      setSettings(response.data);
+      setSettings(response.data || []);
       setError(null);
     } catch (err) {
       console.error(err);
@@ -75,17 +57,14 @@ const SettingsPage: React.FC = () => {
   }, []);
 
   const handleChange = (key: string, value: string) => {
-    setSettings((prev) =>
-      prev.map((s) => (s.key === key ? { ...s, value } : s))
-    );
+    setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value } : s)));
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await client.put('/settings', settings);
+      await client.put('/settings', settings); // Uses existing UpdateSettings endpoint
       setSuccess('Settings saved successfully.');
-      // Reload to get fresh state (e.g. re-mask secrets)
       fetchSettings();
     } catch (err) {
       console.error(err);
@@ -95,13 +74,28 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  // Helper to initialize defaults if DB is empty
+  const handleInitialize = async () => {
+      setSaving(true);
+      const defaults = [
+          { key: 'theme', value: 'dark', category: 'general', description: 'UI Theme' },
+          { key: 'refresh_interval', value: '30', category: 'general', description: 'Dashboard Refresh (sec)' },
+          { key: 'email_enabled', value: 'false', category: 'notifications', description: 'Enable Email Alerts' },
+          { key: 'slack_webhook', value: '', category: 'integrations', description: 'Slack Webhook URL', is_secret: true }
+      ];
+      try {
+          await client.put('/settings', defaults); // Use PUT (UpdateSettings) which handles creation in your backend
+          setSuccess('Default settings initialized.');
+          fetchSettings();
+      } catch (err) {
+          setError('Failed to initialize settings.');
+      } finally {
+          setSaving(false);
+      }
   };
 
   const renderField = (setting: Setting) => {
-    // Boolean switch for specific keys or based on value
-    const isBoolean = setting.value === 'true' || setting.value === 'false' || setting.key.includes('enabled') || setting.key.includes('active');
+    const isBoolean = setting.value === 'true' || setting.value === 'false' || setting.key.includes('enabled');
 
     if (isBoolean) {
       return (
@@ -123,9 +117,7 @@ const SettingsPage: React.FC = () => {
 
     return (
       <Box key={setting.key} sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
-            {setting.description || setting.key}
-        </Typography>
+        <Typography variant="subtitle2" gutterBottom>{setting.description || setting.key}</Typography>
         <TextField
             fullWidth
             type={setting.is_secret ? 'password' : 'text'}
@@ -134,10 +126,6 @@ const SettingsPage: React.FC = () => {
             placeholder={setting.is_secret ? '••••••••' : ''}
             variant="outlined"
             size="small"
-            helperText={`Key: ${setting.key}`}
-            InputProps={{
-                sx: { bgcolor: theme.palette.background.default }
-            }}
         />
       </Box>
     );
@@ -145,25 +133,17 @@ const SettingsPage: React.FC = () => {
 
   const filterByCategory = (category: string) => settings.filter(s => s.category === category);
 
-  if (loading && settings.length === 0) {
-    return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-            <CircularProgress />
-        </Box>
-    );
-  }
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1000, mx: 'auto', pb: 5 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">
-          System Settings
-        </Typography>
+        <Typography variant="h4" fontWeight="bold">System Settings</Typography>
         <Button
             variant="contained"
             startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || settings.length === 0}
         >
             {saving ? 'Saving...' : 'Save Changes'}
         </Button>
@@ -174,50 +154,37 @@ const SettingsPage: React.FC = () => {
         <Alert severity="success" onClose={() => setSuccess(null)}>{success}</Alert>
       </Snackbar>
 
-      <Paper sx={{ bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden' }}>
-        <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            variant="fullWidth"
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#09090b' }}
-        >
-            <Tab label="General" />
-            <Tab label="Notifications" />
-            <Tab label="Integrations" />
-        </Tabs>
-
-        <TabPanel value={tabValue} index={0}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 3, color: 'primary.main' }}>
-                General Configuration
-            </Typography>
-            {filterByCategory('general').map(renderField)}
-            {filterByCategory('general').length === 0 && <Typography color="text.secondary">No general settings found.</Typography>}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 3, color: 'primary.main' }}>
-                Alerts & Notifications
-            </Typography>
-            {filterByCategory('notifications').map(renderField)}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={2}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 3, color: 'primary.main' }}>
-                External Integrations
-            </Typography>
-            <Alert severity="info" sx={{ mb: 3 }}>
-                API Keys provided here are stored securely and masked in the UI.
-            </Alert>
-            {filterByCategory('integrations').map(renderField)}
-        </TabPanel>
-      </Paper>
+      {/* Empty State / Initialization Handler */}
+      {settings.length === 0 ? (
+          <Paper sx={{ p: 5, textAlign: 'center', bgcolor: 'background.paper', border: '1px dashed rgba(255,255,255,0.2)' }}>
+              <Typography variant="h6" gutterBottom>No Settings Found</Typography>
+              <Typography color="text.secondary" paragraph>The system configuration has not been initialized yet.</Typography>
+              <Button variant="outlined" startIcon={<BuildIcon />} onClick={handleInitialize} disabled={saving}>
+                  Initialize Default Settings
+              </Button>
+          </Paper>
+      ) : (
+          <Paper sx={{ bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden' }}>
+            <Tabs value={tabValue} onChange={(_e, v) => setTabValue(v)} variant="fullWidth" textColor="primary" indicatorColor="primary">
+                <Tab label="General" />
+                <Tab label="Notifications" />
+                <Tab label="Integrations" />
+            </Tabs>
+            <TabPanel value={tabValue} index={0}>
+                {filterByCategory('general').length > 0 ? filterByCategory('general').map(renderField) : <Typography color="text.secondary">No general settings.</Typography>}
+            </TabPanel>
+            <TabPanel value={tabValue} index={1}>
+                {filterByCategory('notifications').length > 0 ? filterByCategory('notifications').map(renderField) : <Typography color="text.secondary">No notification settings.</Typography>}
+            </TabPanel>
+            <TabPanel value={tabValue} index={2}>
+                 <Alert severity="info" sx={{ mb: 3 }}>API Keys are masked for security.</Alert>
+                {filterByCategory('integrations').length > 0 ? filterByCategory('integrations').map(renderField) : <Typography color="text.secondary">No integration settings.</Typography>}
+            </TabPanel>
+          </Paper>
+      )}
 
       <Box sx={{ mt: 3, textAlign: 'center' }}>
-        <Button startIcon={<RefreshIcon />} onClick={fetchSettings} color="inherit">
-            Reload Settings
-        </Button>
+        <Button startIcon={<RefreshIcon />} onClick={fetchSettings} color="inherit">Reload Settings</Button>
       </Box>
     </Box>
   );

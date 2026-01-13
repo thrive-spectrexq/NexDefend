@@ -4,8 +4,9 @@ import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import { getVulnerabilities } from '@/api/vulnerabilities';
 
+// Update columns to match Backend JSON tags (vulnerability.go)
 const columns = [
-  { id: 'cve_id', label: 'CVE ID', minWidth: 120 },
+  { id: 'title', label: 'CVE ID', minWidth: 120 }, // Backend maps CVE to 'title'
   { id: 'package_name', label: 'Package', minWidth: 150 },
   {
     id: 'severity',
@@ -15,7 +16,12 @@ const columns = [
   },
   { id: 'description', label: 'Description', minWidth: 250 },
   { id: 'status', label: 'Status', minWidth: 120, format: (value: string) => <StatusChip status={value} /> },
-  { id: 'created_at', label: 'Detected At', minWidth: 150 },
+  {
+    id: 'discovered_at', // Matched 'discovered_at' from backend
+    label: 'Detected At',
+    minWidth: 150,
+    format: (value: string) => value ? new Date(value).toLocaleDateString() : 'N/A'
+  },
 ];
 
 const VulnerabilitiesPage: React.FC = () => {
@@ -30,7 +36,7 @@ const VulnerabilitiesPage: React.FC = () => {
         setVulnerabilities(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch vulnerabilities", err);
-        setError("Failed to load vulnerabilities.");
+        setError("Failed to load vulnerabilities. Check API connection.");
       } finally {
         setLoading(false);
       }
@@ -43,7 +49,7 @@ const VulnerabilitiesPage: React.FC = () => {
 
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom fontWeight="bold">
         Vulnerability Scanner
       </Typography>
       <DataTable columns={columns} rows={vulnerabilities} title="Detected Vulnerabilities" />
