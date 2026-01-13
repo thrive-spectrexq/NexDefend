@@ -3,6 +3,8 @@ import logging
 import os
 import json
 import requests
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from confluent_kafka import Consumer, KafkaException
 import sys
 import time
@@ -56,6 +58,9 @@ class SavingTTLCache(TTLCache):
 # LRU Cache: Max 1000 users, expire after 1 hour (3600s).
 behavior_models = SavingTTLCache(maxsize=1000, ttl=3600)
 
+# Thread pool for async backend calls
+executor = ThreadPoolExecutor(max_workers=10)
+
 def calculate_risk_score(severity, event_data):
     """Calculates a risk score for an incident."""
     base_score = 0
@@ -76,33 +81,37 @@ def calculate_risk_score(severity, event_data):
     return base_score
 
 def create_incident_in_backend(description, severity, source_ip=None, entity_name=None, risk_score=None, disposition=None, mitre_technique=None):
-    """Calls the Go backend to create a new incident."""
-    try:
-        payload = {
-            "description": description,
-            "severity": severity,
-            "status": "Open",
-            "risk_score": risk_score,
-            "entity_name": entity_name,
-            "disposition": disposition,
-            "mitre_technique": mitre_technique,
-        }
-        if source_ip:
-            payload["source_ip"] = source_ip
+    """Calls the Go backend to create a new incident asynchronously."""
+    def _send_request():
+        try:
+            payload = {
+                "description": description,
+                "severity": severity,
+                "status": "Open",
+                "risk_score": risk_score,
+                "entity_name": entity_name,
+                "disposition": disposition,
+                "mitre_technique": mitre_technique,
+            }
+            if source_ip:
+                payload["source_ip"] = source_ip
 
-        headers = {
-            "Authorization": f"Bearer {AI_SERVICE_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        incident_url = f"{GO_API_URL}/incidents"
-        response = requests.post(incident_url, json=payload, headers=headers)
+            headers = {
+                "Authorization": f"Bearer {AI_SERVICE_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            incident_url = f"{GO_API_URL}/incidents"
+            response = requests.post(incident_url, json=payload, headers=headers, timeout=5)
 
-        if response.status_code == 201:
-            logging.info(f"Successfully created incident: {description}")
-        else:
-            logging.error(f"Failed to create incident. Status: {response.status_code}, Body: {response.text}")
-    except Exception as e:
-        logging.error(f"Error calling create_incident_in_backend: {e}")
+            if response.status_code == 201:
+                logging.info(f"Successfully created incident: {description}")
+            else:
+                logging.error(f"Failed to create incident. Status: {response.status_code}, Body: {response.text}")
+        except Exception as e:
+            logging.error(f"Error calling create_incident_in_backend: {e}")
+
+    # Run in a separate thread to avoid blocking the Kafka consumer
+    executor.submit(_send_request)
 
 def process_event(event):
     """Processes a single event and checks for behavioral anomalies."""

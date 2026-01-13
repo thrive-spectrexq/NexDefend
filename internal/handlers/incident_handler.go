@@ -3,11 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type IncidentHandler struct {
@@ -26,8 +28,12 @@ func (h *IncidentHandler) CreateIncident(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	incident.Status = "Open"
+	// Default status if not provided, but honor input if given (e.g. from AI)
+	if incident.Status == "" {
+		incident.Status = "Open"
+	}
 	incident.CreatedAt = time.Now()
+	incident.UpdatedAt = time.Now()
 
 	if err := h.DB.Create(&incident).Error; err != nil {
 		http.Error(w, "Failed to create incident", http.StatusInternalServerError)
@@ -38,7 +44,7 @@ func (h *IncidentHandler) CreateIncident(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(incident)
 }
 
-// GetIncidents returns a filtered list of incidents
+// GetIncidents returns a filtered and paginated list of incidents
 func (h *IncidentHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 	var incidents []models.Incident
 
@@ -56,7 +62,23 @@ func (h *IncidentHandler) GetIncidents(w http.ResponseWriter, r *http.Request) {
 		query = query.Where("severity = ?", severity)
 	}
 
-	query.Order("created_at desc").Find(&incidents)
+	// Pagination
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+
+	page, _ := strconv.Atoi(pageStr)
+	if page < 1 {
+		page = 1
+	}
+
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	offset := (page - 1) * limit
+
+	query.Order("created_at desc").Offset(offset).Limit(limit).Find(&incidents)
 	json.NewEncoder(w).Encode(incidents)
 }
 
@@ -74,7 +96,13 @@ func (h *IncidentHandler) GetIncident(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(incident)
 }
 
-// UpdateIncident handles status changes and assigning users
+type IncidentNote struct {
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+	Author    string    `json:"author"` // Optional, could be "System" or username
+}
+
+// UpdateIncident handles status changes, assigning users, and appending notes
 func (h *IncidentHandler) UpdateIncident(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -104,8 +132,31 @@ func (h *IncidentHandler) UpdateIncident(w http.ResponseWriter, r *http.Request)
 		incident.AssignedTo = updateData.Assignee
 	}
 
-	// In a real app, you would save 'Note' to a separate IncidentNotes table linked by ID
-	// For now, we update the timestamp
+	// Handle Notes
+	if updateData.Note != "" {
+		var notes []IncidentNote
+
+		// Unmarshal existing notes if any
+		if len(incident.Notes) > 0 {
+			// Ignore error here, start fresh if corrupted
+			_ = json.Unmarshal(incident.Notes, &notes)
+		}
+
+		newNote := IncidentNote{
+			Content:   updateData.Note,
+			Timestamp: time.Now(),
+			Author:    "User", // In a real app, extract from context
+		}
+		notes = append(notes, newNote)
+
+		notesJSON, err := json.Marshal(notes)
+		if err != nil {
+			http.Error(w, "Failed to process notes", http.StatusInternalServerError)
+			return
+		}
+		incident.Notes = datatypes.JSON(notesJSON)
+	}
+
 	incident.UpdatedAt = time.Now()
 
 	if err := h.DB.Save(&incident).Error; err != nil {
