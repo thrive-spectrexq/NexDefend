@@ -24,6 +24,7 @@ import PrometheusPage from '@/pages/PrometheusPage';
 import CloudDashboardPage from '@/pages/CloudDashboardPage';
 import PlaybooksPage from '@/pages/PlaybooksPage';
 import PlaybookEditorPage from '@/pages/PlaybookEditorPage';
+import ProfilePage from '@/pages/ProfilePage';
 
 // Private Route Guard
 const RequireAuth: React.FC = () => {
@@ -68,7 +69,7 @@ const AppRoutes: React.FC = () => {
             <Route path="/topology" element={<TopologyPage />} />
             <Route path="/network-dashboard" element={<NetworkDashboardPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/profile" element={<GenericPage title="Profile" description="User profile management." />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/grafana" element={<GrafanaPage />} />
             <Route path="/prometheus" element={<PrometheusPage />} />
             <Route path="/cloud-monitoring" element={<CloudDashboardPage />} />
