@@ -25,6 +25,7 @@ import CloudDashboardPage from '@/pages/CloudDashboardPage';
 import PlaybooksPage from '@/pages/PlaybooksPage';
 import PlaybookEditorPage from '@/pages/PlaybookEditorPage';
 import ProfilePage from '@/pages/ProfilePage';
+import HostDetailsPage from '@/pages/HostDetailsPage';
 
 // Private Route Guard
 const RequireAuth: React.FC = () => {
@@ -59,6 +60,7 @@ const AppRoutes: React.FC = () => {
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/agents" element={<AgentsPage />} />
+            <Route path="/agents/:id" element={<HostDetailsPage />} />
             <Route path="/vulnerabilities" element={<VulnerabilitiesPage />} />
             <Route path="/processes" element={<GenericPage title="Process Explorer" description="Real-time process monitoring." />} />
             <Route path="/rules" element={<GenericPage title="Rules" description="Detection rule configuration." />} />

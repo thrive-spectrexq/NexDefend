@@ -12,6 +12,7 @@ import (
 type Config struct {
 	APIPrefix          string
 	PythonAPI          string
+	SoarURL            string // Added SoarURL
 	CORSAllowedOrigins []string
 	JWTSecretKey       []byte // For user JWTs
 	AIServiceToken     string // For service-to-service auth
@@ -32,6 +33,11 @@ func LoadConfig() *Config {
 	pythonAPI := os.Getenv("PYTHON_API")
 	if pythonAPI == "" {
 		pythonAPI = "http://localhost:5000" // Use localhost for AI dev
+	}
+
+	soarURL := os.Getenv("SOAR_URL")
+	if soarURL == "" {
+		soarURL = "http://localhost:8082" // Default fallback (assuming SOAR is on a different port locally)
 	}
 
 	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
@@ -62,6 +68,7 @@ func LoadConfig() *Config {
 	return &Config{
 		APIPrefix:          apiPrefix,
 		PythonAPI:          pythonAPI,
+		SoarURL:            soarURL,
 		CORSAllowedOrigins: allowedOrigins,
 		JWTSecretKey:       []byte(jwtKey),
 		AIServiceToken:     aiToken,

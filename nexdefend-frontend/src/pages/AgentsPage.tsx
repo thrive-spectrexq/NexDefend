@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Box, CircularProgress, Alert } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import { getAgents } from '@/api/agents';
@@ -7,9 +8,9 @@ import { getAgents } from '@/api/agents';
 // Update columns to match backend JSON tags from models.Asset
 const columns = [
   { id: 'hostname', label: 'Hostname', minWidth: 150 },
-  { id: 'ip_address', label: 'IP Address', minWidth: 130 }, // Fixed: ip -> ip_address
-  { id: 'os_version', label: 'OS', minWidth: 150 },         // Fixed: os -> os_version
-  { id: 'agent_version', label: 'Agent Version', minWidth: 120 }, // Fixed: version -> agent_version
+  { id: 'ip_address', label: 'IP Address', minWidth: 130 },
+  { id: 'os_version', label: 'OS', minWidth: 150 },
+  { id: 'agent_version', label: 'Agent Version', minWidth: 120 },
   {
     id: 'status',
     label: 'Status',
@@ -17,7 +18,7 @@ const columns = [
     format: (value: string) => <StatusChip status={value} />
   },
   {
-    id: 'last_heartbeat', // Fixed: last_seen -> last_heartbeat
+    id: 'last_heartbeat',
     label: 'Last Seen',
     minWidth: 150,
     format: (value: string) => value ? new Date(value).toLocaleString() : 'Never'
@@ -25,6 +26,7 @@ const columns = [
 ];
 
 const AgentsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,6 @@ const AgentsPage: React.FC = () => {
     const fetchAgents = async () => {
       try {
         const data = await getAgents();
-        // Ensure we handle the response correctly (Asset[] vs wrapper object)
         setAgents(Array.isArray(data) ? data : []);
         setError(null);
       } catch (err) {
@@ -54,7 +55,12 @@ const AgentsPage: React.FC = () => {
       <Typography variant="h4" gutterBottom fontWeight="bold">
         Agent Fleet
       </Typography>
-      <DataTable columns={columns} rows={agents} title="Registered Agents" />
+      <DataTable
+        columns={columns}
+        rows={agents}
+        title="Registered Agents"
+        onRowClick={(row) => navigate(`/agents/${row.id}`)}
+      />
     </Box>
   );
 };
