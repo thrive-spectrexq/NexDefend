@@ -9,8 +9,8 @@ import (
 
 // Command represents a command received from the SOAR service.
 type Command struct {
-	Action     string            `json:"action"`
-	Parameters map[string]string `json:"parameters"`
+	Action     string                 `json:"action"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 // KillProcess attempts to kill a process by its PID.

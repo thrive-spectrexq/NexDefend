@@ -12,7 +12,8 @@ import (
 )
 
 // StartWinEventLogWatcher starts the Windows Event Log watcher.
-func StartWinEventLogWatcher(producer *kafka.Producer, topic string) {
+// It accepts a ProducerProvider to handle producer reconnection/updates safely.
+func StartWinEventLogWatcher(getProducer func() *kafka.Producer, topic string) {
 	log.Println("Starting Windows Event Log watcher...")
 
 	// In a real implementation, you would use the Windows Event Log API to subscribe to events.

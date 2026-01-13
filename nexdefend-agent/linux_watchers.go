@@ -21,7 +21,7 @@ var (
 	seenConnections = make(map[string]struct{})
 )
 
-func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig) {
+func startFIMWatcher(getProducer ProducerProvider, topic string, config *AgentConfig) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatalf("Failed to create FIM watcher: %v", err)
@@ -58,10 +58,13 @@ func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig
 					continue
 				}
 
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          eventJSON,
-				}, nil)
+				producer := getProducer()
+				if producer != nil {
+					producer.Produce(&kafka.Message{
+						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+						Value:          eventJSON,
+					}, nil)
+				}
 
 				// If a new directory is created, watch it
 				if event.Op&fsnotify.Create == fsnotify.Create {
@@ -106,7 +109,7 @@ func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig
 	<-make(chan struct{})
 }
 
-func startNetWatcher(producer *kafka.Producer, topic string) {
+func startNetWatcher(getProducer ProducerProvider, topic string) {
 	for {
 		connections, err := psnet.Connections("all")
 		if err != nil {
@@ -143,10 +146,13 @@ func startNetWatcher(producer *kafka.Producer, topic string) {
 					continue
 				}
 
-				producer.Produce(&kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          eventJSON,
-				}, nil)
+				producer := getProducer()
+				if producer != nil {
+					producer.Produce(&kafka.Message{
+						TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+						Value:          eventJSON,
+					}, nil)
+				}
 			}
 		}
 

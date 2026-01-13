@@ -11,7 +11,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig) {
+func startFIMWatcher(getProducer ProducerProvider, topic string, config *AgentConfig) {
 	log.Println("Starting FIM watcher on macOS...")
 	// In a real implementation, you would use the EndpointSecurity framework to monitor file events.
 	go func() {
@@ -22,7 +22,7 @@ func startFIMWatcher(producer *kafka.Producer, topic string, config *AgentConfig
 	}()
 }
 
-func startNetWatcher(producer *kafka.Producer, topic string) {
+func startNetWatcher(getProducer ProducerProvider, topic string) {
 	log.Println("Starting network watcher on macOS...")
 	// In a real implementation, you would use the EndpointSecurity framework to monitor network events.
 	go func() {
