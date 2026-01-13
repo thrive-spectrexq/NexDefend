@@ -2,31 +2,41 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
-import { getIncidents } from '@/api/alerts';
+import { getIncidents } from '@/api/alerts'; // Assuming this maps to /incidents endpoint
 
 const columns = [
-  { id: 'title', label: 'Title', minWidth: 250 },
   {
-    id: 'priority',
-    label: 'Priority',
+      id: 'description', // Backend uses 'description', no 'title' field
+      label: 'Incident Description',
+      minWidth: 250
+  },
+  {
+    id: 'severity', // Backend uses 'severity', no 'priority' field
+    label: 'Severity',
     minWidth: 100,
     format: (value: string) => {
+        // Handle case-insensitive standard severity levels
+        const v = (value || '').toLowerCase();
         let status = 'info';
-        if(value === 'P1') status = 'critical';
-        if(value === 'P2') status = 'warning';
-        return <StatusChip status={status === 'critical' || status === 'warning' ? value : 'info'} />;
+        if(v === 'critical' || v === 'p1') status = 'critical';
+        if(v === 'high' || v === 'warning' || v === 'p2') status = 'warning';
+        if(v === 'medium') status = 'warning';
+        return <StatusChip status={status} label={value} />;
     }
   },
-  { id: 'assignee', label: 'Assignee', minWidth: 150 },
+  { id: 'assigned_to', label: 'Assignee', minWidth: 150 }, // Backend JSON tag is 'assigned_to'
   {
     id: 'status',
     label: 'Status',
     minWidth: 120,
-    format: (value: string) => {
-        return <StatusChip status={value} />;
-    }
+    format: (value: string) => <StatusChip status={value} />
   },
-  { id: 'created', label: 'Created Date', minWidth: 150 },
+  {
+    id: 'created_at', // Backend JSON tag is 'created_at'
+    label: 'Created Date',
+    minWidth: 150,
+    format: (value: string) => value ? new Date(value).toLocaleDateString() + ' ' + new Date(value).toLocaleTimeString() : 'N/A'
+  },
 ];
 
 const IncidentsPage: React.FC = () => {
@@ -37,11 +47,11 @@ const IncidentsPage: React.FC = () => {
   useEffect(() => {
     const fetchIncidents = async () => {
       try {
-        const data = await getIncidents();
+        const data = await getIncidents(); // Ensure this calls /incidents
         setIncidents(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch incidents", err);
-        setError("Failed to load incidents.");
+        setError("Failed to load incidents. Ensure the backend SOAR module is active.");
       } finally {
         setLoading(false);
       }
@@ -54,7 +64,7 @@ const IncidentsPage: React.FC = () => {
 
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom fontWeight="bold">
         Incidents Management
       </Typography>
       <DataTable columns={columns} rows={incidents} title="Active Incidents" />

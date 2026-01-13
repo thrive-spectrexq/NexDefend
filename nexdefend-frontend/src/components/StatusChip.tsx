@@ -5,6 +5,7 @@ export type StatusType = 'active' | 'online' | 'offline' | 'critical' | 'warning
 
 interface StatusChipProps {
   status: string;
+  label?: string;
 }
 
 const getStatusColor = (status: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
@@ -26,10 +27,10 @@ const getStatusColor = (status: string): "default" | "primary" | "secondary" | "
   }
 };
 
-const StatusChip: React.FC<StatusChipProps> = ({ status }) => {
+const StatusChip: React.FC<StatusChipProps> = ({ status, label }) => {
   return (
     <Chip
-      label={status}
+      label={label || status}
       color={getStatusColor(status)}
       size="small"
       sx={{ textTransform: 'capitalize', fontWeight: 'bold' }}

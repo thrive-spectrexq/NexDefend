@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Alert } from '@mui/material';
+import { getTopology } from '@/api/topology';
 
 interface Node extends d3.SimulationNodeDatum {
   id: string;
   group: number;
-  ip: string;
 }
 
 interface Link extends d3.SimulationLinkDatum<Node> {
@@ -16,34 +16,42 @@ interface Link extends d3.SimulationLinkDatum<Node> {
 
 const TopologyGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [data, setData] = useState<{ nodes: Node[]; links: Link[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // 1. Fetch Data from API
   useEffect(() => {
-    if (!svgRef.current) return;
+    const fetchData = async () => {
+      try {
+        const response = await getTopology();
+        // Validation to ensure D3 doesn't crash on empty/malformed data
+        if (response && Array.isArray(response.nodes) && Array.isArray(response.links)) {
+            // Create deep copies because D3 mutates objects directly
+            setData({
+                nodes: response.nodes.map((n: any) => ({ ...n })),
+                links: response.links.map((l: any) => ({ ...l }))
+            });
+        } else {
+            setError("Invalid topology data received from server.");
+        }
+      } catch (err) {
+        console.error("Topology fetch error:", err);
+        setError("Failed to load network topology.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-    // Mock Data
-    const nodes: Node[] = [
-      { id: "Gateway", group: 1, ip: "192.168.1.1" },
-      { id: "Server-1", group: 2, ip: "192.168.1.10" },
-      { id: "Server-2", group: 2, ip: "192.168.1.11" },
-      { id: "Workstation-A", group: 3, ip: "192.168.1.100" },
-      { id: "Workstation-B", group: 3, ip: "192.168.1.101" },
-      { id: "Workstation-C", group: 3, ip: "192.168.1.102" },
-      { id: "Printer", group: 4, ip: "192.168.1.200" },
-      { id: "Unknown-Device", group: 5, ip: "192.168.1.250" },
-    ];
-
-    const links: Link[] = [
-      { source: "Gateway", target: "Server-1", value: 10 },
-      { source: "Gateway", target: "Server-2", value: 10 },
-      { source: "Gateway", target: "Printer", value: 1 },
-      { source: "Server-1", target: "Workstation-A", value: 5 },
-      { source: "Server-1", target: "Workstation-B", value: 5 },
-      { source: "Server-2", target: "Workstation-C", value: 5 },
-      { source: "Workstation-A", target: "Unknown-Device", value: 1 },
-    ];
+  // 2. Render D3 Graph
+  useEffect(() => {
+    if (!data || !svgRef.current) return;
 
     const width = 800;
     const height = 600;
+    const { nodes, links } = data;
 
     // Clear previous SVG content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -51,16 +59,13 @@ const TopologyGraph: React.FC = () => {
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [0, 0, width, height]);
 
-    // Color scale
     const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-    // Simulation
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(links).id((d: any) => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-300))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    // Links
     const link = svg.append("g")
       .attr("stroke", "#999")
       .attr("stroke-opacity", 0.6)
@@ -69,32 +74,29 @@ const TopologyGraph: React.FC = () => {
       .join("line")
       .attr("stroke-width", d => Math.sqrt(d.value));
 
-    // Nodes
     const node = svg.append("g")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
       .selectAll("circle")
       .data(nodes)
       .join("circle")
-      .attr("r", 10)
-      .attr("fill", (d: any) => color(d.group))
+      .attr("r", 12) // Slightly larger nodes
+      .attr("fill", (d: any) => color(String(d.group)))
       // @ts-ignore
       .call(drag(simulation));
 
-    // Labels
     const labels = svg.append("g")
-        .attr("class", "labels")
         .selectAll("text")
         .data(nodes)
         .enter()
         .append("text")
-        .attr("dx", 12)
+        .attr("dx", 15)
         .attr("dy", ".35em")
-        .style("fill", "#ccc")
+        .style("fill", "#e2e8f0") // Lighter text for dark mode
         .style("font-size", "12px")
+        .style("font-family", "Roboto, sans-serif")
         .text((d: any) => d.id);
 
-    // Simulation Tick
     simulation.on("tick", () => {
       link
         .attr("x1", (d: any) => d.source.x)
@@ -111,41 +113,42 @@ const TopologyGraph: React.FC = () => {
         .attr("y", (d: any) => d.y);
     });
 
-    // Drag behavior
     function drag(simulation: any) {
       function dragstarted(event: any) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
       }
-
       function dragged(event: any) {
         event.subject.fx = event.x;
         event.subject.fy = event.y;
       }
-
       function dragended(event: any) {
         if (!event.active) simulation.alphaTarget(0);
         event.subject.fx = null;
         event.subject.fy = null;
       }
-
-      return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
+      return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
     }
 
-    return () => {
-      simulation.stop();
-    };
-  }, []);
+    return () => { simulation.stop(); };
+  }, [data]);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
 
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
-      <Typography variant="h4" gutterBottom>Network Topology</Typography>
-      <Paper sx={{ width: '100%', height: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#0f172a' }}>
-        <svg ref={svgRef} width="100%" height="100%" style={{ maxHeight: 600 }}></svg>
+      <Typography variant="h4" gutterBottom fontWeight="bold">Network Topology</Typography>
+      {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <Paper sx={{ width: '100%', height: 600, bgcolor: '#0f172a', border: '1px solid #1e293b', borderRadius: 2, overflow: 'hidden' }}>
+        {data ? (
+           <svg ref={svgRef} width="100%" height="100%" style={{ display: 'block' }}></svg>
+        ) : (
+           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+               <Typography color="text.secondary">No topology data available.</Typography>
+           </Box>
+        )}
       </Paper>
     </Box>
   );

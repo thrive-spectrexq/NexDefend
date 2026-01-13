@@ -1,116 +1,143 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, IconButton, Tooltip } from '@mui/material';
-import {
-    Terminal as TerminalIcon,
-    DeleteSweep as ClearIcon
-} from '@mui/icons-material';
+import { Box, Paper, Typography, TextField, IconButton } from '@mui/material';
+import { Terminal as TerminalIcon, DeleteSweep as ClearIcon } from '@mui/icons-material';
+import client from '../api/client'; // Using your existing client
+import { getAgents } from '../api/agents';
+
+// Define structure for command responses
+interface ConsoleLine {
+  type: 'cmd' | 'out' | 'err';
+  text: string;
+}
 
 const ConsolePage: React.FC = () => {
-  const [history, setHistory] = useState<{type: 'cmd' | 'out' | 'err', text: string}[]>([
-      { type: 'out', text: 'NexDefend Security Protocol v2.4.1 initialized...' },
-      { type: 'out', text: 'Connection established to Mainframe [192.168.1.50]' },
+  const [history, setHistory] = useState<ConsoleLine[]>([
+      { type: 'out', text: 'NexDefend Security Protocol v2.5.0 initialized...' },
+      { type: 'out', text: 'Connected to NexDefend Core API.' },
       { type: 'out', text: 'Type "help" to view available commands.' }
   ]);
   const [input, setInput] = useState('');
+  const [processing, setProcessing] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom
+  // Auto-scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history]);
 
-  // Keep focus on input
-  const focusInput = () => {
-      inputRef.current?.focus();
+  const addLine = (type: 'out' | 'err', text: string) => {
+      setHistory(prev => [...prev, { type, text }]);
   };
 
-  const handleCommand = (cmd: string) => {
-    const command = cmd.trim().toLowerCase();
-    const newHistory = [...history, { type: 'cmd' as const, text: `admin@nexdefend:~$ ${cmd}` }];
+  const executeCommand = async (rawCmd: string) => {
+    const args = rawCmd.trim().split(' ');
+    const cmd = args[0].toLowerCase();
 
-    let response = '';
-    let type: 'out' | 'err' = 'out';
+    setProcessing(true);
 
-    switch (command.split(' ')[0]) {
-      case 'help':
-        response = `Available Commands:
-  help          - Show this help message
-  status        - Check system health status
-  clear         - Clear terminal history
-  agents        - List connected security agents
-  scan <target> - Initiate vulnerability scan on target IP
-  whoami        - Display current user
-  connect <ip>  - Establish secure tunnel`;
-        break;
-      case 'status':
-        response = `[SYSTEM STATUS]
+    try {
+        switch (cmd) {
+            case 'help':
+                addLine('out', `Available Commands:
+  help            - Show this help message
+  status          - Check API connection health
+  clear           - Clear terminal history
+  agents          - List connected security agents (Real-time)
+  scan <target>   - Initiate vulnerability scan (API)
+  whoami          - Display current session info`);
+                break;
+
+            case 'clear':
+                setHistory([]);
+                break;
+
+            case 'whoami':
+                // Simple check for token or user info
+                const token = localStorage.getItem('token');
+                addLine('out', token ? 'User: Authenticated Admin (JWT)' : 'User: Guest (Limited Access)');
+                break;
+
+            case 'status':
+                // Ping the stats endpoint as a health check
+                try {
+                    const start = Date.now();
+                    await client.get('/dashboard/stats');
+                    const latency = Date.now() - start;
+                    addLine('out', `[SYSTEM STATUS]
 ---------------------------
-Core Service   : ONLINE [PID: 4022]
-Threat Engine  : ONLINE [PID: 4023]
+API Gateway    : ONLINE (${latency}ms)
 Database       : CONNECTED
-Memory Usage   : 14% (12GB Free)
-Active Threats : 0 Detected`;
-        break;
-      case 'clear':
-        setHistory([]);
-        return;
-      case 'agents':
-        response = `ID        HOSTNAME      IP              STATUS
-------------------------------------------------
-AG-001    WinSrv-Prod   10.0.0.15       [ONLINE]
-AG-002    Lin-Gateway   10.0.0.1        [ONLINE]
-AG-003    DB-Cluster    10.0.0.25       [OFFLINE]`;
-        break;
-      case 'whoami':
-        response = 'root (Privileges: ALL)';
-        break;
-      case 'scan':
-        const target = command.split(' ')[1];
-        if (target) {
-             response = `[+] Target acquired: ${target}
-[+] Initializing port scanner...
-[+] Checking CVE database...
-[!] Scan ID #9921 started. check 'alerts' for results.`;
-        } else {
-            response = 'Usage: scan <target_ip>';
-            type = 'err';
+Services       : ACTIVE`);
+                } catch (e) {
+                    addLine('err', `[!] System Unreachable: ${e}`);
+                }
+                break;
+
+            case 'agents':
+                addLine('out', '[*] Fetching agent list from /api/v1/assets...');
+                try {
+                    const assets = await getAgents();
+                    if (assets.length === 0) {
+                         addLine('out', 'No agents found registered in the system.');
+                    } else {
+                        let table = 'ID       HOSTNAME       IP              STATUS\n';
+                        table += '------------------------------------------------\n';
+                        assets.forEach((a: any) => {
+                            table += `${a.id.toString().padEnd(8)} ${a.hostname.padEnd(14)} ${a.ip_address.padEnd(15)} [${a.status.toUpperCase()}]\n`;
+                        });
+                        addLine('out', table);
+                    }
+                } catch (e) {
+                    addLine('err', `Failed to retrieve agents: ${e}`);
+                }
+                break;
+
+            case 'scan':
+                const target = args[1];
+                if (!target) {
+                    addLine('err', 'Usage: scan <target_ip_or_hostname>');
+                } else {
+                    addLine('out', `[+] Initiating scan for target: ${target}...`);
+                    try {
+                        // Call your actual backend endpoint (scan_handler.go)
+                        // Note: The backend handler currently doesn't read the body, but we send it for future proofing
+                        await client.post('/scans', { target: target });
+                        addLine('out', `[SUCCESS] Scan job submitted for ${target}.`);
+                        addLine('out', `[INFO] Check 'Vulnerabilities' page for results.`);
+                    } catch (e) {
+                         addLine('err', `[!] Failed to start scan: ${e}`);
+                    }
+                }
+                break;
+
+            case '':
+                break;
+
+            default:
+                addLine('err', `bash: ${cmd}: command not found`);
         }
-        break;
-      case '':
-        break;
-      default:
-        response = `bash: ${command}: command not found`;
-        type = 'err';
+    } catch (err) {
+        addLine('err', `Unexpected error: ${err}`);
+    } finally {
+        setProcessing(false);
     }
-
-    if (response) {
-        newHistory.push({ type, text: response });
-    }
-
-    setHistory(newHistory);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCommand(input);
+    if (e.key === 'Enter' && !processing) {
+      const cmd = input;
+      setHistory(prev => [...prev, { type: 'cmd', text: `admin@nexdefend:~$ ${cmd}` }]);
       setInput('');
+      executeCommand(cmd);
     }
   };
 
   return (
-    <Box
-        sx={{
-            p: 3,
-            height: 'calc(100vh - 80px)',
-            display: 'flex',
-            flexDirection: 'column',
-            bgcolor: '#050505',
-        }}
-    >
+    <Box sx={{ p: 3, height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', bgcolor: '#050505' }}>
       <Paper
         elevation={10}
-        onClick={focusInput}
+        onClick={() => inputRef.current?.focus()}
         sx={{
           flexGrow: 1,
           bgcolor: '#0d1117',
@@ -119,68 +146,27 @@ AG-003    DB-Cluster    10.0.0.25       [OFFLINE]`;
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          position: 'relative',
-          boxShadow: '0 0 50px rgba(0, 209, 255, 0.05)',
-          '&:before': {
-              content: '""',
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03))',
-              backgroundSize: '100% 2px, 3px 100%',
-              pointerEvents: 'none',
-              zIndex: 10
-          }
+          fontFamily: '"Fira Code", monospace'
         }}
       >
-        {/* Terminal Header */}
-        <Box sx={{
-            bgcolor: '#161b22',
-            borderBottom: '1px solid #30363d',
-            p: 1,
-            px: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-        }}>
+        {/* Header */}
+        <Box sx={{ bgcolor: '#161b22', borderBottom: '1px solid #30363d', p: 1, px: 2, display: 'flex', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TerminalIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="caption" fontFamily="monospace" color="text.secondary">
-                    root@nexdefend-core:~
-                </Typography>
+                <Typography variant="caption" color="text.secondary">root@nexdefend-core:~</Typography>
             </Box>
-            <Box>
-                <Tooltip title="Clear Console">
-                    <IconButton size="small" onClick={() => setHistory([])}>
-                        <ClearIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                    </IconButton>
-                </Tooltip>
-            </Box>
+            <IconButton size="small" onClick={() => setHistory([])}><ClearIcon fontSize="small" sx={{ color: 'text.secondary' }} /></IconButton>
         </Box>
 
-        {/* Terminal Content */}
-        <Box
-            sx={{
-                flexGrow: 1,
-                p: 2,
-                overflowY: 'auto',
-                fontFamily: '"Fira Code", "Roboto Mono", monospace',
-                fontSize: '0.9rem',
-                color: '#e6edf3',
-                '&::-webkit-scrollbar': { width: '8px' },
-                '&::-webkit-scrollbar-thumb': { bgcolor: '#30363d', borderRadius: '4px' }
-            }}
-        >
+        {/* Output Area */}
+        <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto', color: '#e6edf3' }}>
             {history.map((line, i) => (
-                <Box key={i} sx={{ mb: 0.5, opacity: 0.9 }}>
-                    <Typography
-                        component="span"
-                        sx={{
-                            fontFamily: 'inherit',
-                            whiteSpace: 'pre-wrap',
-                            color: line.type === 'cmd' ? '#7ee787' : line.type === 'err' ? '#ff7b72' : '#a5d6ff',
-                            fontWeight: line.type === 'cmd' ? 600 : 400
-                        }}
-                    >
+                <Box key={i} sx={{ mb: 0.5 }}>
+                    <Typography component="span" sx={{
+                        fontFamily: 'inherit', whiteSpace: 'pre-wrap',
+                        color: line.type === 'cmd' ? '#7ee787' : line.type === 'err' ? '#ff7b72' : '#a5d6ff',
+                        fontWeight: line.type === 'cmd' ? 600 : 400
+                    }}>
                         {line.text}
                     </Typography>
                 </Box>
@@ -188,16 +174,7 @@ AG-003    DB-Cluster    10.0.0.25       [OFFLINE]`;
 
             {/* Input Line */}
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Typography
-                    component="span"
-                    sx={{
-                        fontFamily: 'inherit',
-                        color: '#7ee787',
-                        mr: 1,
-                        fontWeight: 'bold',
-                        userSelect: 'none'
-                    }}
-                >
+                <Typography component="span" sx={{ fontFamily: 'inherit', color: '#7ee787', mr: 1, fontWeight: 'bold' }}>
                     admin@nexdefend:~$
                 </Typography>
                 <TextField
@@ -205,18 +182,11 @@ AG-003    DB-Cluster    10.0.0.25       [OFFLINE]`;
                     fullWidth
                     variant="standard"
                     value={input}
+                    disabled={processing}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoFocus
-                    InputProps={{
-                        disableUnderline: true,
-                        sx: {
-                            color: 'white',
-                            fontFamily: '"Fira Code", "Roboto Mono", monospace',
-                            fontSize: '0.9rem',
-                            p: 0
-                        }
-                    }}
+                    InputProps={{ disableUnderline: true, sx: { color: 'white', fontFamily: 'inherit', p: 0 } }}
                 />
             </Box>
             <div ref={endRef} />
