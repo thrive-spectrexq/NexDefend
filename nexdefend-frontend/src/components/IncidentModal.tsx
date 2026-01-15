@@ -25,12 +25,12 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ open, onClose, incident }
 
   if (!incident) return null;
 
-  // Mock Process Data for visualization if actual data is missing from incident context
-  const mockProcesses = [
-    { pid: 100, ppid: 1, name: "explorer.exe", cmdline: "C:\\Windows\\explorer.exe" },
-    { pid: 204, ppid: 100, name: "chrome.exe", cmdline: "chrome.exe --url" },
-    { pid: 305, ppid: 204, name: "cmd.exe", cmdline: "cmd.exe /c download.ps1" },
-    { pid: 401, ppid: 305, name: "powershell.exe", cmdline: "powershell.exe -enc ..." },
+  // Use real process data if available, otherwise fallback to mock for demonstration
+  const processes = incident.process_tree || [
+    { pid: 100, ppid: 1, name: "explorer.exe", cmdline: "C:\\Windows\\explorer.exe", username: "SYSTEM" },
+    { pid: 204, ppid: 100, name: "chrome.exe", cmdline: "chrome.exe --url", username: "user" },
+    { pid: 305, ppid: 204, name: "cmd.exe", cmdline: "cmd.exe /c download.ps1", username: "user" },
+    { pid: 401, ppid: 305, name: "powershell.exe", cmdline: "powershell.exe -enc ...", username: "user" },
   ];
 
   return (
@@ -73,10 +73,10 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ open, onClose, incident }
                 <Typography variant="h6" gutterBottom>Process Tree Analysis</Typography>
                 <Divider sx={{ mb: 2 }} />
                 {/*
-                   In a real scenario, we would pass incident.related_processes.
-                   For now, we use mock data to demonstrate the visualization component.
+                   Visualization of the process execution chain.
+                   Data is sourced from real agent telemetry if available.
                 */}
-                <ProcessTreeViewer processes={mockProcesses} />
+                <ProcessTreeViewer processes={processes} />
             </Box>
         )}
 
