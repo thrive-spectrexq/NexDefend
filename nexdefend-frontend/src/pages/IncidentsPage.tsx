@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
+import IncidentModal from '@/components/IncidentModal';
 import { getIncidents } from '@/api/alerts'; // Assuming this maps to /incidents endpoint
 
 const columns = [
@@ -43,6 +44,7 @@ const IncidentsPage: React.FC = () => {
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIncident, setSelectedIncident] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -59,6 +61,14 @@ const IncidentsPage: React.FC = () => {
     fetchIncidents();
   }, []);
 
+  const handleRowClick = (row: any) => {
+    setSelectedIncident(row);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedIncident(null);
+  };
+
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">{error}</Alert>;
 
@@ -67,7 +77,20 @@ const IncidentsPage: React.FC = () => {
       <Typography variant="h4" gutterBottom fontWeight="bold">
         Incidents Management
       </Typography>
-      <DataTable columns={columns} rows={incidents} title="Active Incidents" />
+      <DataTable
+        columns={columns}
+        rows={incidents}
+        title="Active Incidents"
+        onRowClick={handleRowClick}
+      />
+
+      {selectedIncident && (
+        <IncidentModal
+          open={Boolean(selectedIncident)}
+          onClose={handleCloseModal}
+          incident={selectedIncident}
+        />
+      )}
     </Box>
   );
 };

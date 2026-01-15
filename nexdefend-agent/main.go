@@ -39,9 +39,11 @@ type Event struct {
 
 // ProcessEvent represents the data collected for a single process.
 type ProcessEvent struct {
-	PID     int32  `json:"pid"`
-	Name    string `json:"name"`
-	Cmdline string `json:"cmdline"`
+	PID      int32  `json:"pid"`
+	PPID     int32  `json:"ppid"`
+	Name     string `json:"name"`
+	Cmdline  string `json:"cmdline"`
+	Username string `json:"username,omitempty"`
 }
 
 // FIMEvent represents a file integrity monitoring event.
@@ -188,6 +190,9 @@ func main() {
 
 	go startResponseConsumer()
 
+	// Maintain a set of seen processes to report only new ones or changes
+	seenProcesses := make(map[int32]time.Time)
+
 	for {
 		processes, err := process.Processes()
 		if err != nil {
@@ -196,7 +201,17 @@ func main() {
 			continue
 		}
 
+		// Track current PIDs to detect exits
+		currentPIDs := make(map[int32]struct{})
+
 		for _, p := range processes {
+			currentPIDs[p.Pid] = struct{}{}
+
+			// Check if process is already known
+			if _, exists := seenProcesses[p.Pid]; exists {
+				continue
+			}
+
 			name, err := p.Name()
 			if err != nil {
 				continue
@@ -205,11 +220,23 @@ func main() {
 			if err != nil {
 				cmdline = ""
 			}
+			ppid, err := p.Ppid()
+			if err != nil {
+				ppid = 0
+			}
+			username, err := p.Username()
+			if err != nil {
+				username = ""
+			}
+
+			seenProcesses[p.Pid] = time.Now()
 
 			procEvent := ProcessEvent{
-				PID:     p.Pid,
-				Name:    name,
-				Cmdline: cmdline,
+				PID:      p.Pid,
+				PPID:     ppid,
+				Name:     name,
+				Cmdline:  cmdline,
+				Username: username,
 			}
 
 			event := Event{
@@ -236,6 +263,13 @@ func main() {
 				if err := secureQueue.Enqueue(eventJSON); err != nil {
 					log.Printf("Failed to enqueue process event: %v", err)
 				}
+			}
+		}
+
+		// Cleanup seenProcesses for PIDs that no longer exist
+		for pid := range seenProcesses {
+			if _, ok := currentPIDs[pid]; !ok {
+				delete(seenProcesses, pid)
 			}
 		}
 

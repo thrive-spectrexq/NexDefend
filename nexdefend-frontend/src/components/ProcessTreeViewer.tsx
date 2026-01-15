@@ -7,6 +7,7 @@ interface Process {
   ppid: number;
   name: string;
   cmdline: string;
+  username?: string;
 }
 
 interface ProcessTreeViewerProps {
@@ -27,7 +28,7 @@ const ProcessNode = ({ process }: { process: Process }) => (
     }}
   >
     <Typography variant="subtitle2" fontWeight="bold">{process.name}</Typography>
-    <Typography variant="caption" display="block" color="text.secondary">PID: {process.pid}</Typography>
+    <Typography variant="caption" display="block" color="text.secondary">PID: {process.pid} {process.username && `| User: ${process.username}`}</Typography>
     <Typography variant="caption" display="block" color="text.secondary" sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {process.cmdline}
     </Typography>
