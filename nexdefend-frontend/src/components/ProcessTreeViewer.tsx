@@ -14,21 +14,38 @@ interface ProcessTreeViewerProps {
   processes: Process[];
 }
 
+const getProcessColor = (procName: string) => {
+    const suspicious = ['nc', 'nmap', 'powershell.exe', 'cmd.exe', 'mimikatz', 'wget', 'curl'];
+    const system = ['systemd', 'svchost.exe', 'init', 'winlogon.exe'];
+
+    if (suspicious.some(s => procName.toLowerCase().includes(s))) return '#ff1744'; // Red
+    if (system.some(s => procName.toLowerCase() === s)) return '#00e676'; // Green
+    return 'text.primary'; // Default
+};
+
 const ProcessNode = ({ process }: { process: Process }) => (
   <Paper
     elevation={3}
     sx={{
       p: 1,
-      bgcolor: process.name === 'powershell.exe' || process.name === 'cmd.exe' ? 'rgba(244, 67, 54, 0.1)' : 'background.paper',
-      border: '1px solid',
-      borderColor: process.name === 'powershell.exe' ? '#f44336' : 'rgba(255,255,255,0.1)',
+      bgcolor: 'background.paper',
+      border: '1px solid rgba(255,255,255,0.1)',
       display: 'inline-block',
       textAlign: 'left',
       minWidth: 150
     }}
   >
-    <Typography variant="subtitle2" fontWeight="bold">{process.name}</Typography>
-    <Typography variant="caption" display="block" color="text.secondary">PID: {process.pid} {process.username && `| User: ${process.username}`}</Typography>
+    <Typography
+        variant="body2"
+        sx={{
+            color: getProcessColor(process.name),
+            fontWeight: getProcessColor(process.name) !== 'text.primary' ? 'bold' : 'normal',
+            textShadow: getProcessColor(process.name) === '#ff1744' ? '0 0 8px rgba(255, 23, 68, 0.4)' : 'none'
+        }}
+    >
+        {process.name} <span style={{ opacity: 0.5 }}>({process.pid})</span>
+    </Typography>
+    <Typography variant="caption" display="block" color="text.secondary">{process.username && `User: ${process.username}`}</Typography>
     <Typography variant="caption" display="block" color="text.secondary" sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {process.cmdline}
     </Typography>

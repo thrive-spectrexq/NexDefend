@@ -26,6 +26,13 @@ KEYWORD_MAP = {
     "Persistence": "T1547",
     "Privilege Escalation": "T1068",
     "Credential Dumping": "T1003",
+    # --- NEW KEYWORDS ---
+    "Miner": "T1496",       # Resource Hijacking
+    "Crypto": "T1496",      # Resource Hijacking
+    "XMRig": "T1496",       # Common Miner Software
+    "Wallet": "T1496",      # Resource Hijacking
+    "Stratum": "T1071.001", # Mining Protocol
+    # --------------------
 }
 
 def get_mitre_technique(signature):

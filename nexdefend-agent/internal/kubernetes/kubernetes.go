@@ -59,10 +59,23 @@ func StartKubernetesWatcher(getProducer func() *kafka.Producer, topic string) {
 			}
 
 			for _, pod := range pods.Items {
+				// --- NEW LOGIC: Check for Container Failures ---
+				detailedStatus := string(pod.Status.Phase)
+				for _, containerStatus := range pod.Status.ContainerStatuses {
+					if containerStatus.State.Waiting != nil {
+						reason := containerStatus.State.Waiting.Reason
+						if reason == "CrashLoopBackOff" || reason == "ImagePullBackOff" || reason == "ErrImagePull" {
+							detailedStatus = reason
+							break // Prioritize the error state
+						}
+					}
+				}
+				// ----------------------------------------------
+
 				metric := PodMetric{
 					Name:      pod.Name,
 					Namespace: pod.Namespace,
-					Phase:     string(pod.Status.Phase),
+					Phase:     detailedStatus,
 					NodeName:  pod.Spec.NodeName,
 					PodIP:     pod.Status.PodIP,
 				}

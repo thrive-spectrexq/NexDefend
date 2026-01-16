@@ -113,10 +113,23 @@ const MainLayout: React.FC = () => {
               onClick={() => navigate(item.path)}
               sx={{
                 borderRadius: 2,
+                position: 'relative',
+                overflow: 'hidden',
                 '&.Mui-selected': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  color: 'text.primary',
-                  '& .MuiListItemIcon-root': { color: 'text.primary' },
+                  bgcolor: 'rgba(0, 209, 255, 0.08)',
+                  color: 'primary.main',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: '15%',
+                    bottom: '15%',
+                    width: '4px',
+                    borderRadius: '0 4px 4px 0',
+                    backgroundColor: '#00D1FF',
+                    boxShadow: '0 0 10px #00D1FF'
+                  }
                 },
                 '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' },
               }}
@@ -144,10 +157,23 @@ const MainLayout: React.FC = () => {
               onClick={() => navigate(item.path)}
               sx={{
                 borderRadius: 2,
+                position: 'relative',
+                overflow: 'hidden',
                 '&.Mui-selected': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  color: 'text.primary',
-                  '& .MuiListItemIcon-root': { color: 'text.primary' },
+                  bgcolor: 'rgba(0, 209, 255, 0.08)',
+                  color: 'primary.main',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: '15%',
+                    bottom: '15%',
+                    width: '4px',
+                    borderRadius: '0 4px 4px 0',
+                    backgroundColor: '#00D1FF',
+                    boxShadow: '0 0 10px #00D1FF'
+                  }
                 },
                 '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' },
               }}

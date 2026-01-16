@@ -3,6 +3,12 @@ import * as d3 from 'd3';
 import { Box, Typography, Paper, CircularProgress, Alert } from '@mui/material';
 import { getTopology } from '@/api/topology';
 
+// 1. Define Icon Paths (Simple SVG paths for D3 usage)
+const ICONS = {
+    server: "M15,9H9V7H15M15,11H9V13H15M15,15H9V17H15M2,5V19H22V5H2M20,17H4V7H20V17Z", // Material Server Icon path
+    router: "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z"
+};
+
 interface Node extends d3.SimulationNodeDatum {
   id: string;
   group: number;
@@ -76,12 +82,22 @@ const TopologyGraph: React.FC = () => {
 
     const node = svg.append("g")
       .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5)
-      .selectAll("circle")
+      .attr("stroke-width", 0.5)
+      .selectAll("path") // Changed from circle to path
       .data(nodes)
-      .join("circle")
-      .attr("r", 12) // Slightly larger nodes
+      .join("path")
+      .attr("d", (d: any) => d.group === 1 ? ICONS.server : ICONS.router) // Conditional Icon
       .attr("fill", (d: any) => color(String(d.group)))
+      .attr("transform", "scale(1.5)") // Scale up icons
+      // Add Tooltip Events
+      .on("mouseover", (event, d: any) => {
+          d3.select("#tooltip")
+            .style("opacity", 1)
+            .html(`<strong>${d.id}</strong><br/>Group: ${d.group}<br/>Status: Active`)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", () => d3.select("#tooltip").style("opacity", 0))
       // @ts-ignore
       .call(drag(simulation));
 
@@ -105,8 +121,7 @@ const TopologyGraph: React.FC = () => {
         .attr("y2", (d: any) => d.target.y);
 
       node
-        .attr("cx", (d: any) => d.x)
-        .attr("cy", (d: any) => d.y);
+        .attr("transform", (d: any) => `translate(${d.x},${d.y}) scale(1.5)`);
 
       labels
         .attr("x", (d: any) => d.x)
@@ -141,7 +156,14 @@ const TopologyGraph: React.FC = () => {
       <Typography variant="h4" gutterBottom fontWeight="bold">Network Topology</Typography>
       {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Paper sx={{ width: '100%', height: 600, bgcolor: '#0f172a', border: '1px solid #1e293b', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ width: '100%', height: 600, bgcolor: '#0f172a', border: '1px solid #1e293b', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
+        {/* Tooltip Div */}
+        <div id="tooltip" style={{
+            position: 'fixed', opacity: 0, pointerEvents: 'none',
+            backgroundColor: '#1e293b', border: '1px solid #00D1FF', color: '#fff',
+            padding: '8px', borderRadius: '4px', fontSize: '12px', zIndex: 10
+        }}></div>
+
         {data ? (
            <svg ref={svgRef} width="100%" height="100%" style={{ display: 'block' }}></svg>
         ) : (

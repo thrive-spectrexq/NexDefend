@@ -24,6 +24,7 @@ func RunComplianceChecks() []ComplianceResult {
 	results = append(results, checkSSHRootLogin())
 	results = append(results, checkShadowFilePerms())
 	results = append(results, checkIPForwarding())
+	results = append(results, checkDockerSocketSecurity())
 
 	for _, res := range results {
 		logCompliance(res)
@@ -82,6 +83,27 @@ func checkIPForwarding() ComplianceResult {
 		return pass("IP Forwarding", "IP Forwarding is disabled.")
 	}
 	return fail("IP Forwarding", "IP Forwarding is enabled (1).")
+}
+
+// Check 4: Ensure Docker Socket is not world-writable
+func checkDockerSocketSecurity() ComplianceResult {
+	path := "/var/run/docker.sock"
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return pass("Docker Socket Security", "Docker socket not present (Service might not be installed).")
+	}
+	if err != nil {
+		return fail("Docker Socket Security", fmt.Sprintf("Could not check %s: %v", path, err))
+	}
+
+	mode := info.Mode().Perm()
+	// Check if "others" have write permission (mask 0002)
+	// 0660 is standard secure (rw-rw----). 0666 is insecure (rw-rw-rw-).
+	if mode&0002 != 0 {
+		return fail("Docker Socket Security", fmt.Sprintf("Docker socket is world-writable (Permissions: %v). Critical Risk!", mode))
+	}
+
+	return pass("Docker Socket Security", "Docker socket permissions are secure.")
 }
 
 // Helpers
