@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	// "github.com/rs/cors" // FIX: Removed import
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
@@ -27,8 +27,6 @@ func NewRouter(
 
 	r := mux.NewRouter()
 
-	// FIX 1: Move Logging Middleware to the Root Router
-	// This ensures we see logs for 404s, root paths, and mismatched routes
 	r.Use(middleware.LoggingMiddleware)
 
 	// Initialize Handlers
@@ -53,8 +51,7 @@ func NewRouter(
 	networkHandler := handlers.NewNetworkStatsHandler(osClient)
 	soarHandler := handlers.NewSoarProxyHandler(cfg.SoarURL)
 
-	// FIX 2: Add Root Health Check
-	// Helpful to verify if the server is reachable at all at https://url/health
+	// Health Check
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -65,13 +62,8 @@ func NewRouter(
 
 	// Public Routes
 	api.HandleFunc("/", homeHandler.Home).Methods("GET")
-	
-	// FIX 3: Ensure Auth Routes are registered correctly
-	// Matches /api/v1/auth/login and /api/v1/auth/register
 	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST", "OPTIONS")
 	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
-
-	// Forward all /ai/* requests to the Python Proxy
 	api.HandleFunc("/ai/{endpoint}", handlers.ProxyToPython).Methods("GET", "POST")
 
 	// Agent & Ingestion
@@ -79,7 +71,7 @@ func NewRouter(
 	api.HandleFunc("/assets/heartbeat", assetHandler.Heartbeat).Methods("POST")
 	api.HandleFunc("/events", eventHandler.IngestEvent).Methods("POST")
 
-	// Protected Routes (Apply Auth Middleware)
+	// Protected Routes
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware(cfg.JWTSecretKey))
 
@@ -147,15 +139,7 @@ func NewRouter(
 	protected.HandleFunc("/auth/profile", authHandler.GetProfile).Methods("GET")
 	protected.HandleFunc("/auth/profile", authHandler.UpdateProfile).Methods("PUT")
 
-	// CORS Handler (Applied globally)
-	cWrapper := cors.New(cors.Options{
-		AllowedOrigins:   cfg.CORSAllowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-		AllowCredentials: true,
-	})
-
-	r.Use(cWrapper.Handler)
+	// FIX: Removed local CORS wrapper. It is now handled in main.go.
 
 	return r
 }
