@@ -12,14 +12,14 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/search"
 	"github.com/thrive-spectrexq/NexDefend/internal/tip"
-	"github.com/rs/cors"
+    // "github.com/rs/cors"  <-- REMOVED THIS LINE
 )
 
 func NewRouter(
 	cfg *config.Config,
 	database *db.Database,
 	c *cache.Cache,
-	tip tip.TIP, // FIX: Removed '*' (Use interface directly, not pointer to interface)
+	tip tip.TIP,
 	adConnector enrichment.ActiveDirectoryConnector,
 	snowConnector enrichment.ServiceNowConnector,
 	osClient *search.Client,
@@ -50,7 +50,7 @@ func NewRouter(
 	processTreeHandler := handlers.NewProcessTreeHandler(cfg.PythonAPI)
 	networkHandler := handlers.NewNetworkStatsHandler(osClient)
 	soarHandler := handlers.NewSoarProxyHandler(cfg.SoarURL)
-	tipHandler := handlers.NewTIPHandler(tip) // Initialize TIP Handler
+	tipHandler := handlers.NewTIPHandler(tip) // This requires tip_handler.go to be correct
 
 	// Health Check
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
