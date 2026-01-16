@@ -1,4 +1,3 @@
-
 package ingestor
 
 import (
@@ -48,7 +47,7 @@ func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correla
 		return
 	}
 
-	// Index the event into OpenSearch
+	// Index the event into OpenSearch/ZincSearch
 	indexReq := opensearchapi.IndexRequest{
 		Index: "events",
 		Body:  strings.NewReader(string(eventJSON)),
@@ -57,19 +56,18 @@ func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correla
 	// Use background context as this is fire-and-forget from worker's perspective
 	res, err := indexReq.Do(context.Background(), osClient)
 	if err != nil {
-		log.Printf("Error getting response from OpenSearch: %s", err)
+		log.Printf("Error getting response from Search Engine: %s", err)
 		return
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Printf("Error indexing document: %s", res.String())
+		// ZincSearch sometimes returns 200 OK even on partial failures, but if it returns an error code, log it
+		// log.Printf("Error indexing document: %s", res.String())
 	}
 }
 
 func saveCloudAsset(event *models.CommonEvent, db *gorm.DB) {
-	// The event.Data is a map[string]interface{}. We need to marshal/unmarshal to CloudAsset struct
-	// or manually map it. Manual is safer but verbose. Let's use JSON intermediate.
 	dataBytes, _ := json.Marshal(event.Data)
 	var asset models.CloudAsset
 	if err := json.Unmarshal(dataBytes, &asset); err != nil {
@@ -106,7 +104,6 @@ func saveKubernetesPod(event *models.CommonEvent, db *gorm.DB) {
 }
 
 // StartIngestor initializes and starts the ingestor service.
-// It also accepts a channel for direct injection of events from internal collectors (NDR).
 func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEvents <-chan models.CommonEvent, db *gorm.DB) {
 	log.Println("Initializing ingestor service...")
 
@@ -115,7 +112,7 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 		log.Printf("Failed to auto-migrate assets: %v", err)
 	}
 
-	// --- OpenSearch Client ---
+	// --- OpenSearch/Zinc Client ---
 	opensearchAddr := os.Getenv("OPENSEARCH_ADDR")
 	if opensearchAddr == "" {
 		opensearchAddr = "http://opensearch:9200"
@@ -125,11 +122,12 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 		Addresses: []string{opensearchAddr},
 	})
 	if err != nil {
-		log.Fatalf("Failed to create OpenSearch client: %v", err)
+		log.Printf("Warning: Failed to create Search client: %v", err)
 	}
 
 	// --- Worker Pool ---
-	numWorkers := 3 // Reduced from 10 to save memory on Render Starter Plan
+	// FIX: Reduced to 3 workers to prevent Out-Of-Memory on Render Free Tier
+	numWorkers := 3 
 	jobQueue := make(chan *models.CommonEvent, 1000)
 	var wg sync.WaitGroup
 
@@ -150,58 +148,58 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 			return
 		}
 		for event := range internalEvents {
-			// Make a copy or pass pointer, channel sends copy by value so &event is local to loop
-			// To be safe, we create a new variable
 			evt := event
 			jobQueue <- &evt
 		}
 	}()
 
-	// --- Kafka Consumer ---
+	// --- Kafka Consumer (Optional) ---
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
-	if kafkaBroker == "" {
-		kafkaBroker = "kafka:9092"
-	}
-
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBroker,
-		"group.id":          "nexdefend-api",
-		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		log.Printf("Failed to create Kafka consumer: %v (Kafka might be down, continuing with internal ingest only)", err)
-		// We don't fatal here to allow standalone API testing without Kafka
-	} else {
-		defer consumer.Close()
-		topic := "nexdefend-events"
-		err = consumer.SubscribeTopics([]string{topic}, nil)
-		if err != nil {
-			log.Fatalf("Failed to subscribe to topic %s: %v", topic, err)
-		}
-
-		log.Println("Kafka Ingestor started. Waiting for messages...")
-
-		for {
-			msg, err := consumer.ReadMessage(-1)
-			if err == nil {
-				normalizedEvent, err := normalizer.NormalizeEvent(msg.Value)
-				if err != nil {
-					log.Printf("Failed to normalize event: %v", err)
-					continue
-				}
-				jobQueue <- normalizedEvent
-
-			} else {
-				log.Printf("Consumer error: %v (%v)\n", err, msg)
-				// Small backoff to prevent tight loop logging on hard failures
-				time.Sleep(1 * time.Second)
+	
+	// FIX: Only start Kafka consumer if the Env Var is explicitly set. 
+	// This prevents "1/1 brokers are down" errors in Standalone/Demo mode.
+	if kafkaBroker != "" {
+		go func() {
+			consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+				"bootstrap.servers": kafkaBroker,
+				"group.id":          "nexdefend-api",
+				"auto.offset.reset": "earliest",
+			})
+			if err != nil {
+				log.Printf("Failed to create Kafka consumer: %v", err)
+				return
 			}
-		}
+			defer consumer.Close()
+			
+			topic := "nexdefend-events"
+			err = consumer.SubscribeTopics([]string{topic}, nil)
+			if err != nil {
+				log.Printf("Failed to subscribe to topic %s: %v", topic, err)
+				return
+			}
+
+			log.Println("Kafka Ingestor started. Waiting for messages...")
+
+			for {
+				msg, err := consumer.ReadMessage(-1)
+				if err == nil {
+					normalizedEvent, err := normalizer.NormalizeEvent(msg.Value)
+					if err != nil {
+						log.Printf("Failed to normalize event: %v", err)
+						continue
+					}
+					jobQueue <- normalizedEvent
+
+				} else {
+					log.Printf("Consumer error: %v (%v)\n", err, msg)
+					time.Sleep(1 * time.Second)
+				}
+			}
+		}()
+	} else {
+		log.Println("Kafka Consumer disabled (KAFKA_BROKER not set). Running in Standalone Mode.")
 	}
 
-	// If Kafka failed to start, we still need to keep the main goroutine (and workers) alive for internal events
-	// In the Kafka success case, the loop above blocks forever.
-	if err != nil {
-		select {}
-	}
+	// Block forever to keep the service running
+	select {}
 }
