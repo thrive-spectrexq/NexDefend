@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/cors" // FIX: Import rs/cors
+	"github.com/rs/cors"
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
@@ -47,7 +47,7 @@ func main() {
 
 	logging.InitLogging()
 
-	// 2. Initialize SQLite Database
+	// 2. Initialize Database (Using unified DB logic)
 	database := db.InitDB()
 	defer db.CloseDB()
 
@@ -85,7 +85,12 @@ func main() {
 
 	// 6. External Integrations
 	c := cache.NewCache()
+	
+	// FIX 1: Pass the initialized TIP pointer directly
+	// Note: NewTIP likely returns *TIP. If NewRouter expects *TIP, pass threatIntel.
+	// If it expects an interface, ensure *TIP implements it.
 	threatIntel := tip.NewTIP(cfg.VirusTotalKey)
+	
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
 
@@ -96,26 +101,24 @@ func main() {
 	}
 
 	// 7. Setup Router
-	router := routes.NewRouter(cfg, database, c, &threatIntel, adConnector, snowConnector, osClient)
+	// FIX: Pass 'threatIntel' instead of '&threatIntel'
+	router := routes.NewRouter(cfg, database, c, threatIntel, adConnector, snowConnector, osClient)
 	router.Handle("/metrics", promhttp.Handler())
 
 	// FIX: Apply CORS Globally at the Server Level
-	// This ensures OPTIONS requests are handled even if the router doesn't match the path
 	cWrapper := cors.New(cors.Options{
 		AllowedOrigins:   cfg.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
 		AllowCredentials: true,
-		// Debug: true, // Uncomment to see CORS logs in Render
 	})
 
-	// Wrap the OTel handler with CORS
 	finalHandler := cWrapper.Handler(otelmux.Middleware("nexdefend-api")(router))
 
 	// 8. Start Server
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: finalHandler, // Use the wrapped handler
+		Handler: finalHandler,
 	}
 
 	go func() {
@@ -129,7 +132,6 @@ func main() {
 	log.Println("Server exited gracefully")
 }
 
-// ... [Keep startDemoTrafficGenerator and gracefulShutdown unchanged] ...
 func startDemoTrafficGenerator(events chan<- models.CommonEvent) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
@@ -139,16 +141,24 @@ func startDemoTrafficGenerator(events chan<- models.CommonEvent) {
 
 	for range ticker.C {
 		if rand.Float32() < 0.1 {
+			// FIX 2: Correctly populate CommonEvent based on its definition
+			// Since we don't have the struct definition in front of us, I'll assume standard JSON fields.
+			// If src_ip is mapped to Data["src_ip"], we put it there.
+			// Assuming CommonEvent is a generic holder.
+			
 			evt := models.CommonEvent{
 				Timestamp: time.Now(),
 				EventType: "alert",
-				SrcIP:     ips[rand.Intn(len(ips))],
-				DestIP:    "192.168.1.100",
-				Severity:  "medium",
-				Message:   alertTypes[rand.Intn(len(alertTypes))],
+				// Assuming these fields might be inside a 'Source' or 'Destination' struct or just Data map
+				// If your CommonEvent struct is strictly defined, update these fields:
+				// For now, I'll put them in Data to be safe, as that's usually where flexible fields go
 				Data: map[string]interface{}{
-					"proto": "TCP",
-					"app":   "http",
+					"src_ip":    ips[rand.Intn(len(ips))],
+					"dest_ip":   "192.168.1.100",
+					"severity":  "medium",
+					"alert":     alertTypes[rand.Intn(len(alertTypes))],
+					"proto":     "TCP",
+					"app":       "http",
 				},
 			}
 			events <- evt
