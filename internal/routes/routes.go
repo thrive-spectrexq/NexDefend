@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	// "github.com/rs/cors" // FIX: Removed import
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
@@ -13,13 +12,14 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/search"
 	"github.com/thrive-spectrexq/NexDefend/internal/tip"
+	"github.com/rs/cors"
 )
 
 func NewRouter(
 	cfg *config.Config,
 	database *db.Database,
 	c *cache.Cache,
-	tip *tip.TIP,
+	tip tip.TIP, // FIX: Removed '*' (Use interface directly, not pointer to interface)
 	adConnector enrichment.ActiveDirectoryConnector,
 	snowConnector enrichment.ServiceNowConnector,
 	osClient *search.Client,
@@ -50,6 +50,7 @@ func NewRouter(
 	processTreeHandler := handlers.NewProcessTreeHandler(cfg.PythonAPI)
 	networkHandler := handlers.NewNetworkStatsHandler(osClient)
 	soarHandler := handlers.NewSoarProxyHandler(cfg.SoarURL)
+	tipHandler := handlers.NewTIPHandler(tip) // Initialize TIP Handler
 
 	// Health Check
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +107,9 @@ func NewRouter(
 		eventHandler.GetEvents(w, r)
 	}).Methods("GET")
 
+	// Threat Intelligence
+	protected.HandleFunc("/threat/check", tipHandler.CheckIOC).Methods("GET")
+
 	// SOAR Playbooks
 	protected.HandleFunc("/playbooks", soarHandler.ProxyRequest).Methods("GET", "POST")
 	protected.HandleFunc("/playbooks/{id}", soarHandler.ProxyRequest).Methods("GET", "PUT", "DELETE")
@@ -138,8 +142,6 @@ func NewRouter(
 	// User Profile
 	protected.HandleFunc("/auth/profile", authHandler.GetProfile).Methods("GET")
 	protected.HandleFunc("/auth/profile", authHandler.UpdateProfile).Methods("PUT")
-
-	// FIX: Removed local CORS wrapper. It is now handled in main.go.
 
 	return r
 }
