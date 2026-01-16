@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/cors" // FIX: Import rs/cors
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
@@ -46,41 +47,35 @@ func main() {
 
 	logging.InitLogging()
 
-	// 2. Initialize SQLite Database (Updated in db.go)
+	// 2. Initialize SQLite Database
 	database := db.InitDB()
 	defer db.CloseDB()
 
 	// 3. Setup Internal Event Channel
-	// This channel acts as the "Queue" between Collectors and Ingestor
 	internalEvents := make(chan models.CommonEvent, 1000)
 
 	// 4. Start Core Engines
 	correlationEngine := correlation.NewCorrelationEngine()
-
-	// Start Ingestor (Passes data to SQLite & ZincSearch)
+	
+	// Start Ingestor
 	go ingestor.StartIngestor(correlationEngine, internalEvents, database.GetDB())
-
+	
 	// Start System Metrics Collection
 	go metrics.CollectMetrics(database)
-
-	// Start Agent Collector (HTTP listener for Agents)
+	
+	// Start Agent Collector
 	go handlers.StartActiveAgentCollector(database.GetDB())
 
-	// 5. Collectors (Suricata / NetFlow) OR Demo Mode
-	// On Render, we usually disable physical collectors and enable Demo Mode.
+	// 5. Collectors / Demo Mode
 	if os.Getenv("DEMO_MODE") == "true" {
 		log.Println("--- DEMO MODE ENABLED: Generating simulated traffic ---")
 		go startDemoTrafficGenerator(internalEvents)
 	} else {
-		// Only start real collectors if NOT in demo mode or explicitly enabled
 		if os.Getenv("ENABLE_COLLECTORS") != "false" {
-			// Real NetFlow
 			netflowCollector := ndr.NewNetFlowCollector(2055, internalEvents)
 			if err := netflowCollector.StartCollector(); err != nil {
 				log.Printf("NetFlow collector skipped: %v", err)
 			}
-
-			// Real Suricata
 			suricataCollector := ndr.NewSuricataCollector("/var/log/suricata/eve.json", internalEvents)
 			if err := suricataCollector.StartCollector(); err != nil {
 				log.Printf("Suricata collector skipped: %v", err)
@@ -90,25 +85,37 @@ func main() {
 
 	// 6. External Integrations
 	c := cache.NewCache()
-	// Must explicitly use interface type so we can pass &threatIntel (pointer to interface) to NewRouter
-	var threatIntel tip.TIP = tip.NewTIP(cfg.VirusTotalKey)
+	threatIntel := tip.NewTIP(cfg.VirusTotalKey)
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
 
-	// ZincSearch Client
+	// Search Client
 	osClient, err := search.NewClient()
 	if err != nil {
-		log.Printf("Warning: Search Engine (Zinc) not ready yet: %v", err)
+		log.Printf("Warning: Search Engine client not ready: %v", err)
 	}
 
 	// 7. Setup Router
 	router := routes.NewRouter(cfg, database, c, &threatIntel, adConnector, snowConnector, osClient)
 	router.Handle("/metrics", promhttp.Handler())
 
+	// FIX: Apply CORS Globally at the Server Level
+	// This ensures OPTIONS requests are handled even if the router doesn't match the path
+	cWrapper := cors.New(cors.Options{
+		AllowedOrigins:   cfg.CORSAllowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
+		AllowCredentials: true,
+		// Debug: true, // Uncomment to see CORS logs in Render
+	})
+
+	// Wrap the OTel handler with CORS
+	finalHandler := cWrapper.Handler(otelmux.Middleware("nexdefend-api")(router))
+
 	// 8. Start Server
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: otelmux.Middleware("nexdefend-api")(router),
+		Handler: finalHandler, // Use the wrapped handler
 	}
 
 	go func() {
@@ -122,29 +129,26 @@ func main() {
 	log.Println("Server exited gracefully")
 }
 
-// simulateTraffic generates fake events for the Live Demo
+// ... [Keep startDemoTrafficGenerator and gracefulShutdown unchanged] ...
 func startDemoTrafficGenerator(events chan<- models.CommonEvent) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
-	// Sample IPs and Events
 	ips := []string{"192.168.1.10", "192.168.1.55", "10.0.0.5", "172.16.0.23"}
 	alertTypes := []string{"SSH Brute Force", "Malware C&C", "Port Scan", "SQL Injection"}
 
 	for range ticker.C {
-		// 10% chance of generating a threat
 		if rand.Float32() < 0.1 {
 			evt := models.CommonEvent{
 				Timestamp: time.Now(),
 				EventType: "alert",
-				IPAddress: ips[rand.Intn(len(ips))],
+				SrcIP:     ips[rand.Intn(len(ips))],
+				DestIP:    "192.168.1.100",
+				Severity:  "medium",
+				Message:   alertTypes[rand.Intn(len(alertTypes))],
 				Data: map[string]interface{}{
-					"src_ip":   ips[rand.Intn(len(ips))],
-					"dest_ip":  "192.168.1.100",
-					"severity": "medium",
-					"message":  alertTypes[rand.Intn(len(alertTypes))],
-					"proto":    "TCP",
-					"app":      "http",
+					"proto": "TCP",
+					"app":   "http",
 				},
 			}
 			events <- evt
