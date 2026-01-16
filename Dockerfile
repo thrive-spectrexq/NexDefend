@@ -23,6 +23,7 @@ FROM python:3.11-alpine
 # FIX: Added 'g++' and 'openblas-dev' which are required to build scikit-learn/numpy
 RUN apk add --no-cache \
     librdkafka \
+    librdkafka-dev \
     sqlite \
     ca-certificates \
     bash \
