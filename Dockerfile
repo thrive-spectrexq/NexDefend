@@ -21,7 +21,7 @@ FROM python:3.11-alpine
 
 # Install Runtime Dependencies
 # librdkafka (Go), sqlite (DB), bash/curl (Scripts)
-RUN apk add --no-cache librdkafka sqlite ca-certificates bash curl gcc musl-dev python3-dev libffi-dev
+RUN apk add --no-cache librdkafka sqlite ca-certificates bash curl gcc musl-dev python3-dev libffi-dev nmap
 
 # 1. Setup ZincSearch (Lightweight Search Engine)
 WORKDIR /zinc

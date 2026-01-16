@@ -129,7 +129,7 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 	}
 
 	// --- Worker Pool ---
-	numWorkers := 10 // Can be configurable
+	numWorkers := 3 // Reduced from 10 to save memory on Render Starter Plan
 	jobQueue := make(chan *models.CommonEvent, 1000)
 	var wg sync.WaitGroup
 
