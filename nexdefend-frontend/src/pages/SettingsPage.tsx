@@ -5,6 +5,7 @@ import {
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import BuildIcon from '@mui/icons-material/Build'; // Icon for initialization
+import SendIcon from '@mui/icons-material/Send';
 import client from '../api/client';
 
 interface Setting {
@@ -94,6 +95,16 @@ const SettingsPage: React.FC = () => {
       }
   };
 
+  const handleTestIntegration = async (key: string, value: string) => {
+      try {
+          // Assuming a backend endpoint '/settings/test' exists
+          await client.post('/settings/test', { key, value });
+          setSuccess(`Connection test for ${key} passed!`);
+      } catch (err: any) {
+          setError(`Connection test failed: ${err.message || err}`);
+      }
+  };
+
   const renderField = (setting: Setting) => {
     const isBoolean = setting.value === 'true' || setting.value === 'false' || setting.key.includes('enabled');
 
@@ -115,18 +126,35 @@ const SettingsPage: React.FC = () => {
       );
     }
 
+    // Check if the setting is a testable integration (e.g., Slack)
+    const isTestable = setting.key === 'slack_webhook' || setting.key.includes('smtp');
+
     return (
       <Box key={setting.key} sx={{ mb: 3 }}>
         <Typography variant="subtitle2" gutterBottom>{setting.description || setting.key}</Typography>
-        <TextField
-            fullWidth
-            type={setting.is_secret ? 'password' : 'text'}
-            value={setting.value}
-            onChange={(e) => handleChange(setting.key, e.target.value)}
-            placeholder={setting.is_secret ? '••••••••' : ''}
-            variant="outlined"
-            size="small"
-        />
+        <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+                fullWidth
+                type={setting.is_secret ? 'password' : 'text'}
+                value={setting.value}
+                onChange={(e) => handleChange(setting.key, e.target.value)}
+                placeholder={setting.is_secret ? '••••••••' : ''}
+                variant="outlined"
+                size="small"
+            />
+            {isTestable && (
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    startIcon={<SendIcon />}
+                    onClick={() => handleTestIntegration(setting.key, setting.value)}
+                    sx={{ minWidth: 100 }}
+                >
+                    Test
+                </Button>
+            )}
+        </Box>
       </Box>
     );
   };

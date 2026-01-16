@@ -7,6 +7,7 @@ import {
 import {
   Computer, Memory, Storage, Speed, ArrowBack, Refresh, Terminal, VerifiedUser
 } from '@mui/icons-material';
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import client from '@/api/client';
 
 // Types matching Backend
@@ -55,6 +56,35 @@ const HostDetailsPage: React.FC = () => {
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Add this reusable Gauge Component
+  const ResourceGauge = ({ label, value, color }: { label: string, value: number, color: string }) => {
+    const data = [{ name: label, value: value, fill: color }];
+
+    return (
+      <Box sx={{ position: 'relative', height: 180, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+         <ResponsiveContainer width="100%" height="100%">
+          <RadialBarChart
+            innerRadius="70%"
+            outerRadius="100%"
+            barSize={10}
+            data={data}
+            startAngle={90}
+            endAngle={-270}
+          >
+            <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+            <RadialBar background dataKey="value" cornerRadius={30} />
+          </RadialBarChart>
+        </ResponsiveContainer>
+
+        {/* Centered Label */}
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ color }}>{value}%</Typography>
+          <Typography variant="caption" color="text.secondary">{label}</Typography>
+        </Box>
+      </Box>
+    );
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -83,23 +113,12 @@ const HostDetailsPage: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 3 }}>
             <Paper sx={{ p: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Speed color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle2">CPU Usage</Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">{resources.cpu_percent.toFixed(1)}%</Typography>
-                <LinearProgress variant="determinate" value={resources.cpu_percent} sx={{ mt: 2, height: 6, borderRadius: 3 }} />
+                <ResourceGauge label="CPU Load" value={Number(resources.cpu_percent.toFixed(1))} color="#F50057" />
             </Paper>
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
-            <Paper sx={{ p: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Memory color="secondary" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle2">Memory Usage</Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">{resources.memory_percent.toFixed(1)}%</Typography>
-                <Typography variant="caption" color="text.secondary">{formatBytes(resources.memory_used)} / {formatBytes(resources.memory_total)}</Typography>
-                <LinearProgress variant="determinate" color="secondary" value={resources.memory_percent} sx={{ mt: 1, height: 6, borderRadius: 3 }} />
+             <Paper sx={{ p: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <ResourceGauge label="Memory Usage" value={Number(resources.memory_percent.toFixed(1))} color="#00D1FF" />
             </Paper>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>

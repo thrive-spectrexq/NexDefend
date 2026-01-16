@@ -1,5 +1,6 @@
 
 import math
+import re
 from collections import Counter
 
 def calculate_entropy(domain):
@@ -40,6 +41,20 @@ def is_dga(domain):
     if length > 25:
         return True
 
-    # Consonant to vowel ratio check could be added here
+    # --- NEW FEATURE: Consonant to Vowel Ratio ---
+    # Heuristic: Legitimate English domains usually have a ratio < 2.5
+    # Random strings often have much higher ratios (e.g., "zxcvbnm")
+    vowels = len(re.findall(r'[aeiou]', domain_body, re.IGNORECASE))
+    consonants = len(re.findall(r'[bcdfghjklmnpqrstvwxyz]', domain_body, re.IGNORECASE))
+
+    if vowels > 0:
+        ratio = consonants / vowels
+    else:
+        ratio = consonants # High penalty if no vowels exist
+
+    # Threshold: Ratio > 3.0 is highly suspicious for standard DGA
+    if ratio > 3.5:
+        return True
+    # ---------------------------------------------
 
     return False

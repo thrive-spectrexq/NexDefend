@@ -11,6 +11,10 @@ import {
   TextField,
   Box,
   Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 interface Column {
@@ -26,12 +30,14 @@ interface DataTableProps {
   rows: any[];
   title?: string;
   onRowClick?: (row: any) => void;
+  statusOptions?: string[];
 }
 
-const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick }) => {
+const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick, statusOptions }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filter, setFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -43,9 +49,12 @@ const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick 
   };
 
   const filteredRows = rows.filter((row) => {
-    return Object.values(row).some((val) =>
+    const matchesSearch = Object.values(row).some((val) =>
       String(val).toLowerCase().includes(filter.toLowerCase())
     );
+    const matchesStatus = statusFilter === 'All' || (row.status && row.status.toLowerCase() === statusFilter.toLowerCase());
+
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -55,15 +64,31 @@ const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick 
           {title}
         </Typography>
       )}
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
         <TextField
           label="Search"
           variant="outlined"
           size="small"
-          fullWidth
+          sx={{ flexGrow: 1 }}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
+
+        {statusOptions && (
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="All">All Statuses</MenuItem>
+              {statusOptions.map(opt => (
+                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
       </Box>
       <TableContainer sx={{ maxHeight: 600 }}>
         <Table stickyHeader aria-label="sticky table">

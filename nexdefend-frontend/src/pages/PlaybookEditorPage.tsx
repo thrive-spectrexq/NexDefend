@@ -9,8 +9,12 @@ import {
   Grid,
   IconButton,
   Alert,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
+import type { StepIconProps } from '@mui/material';
+import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon, Radar, Block, GppBad, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchPlaybooks, savePlaybooks } from '@/api/soar';
 import type { Playbook, PlaybookAction } from '@/api/soar';
@@ -106,6 +110,16 @@ const PlaybookEditorPage: React.FC = () => {
       setPlaybook({ ...playbook, actions: newActions });
   }
 
+  // ... Helper for Step Icons ...
+  const StepIcon = (props: StepIconProps) => {
+      const icons: { [index: string]: React.ReactElement } = {
+          1: <Search fontSize="small" />, // Scan
+          2: <GppBad fontSize="small" />, // Isolate
+          3: <Block fontSize="small" />,  // Block
+      };
+      return icons[String(props.icon)] || <Radar fontSize="small" />;
+  };
+
   if (loading) return <Box p={3}>Loading...</Box>;
 
   return (
@@ -129,6 +143,36 @@ const PlaybookEditorPage: React.FC = () => {
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <Card sx={{ mb: 3, p: 2, bgcolor: '#0f172a', border: '1px dashed rgba(0, 209, 255, 0.3)' }}>
+          <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2, textAlign: 'center' }}>
+              Automation Pipeline Visualization
+          </Typography>
+          <Stepper alternativeLabel>
+              {/* Start Node */}
+              <Step active={true} completed={true}>
+                  <StepLabel icon={<Radar color="primary" />}>Trigger: {playbook.trigger || 'Manual'}</StepLabel>
+              </Step>
+
+              {/* Dynamic Actions */}
+              {playbook.actions.map((action, index) => (
+                  <Step key={index} active={true}>
+                      <StepLabel>
+                          <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 'bold' }}>
+                              {action.type.replace('_', ' ')}
+                          </Typography>
+                      </StepLabel>
+                  </Step>
+              ))}
+
+              {/* End Node */}
+              <Step active={false}>
+                  <StepLabel icon={<div style={{ width: 10, height: 10, borderRadius: '50%', background: '#666' }} />}>
+                      End
+                  </StepLabel>
+              </Step>
+          </Stepper>
+      </Card>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>

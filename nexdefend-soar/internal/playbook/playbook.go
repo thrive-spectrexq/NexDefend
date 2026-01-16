@@ -2,11 +2,13 @@
 package playbook
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
-	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/remediation"
+	"net/http"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/remediation"
 )
 
 // Action represents a single action to be taken in a playbook.
@@ -41,6 +43,11 @@ func (p *Playbook) Execute(producer *kafka.Producer) error {
 			remediation.Isolate(action.Params["target"])
 		case "block":
 			remediation.Block(action.Params["target"])
+		case "slack_notify":
+			err := sendSlackNotification(action.Params["webhook_url"], action.Params["message"])
+			if err != nil {
+				log.Printf("Failed to send Slack notification: %v", err)
+			}
 		case "disable_user":
 			remediation.DisableUser(action.Params["username"])
 		case "kill_process":
@@ -63,5 +70,18 @@ func (p *Playbook) Execute(producer *kafka.Producer) error {
 			log.Printf("Unknown action type: %s", action.Type)
 		}
 	}
+	return nil
+}
+
+// Helper function
+func sendSlackNotification(webhookURL, message string) error {
+	payload := map[string]string{"text": "🚨 NexDefend SOAR Alert: " + message}
+	jsonValue, _ := json.Marshal(payload)
+
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonValue))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 	return nil
 }

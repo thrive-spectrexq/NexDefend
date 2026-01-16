@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Typography, Paper, Grid, Box, Button, Chip, Alert, CircularProgress } from '@mui/material';
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  RadialBarChart, RadialBar
 } from 'recharts';
 import { ArrowOutward as ArrowIcon, Security as SecurityIcon } from '@mui/icons-material';
 import { getDashboardStats } from '@/api/dashboard';
@@ -187,39 +188,48 @@ const DashboardPage: React.FC = () => {
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <Paper
             sx={{
-              p: 3,
+              p: 2,
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
+              alignItems: 'center',
               justifyContent: 'center',
               bgcolor: 'background.paper',
               border: '1px solid rgba(255,255,255,0.08)',
+              position: 'relative'
             }}
           >
-            <Box sx={{ position: 'relative', zIndex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <SecurityIcon color="primary" />
-                  <Typography variant="h6" fontWeight="bold">
-                    Threat Hunting
-                  </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Investigate anomalies and query raw event logs.
-              </Typography>
-              <Button
-                variant="contained"
-                endIcon={<ArrowIcon />}
-                href="/data-explorer"
-                sx={{
-                  bgcolor: 'white',
-                  color: 'black',
-                  fontWeight: 'bold',
-                  '&:hover': { bgcolor: '#e0e0e0' }
-                }}
-              >
-                Start Investigation
-              </Button>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ position: 'absolute', top: 20, left: 20 }}>
+              System Health Score
+            </Typography>
+
+            <Box sx={{ height: 180, width: '100%', mt: 2 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart
+                  innerRadius="70%"
+                  outerRadius="100%"
+                  data={[{ name: 'Health', value: 85, fill: '#00D1FF' }]}
+                  startAngle={180}
+                  endAngle={0}
+                >
+                  <RadialBar background dataKey="value" cornerRadius={10} />
+                </RadialBarChart>
+              </ResponsiveContainer>
             </Box>
+
+            <Box sx={{ position: 'absolute', top: '55%', textAlign: 'center' }}>
+              <Typography variant="h3" fontWeight="bold">85%</Typography>
+              <Typography variant="caption" color="text.secondary">Optimal</Typography>
+            </Box>
+
+            <Button
+                variant="outlined"
+                size="small"
+                href="/data-explorer"
+                sx={{ mt: 1, borderRadius: 20, textTransform: 'none' }}
+            >
+                View Threat Map
+            </Button>
           </Paper>
         </Grid>
 

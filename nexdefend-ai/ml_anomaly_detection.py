@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import OneHotEncoder
 from data_ingestion import EVENT_COLUMNS # Import the column list
+from datetime import datetime
 
 MODEL_PATH = "isolation_forest_model.joblib"
 ENCODER_PATH = "one_hot_encoder.joblib"
@@ -25,7 +26,7 @@ def preprocess_events(events, is_training=False):
             n_categorical_features = 1 # Fallback
         
         # Adjust numeric feature count to match new features
-        n_numeric_features = 6 
+        n_numeric_features = 8
         return np.empty((0, n_numeric_features + n_categorical_features))
 
     # Use the imported column names
@@ -38,6 +39,21 @@ def preprocess_events(events, is_training=False):
         alert_data = row.get('alert') or {}
         dns_data = row.get('dns') or {}
 
+        # --- NEW FEATURE EXTRACTION ---
+        # Parse timestamp (Assuming Suricata standard 'timestamp' field exists)
+        ts_str = row.get('timestamp', str(datetime.now()))
+        try:
+            # Handle standard ISO format: 2023-10-27T10:00:00.000+0000
+            ts = pd.to_datetime(ts_str)
+            hour_of_day = ts.hour
+            day_of_week = ts.dayofweek
+        except:
+            # Fallback to current server time if parsing fails
+            now = datetime.now()
+            hour_of_day = now.hour
+            day_of_week = now.weekday()
+        # -----------------------------
+
         feature_dict = {
             'event_type': row.get('event_type', 'unknown'),
             'dest_port': row.get('dest_port', 0),
@@ -47,6 +63,8 @@ def preprocess_events(events, is_training=False):
             'alert_signature_id': alert_data.get('signature_id', 0),
             'alert_severity': alert_data.get('severity', 0),
             'dns_query_length': len(str(dns_data.get('rrname', ''))),
+            'hour_of_day': hour_of_day,
+            'day_of_week': day_of_week
         }
         features.append(feature_dict)
 
@@ -56,7 +74,8 @@ def preprocess_events(events, is_training=False):
     categorical_cols = ['event_type', 'http_method']
     numerical_cols = [
         'dest_port', 'http_length', 'http_status', 
-        'alert_signature_id', 'alert_severity', 'dns_query_length'
+        'alert_signature_id', 'alert_severity', 'dns_query_length',
+        'hour_of_day', 'day_of_week'
     ]
 
     # Handle missing values (fill with 0 or 'unknown')
