@@ -18,21 +18,34 @@ func NewTIPHandler(provider tip.TIP) *TIPHandler {
 
 // CheckIOC checks if an Indicator of Compromise (IOC) is malicious
 func (h *TIPHandler) CheckIOC(w http.ResponseWriter, r *http.Request) {
+	// 1. Get IOC from query parameter
 	ioc := r.URL.Query().Get("ioc")
 	if ioc == "" {
 		http.Error(w, "Missing IOC parameter", http.StatusBadRequest)
 		return
 	}
 
-	// Default to 'ip' type if not specified, or infer it
-	// For simplicity in this demo, assuming IP or Domain
-	rep, err := h.tipProvider.GetReputation(ioc, "ip")
+	// 2. Call the correct interface method: CheckIOC
+	isMalicious, err := h.tipProvider.CheckIOC(ioc)
 	if err != nil {
-		// Fallback or try domain if IP fails, or just return error
+		// Log the error internally in a real app
 		http.Error(w, "Failed to check IOC: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// 3. Construct a standard JSON response
+	response := map[string]interface{}{
+		"ioc":          ioc,
+		"is_malicious": isMalicious,
+		"reputation":   "unknown",
+	}
+
+	if isMalicious {
+		response["reputation"] = "malicious"
+	} else {
+		response["reputation"] = "clean"
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(rep)
+	json.NewEncoder(w).Encode(response)
 }
