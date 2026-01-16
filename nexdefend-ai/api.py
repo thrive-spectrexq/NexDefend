@@ -383,4 +383,5 @@ def chat_copilot():
         return make_response(jsonify({"error": "Failed to process chat query"}), 500)
 
 if __name__ == "__main__":
+    # Host 0.0.0.0 is safer for container networking, port 5000 matches the Go config
     app.run(host="0.0.0.0", port=5000)

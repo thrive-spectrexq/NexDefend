@@ -63,6 +63,9 @@ func NewRouter(
 	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
 	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
 
+	// Forward all /ai/* requests to the Python Proxy
+	api.HandleFunc("/ai/{endpoint}", handlers.ProxyToPython).Methods("GET", "POST")
+
 	// Agent & Ingestion
 	api.HandleFunc("/agent/config/{hostname}", agentHandler.GetConfig).Methods("GET")
 	api.HandleFunc("/assets/heartbeat", assetHandler.Heartbeat).Methods("POST")
