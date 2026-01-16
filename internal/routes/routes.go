@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"net/http" // Added for creating preset queries
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -27,6 +27,10 @@ func NewRouter(
 
 	r := mux.NewRouter()
 
+	// FIX 1: Move Logging Middleware to the Root Router
+	// This ensures we see logs for 404s, root paths, and mismatched routes
+	r.Use(middleware.LoggingMiddleware)
+
 	// Initialize Handlers
 	homeHandler := handlers.NewHomeHandler()
 	authHandler := handlers.NewAuthHandler(database.GetDB(), cfg.JWTSecretKey)
@@ -47,21 +51,25 @@ func NewRouter(
 	topologyHandler := handlers.NewTopologyHandler(osClient)
 	processTreeHandler := handlers.NewProcessTreeHandler(cfg.PythonAPI)
 	networkHandler := handlers.NewNetworkStatsHandler(osClient)
-
-	// --- NEW: SOAR Proxy ---
-	// Assumes SOAR service is reachable via config URL or default dockername
 	soarHandler := handlers.NewSoarProxyHandler(cfg.SoarURL)
+
+	// FIX 2: Add Root Health Check
+	// Helpful to verify if the server is reachable at all at https://url/health
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}).Methods("GET")
 
 	// API V1 Subrouter
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	// Middleware
-	api.Use(middleware.LoggingMiddleware)
-
 	// Public Routes
 	api.HandleFunc("/", homeHandler.Home).Methods("GET")
-	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
-	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
+	
+	// FIX 3: Ensure Auth Routes are registered correctly
+	// Matches /api/v1/auth/login and /api/v1/auth/register
+	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST", "OPTIONS")
+	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
 
 	// Forward all /ai/* requests to the Python Proxy
 	api.HandleFunc("/ai/{endpoint}", handlers.ProxyToPython).Methods("GET", "POST")
@@ -92,29 +100,28 @@ func NewRouter(
 	protected.HandleFunc("/assets/{id}", assetHandler.DeleteAsset).Methods("DELETE")
 	protected.HandleFunc("/assets/{id}/details", hostHandler.GetHostDetails).Methods("GET")
 
-	// Incidents (DB Managed)
+	// Incidents
 	protected.HandleFunc("/incidents", incidentHandler.GetIncidents).Methods("GET")
 	protected.HandleFunc("/incidents", incidentHandler.CreateIncident).Methods("POST")
 	protected.HandleFunc("/incidents/{id}", incidentHandler.GetIncident).Methods("GET")
 	protected.HandleFunc("/incidents/{id}", incidentHandler.UpdateIncident).Methods("PUT")
 
-	// Alerts (Served from OpenSearch via EventHandler)
-	// We force a query param to filter only alerts
+	// Alerts
 	protected.HandleFunc("/alerts", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
-		q.Add("type", "alert") // Enforce 'alert' type
+		q.Add("type", "alert")
 		r.URL.RawQuery = q.Encode()
 		eventHandler.GetEvents(w, r)
 	}).Methods("GET")
 
-	// SOAR Playbooks (Proxied to nexdefend-soar)
+	// SOAR Playbooks
 	protected.HandleFunc("/playbooks", soarHandler.ProxyRequest).Methods("GET", "POST")
 	protected.HandleFunc("/playbooks/{id}", soarHandler.ProxyRequest).Methods("GET", "PUT", "DELETE")
 
 	// Analysis
 	protected.HandleFunc("/analysis/process-tree", processTreeHandler.AnalyzeProcessTree).Methods("POST")
 
-	// Events (Search)
+	// Events
 	protected.HandleFunc("/events/search", eventHandler.GetEvents).Methods("GET")
 
 	// Vulnerabilities
@@ -132,7 +139,7 @@ func NewRouter(
 	// Metrics
 	protected.HandleFunc("/metrics/system", metricsHandler.GetSystemMetrics).Methods("GET")
 
-	// Cases (SOAR/Case Management)
+	// Cases
 	protected.HandleFunc("/cases", caseHandler.GetCases).Methods("GET")
 	protected.HandleFunc("/cases", caseHandler.CreateCase).Methods("POST")
 
@@ -140,7 +147,7 @@ func NewRouter(
 	protected.HandleFunc("/auth/profile", authHandler.GetProfile).Methods("GET")
 	protected.HandleFunc("/auth/profile", authHandler.UpdateProfile).Methods("PUT")
 
-	// CORS Handler
+	// CORS Handler (Applied globally)
 	cWrapper := cors.New(cors.Options{
 		AllowedOrigins:   cfg.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
