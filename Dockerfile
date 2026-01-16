@@ -1,7 +1,7 @@
 # --- Stage 1: Build Go Backend ---
 FROM golang:1.24.3-alpine AS builder
 
-# Install build dependencies (CGO needed for SQLite & Kafka)
+# Install build dependencies (CGO needed for SQLite & Kafka lib)
 RUN apk add --no-cache gcc musl-dev librdkafka-dev
 
 WORKDIR /app
@@ -20,7 +20,8 @@ RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend main.go
 FROM python:3.11-alpine
 
 # Install Runtime Dependencies
-# FIX: Added 'g++' and 'openblas-dev' which are required to build scikit-learn/numpy
+# We include 'g++' and 'openblas-dev' for scikit-learn
+# We include 'librdkafka' for Go (even if Python doesn't use it, Go might link against it)
 RUN apk add --no-cache \
     librdkafka \
     librdkafka-dev \
@@ -45,9 +46,10 @@ RUN mv zincsearch /usr/local/bin/zincsearch
 WORKDIR /app/nexdefend-ai
 COPY nexdefend-ai/requirements.txt .
 
-# Remove psycopg2 and install dependencies
-# We use --prefer-binary to try and find pre-built wheels if available
+# FIX: Remove 'psycopg2-binary' (Postgres) and 'confluent-kafka' (Kafka)
+# This prevents the build error and prepares for SQLite mode
 RUN sed -i '/psycopg2-binary/d' requirements.txt && \
+    sed -i '/confluent-kafka/d' requirements.txt && \
     pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY nexdefend-ai/ .
