@@ -13,8 +13,7 @@ import {
   Step,
   StepLabel,
 } from '@mui/material';
-import type { StepIconProps } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon, Radar, Block, GppBad, Search } from '@mui/icons-material';
+import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon, Radar } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchPlaybooks, savePlaybooks } from '@/api/soar';
 import type { Playbook, PlaybookAction } from '@/api/soar';
@@ -109,16 +108,6 @@ const PlaybookEditorPage: React.FC = () => {
       newActions[index].params = { ...newActions[index].params, [paramKey]: paramValue };
       setPlaybook({ ...playbook, actions: newActions });
   }
-
-  // ... Helper for Step Icons ...
-  const StepIcon = (props: StepIconProps) => {
-      const icons: { [index: string]: React.ReactElement } = {
-          1: <Search fontSize="small" />, // Scan
-          2: <GppBad fontSize="small" />, // Isolate
-          3: <Block fontSize="small" />,  // Block
-      };
-      return icons[String(props.icon)] || <Radar fontSize="small" />;
-  };
 
   if (loading) return <Box p={3}>Loading...</Box>;
 

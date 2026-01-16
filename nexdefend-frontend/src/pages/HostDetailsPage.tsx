@@ -5,7 +5,7 @@ import {
   LinearProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button
 } from '@mui/material';
 import {
-  Computer, Memory, Storage, Speed, ArrowBack, Refresh, Terminal, VerifiedUser
+  Computer, Storage, ArrowBack, Refresh, Terminal, VerifiedUser
 } from '@mui/icons-material';
 import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import client from '@/api/client';

@@ -4,7 +4,6 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar
 } from 'recharts';
-import { ArrowOutward as ArrowIcon, Security as SecurityIcon } from '@mui/icons-material';
 import { getDashboardStats } from '@/api/dashboard';
 
 // Types matching your Go Backend 'DashboardSummary' and 'ModuleStat' structs
