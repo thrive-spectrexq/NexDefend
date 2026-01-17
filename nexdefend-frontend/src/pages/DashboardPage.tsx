@@ -1,5 +1,4 @@
 import { Activity, Server, Shield, Globe, Lock } from 'lucide-react';
-import { MainLayout } from '../components/layout/MainLayout';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
 import { SentinelChat } from '../components/dashboard/SentinelChat';
@@ -7,7 +6,7 @@ import { ResourceGauge } from '../components/dashboard/ResourceGauge';
 
 const DashboardPage = () => {
   return (
-    <MainLayout>
+    <>
       {/* Top Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         {[
@@ -95,7 +94,7 @@ const DashboardPage = () => {
            <SentinelChat />
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 };
 

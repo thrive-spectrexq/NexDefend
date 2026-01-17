@@ -1,91 +1,75 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/store';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 
-import MainLayout from '@/layouts/MainLayout';
-import AuthLayout from '@/layouts/AuthLayout';
-import HomePage from '@/pages/HomePage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import DashboardPage from '@/pages/DashboardPage';
-import GenericPage from '@/components/GenericPage';
-import ConsolePage from '@/pages/ConsolePage';
-import AlertsPage from '@/pages/AlertsPage';
-import IncidentsPage from '@/pages/IncidentsPage';
-import AgentsPage from '@/pages/AgentsPage';
-import TopologyPage from '@/pages/TopologyPage';
-import NetworkDashboardPage from '@/pages/NetworkDashboardPage';
-import VulnerabilitiesPage from '@/pages/VulnerabilitiesPage';
-import DataExplorerPage from '@/pages/DataExplorerPage';
-import SettingsPage from '@/pages/SettingsPage';
-import GrafanaPage from '@/pages/GrafanaPage';
-import PrometheusPage from '@/pages/PrometheusPage';
-import CloudDashboardPage from '@/pages/CloudDashboardPage';
-import PlaybooksPage from '@/pages/PlaybooksPage';
-import PlaybookEditorPage from '@/pages/PlaybookEditorPage';
-import ProfilePage from '@/pages/ProfilePage';
-import HostDetailsPage from '@/pages/HostDetailsPage';
+// Layouts
+import { MainLayout } from './components/layout/MainLayout';
+import AuthLayout from './layouts/AuthLayout';
 
-// Private Route Guard
-const RequireAuth: React.FC = () => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+// Public Pages
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+// Dashboard / Feature Pages
+import DashboardPage from './pages/DashboardPage';
+import ConsolePage from './pages/ConsolePage';
+import AlertsPage from './pages/AlertsPage';
+import IncidentsPage from './pages/IncidentsPage';
+import NetworkDashboardPage from './pages/NetworkDashboardPage';
+import CloudDashboardPage from './pages/CloudDashboardPage';
+import AgentsPage from './pages/AgentsPage';
+import VulnerabilitiesPage from './pages/VulnerabilitiesPage';
+import TopologyPage from './pages/TopologyPage';
+import DataExplorerPage from './pages/DataExplorerPage';
+import GrafanaPage from './pages/GrafanaPage';
+import PlaybooksPage from './pages/PlaybooksPage';
+import SettingsPage from './pages/SettingsPage';
+import ProfilePage from './pages/ProfilePage';
 
-  return <Outlet />;
-};
+export const router = createBrowserRouter([
+  // 1. Landing & Authentication (Public)
+  {
+    path: '/',
+    element: <HomePage />,
+  },
+  {
+    element: <AuthLayout />,
+    children: [
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <RegisterPage /> },
+    ],
+  },
 
-const AppRoutes: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-        </Route>
+  // 2. The Dashboard (Protected Area with Sidebar)
+  {
+    element: <MainLayout />,
+    children: [
+      { path: 'dashboard', element: <DashboardPage /> }, // Main View
 
-        {/* Protected Routes */}
-        <Route element={<RequireAuth />}>
-          <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+      // Operational Consoles
+      { path: 'console', element: <ConsolePage /> },
+      { path: 'network', element: <NetworkDashboardPage /> },
+      { path: 'cloud', element: <CloudDashboardPage /> },
 
-            {/* Placeholders for other pages */}
-            <Route path="/console" element={<ConsolePage />} />
-            <Route path="/security-overview" element={<GenericPage title="Security Overview" description="High-level security metrics." />} />
-            <Route path="/alerts" element={<AlertsPage />} />
-            <Route path="/incidents" element={<IncidentsPage />} />
-            <Route path="/agents" element={<AgentsPage />} />
-            <Route path="/agents/:id" element={<HostDetailsPage />} />
-            <Route path="/vulnerabilities" element={<VulnerabilitiesPage />} />
-            <Route path="/processes" element={<GenericPage title="Process Explorer" description="Real-time process monitoring." />} />
-            <Route path="/rules" element={<GenericPage title="Rules" description="Detection rule configuration." />} />
-            <Route path="/data-explorer" element={<DataExplorerPage />} />
-            <Route path="/reports" element={<GenericPage title="Reports" description="Generate and view reports." />} />
-            <Route path="/integrations" element={<GenericPage title="Integrations" description="Manage external integrations." />} />
-            <Route path="/mission-control" element={<GenericPage title="Mission Control" description="Centralized operations view." />} />
-            <Route path="/topology" element={<TopologyPage />} />
-            <Route path="/network-dashboard" element={<NetworkDashboardPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/grafana" element={<GrafanaPage />} />
-            <Route path="/prometheus" element={<PrometheusPage />} />
-            <Route path="/cloud-monitoring" element={<CloudDashboardPage />} />
-            <Route path="/playbooks" element={<PlaybooksPage />} />
-            <Route path="/playbooks/new" element={<PlaybookEditorPage />} />
-            <Route path="/playbooks/edit/:id" element={<PlaybookEditorPage />} />
+      // Threat Intelligence
+      { path: 'alerts', element: <AlertsPage /> },
+      { path: 'incidents', element: <IncidentsPage /> },
+      { path: 'vulnerabilities', element: <VulnerabilitiesPage /> },
 
-            {/* Catch-all for undefined routes inside protected area */}
-            <Route path="*" element={<GenericPage title="404 Not Found" />} />
-          </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
-};
+      // System & Assets
+      { path: 'agents', element: <AgentsPage /> },
+      { path: 'topology', element: <TopologyPage /> },
 
-export default AppRoutes;
+      // Analytics & Tools
+      { path: 'data-explorer', element: <DataExplorerPage /> },
+      { path: 'grafana', element: <GrafanaPage /> },
+      { path: 'playbooks', element: <PlaybooksPage /> },
+
+      // User Management
+      { path: 'settings', element: <SettingsPage /> },
+      { path: 'profile', element: <ProfilePage /> },
+    ],
+  },
+
+  // Fallback: Redirect unknown paths to Home
+  { path: '*', element: <Navigate to="/" replace /> },
+]);

@@ -1,14 +1,14 @@
-import DashboardPage from './pages/DashboardPage';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes';
+import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-      </Routes>
-    </BrowserRouter>
-  )
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
+  );
 }
 
 export default App;
