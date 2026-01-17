@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ChevronRight, User, Settings, LogOut, Bolt } from 'lucide-react';
@@ -8,7 +8,6 @@ import type { RootState } from '@/store';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   
