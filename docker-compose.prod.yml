@@ -1,99 +1,111 @@
 version: '3.8'
 
 services:
-  # --- Core Application ---
+  # --- 1. Core API Service ---
   api:
-    image: nexdefend-api:latest
-    restart: unless-stopped
+    image: nexdefend/core:v1.0.0
+    container_name: nexdefend-api
+    restart: always
+    # OVERRIDE: Run only the Go binary, not the full start.sh script
+    command: /nexdefend
+    environment:
+      - DB_TYPE=postgres             # Triggers Enterprise DB Mode
+      - DB_HOST=postgres
+      - DB_USER=nexdefend
+      - DB_PASSWORD=secure_password
+      - DB_NAME=nexdefend
+      - KAFKA_BROKER=kafka:9092      # Triggers Enterprise Kafka Mode
+      - OPENSEARCH_ADDR=http://opensearch:9200
+      - PYTHON_API=http://ai:5000    # Points to separate AI container
+      - DEMO_MODE=false              # Disables fake traffic
+      - ENABLE_COLLECTORS=true
+      - JWT_SECRET_KEY=change_this_to_a_secure_random_string
     ports:
       - "8080:8080"
     depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      - DB_HOST=db
-      - DB_USER=${DB_USER:-nexdefend}
-      - DB_PASSWORD=${DB_PASSWORD:-secure_password}
-      - DB_NAME=${DB_NAME:-nexdefend_db}
-      - DB_SSLMODE=disable
-      - PYTHON_API=http://ai:5000
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-    volumes:
-      - ./configs/sample_eve.json:/var/log/suricata/eve.json
-      - suricata_logs:/var/log/suricata
+      - postgres
+      - kafka
+      - opensearch
     networks:
       - nexdefend-net
 
-  frontend:
-    image: nexdefend-frontend:latest
-    restart: unless-stopped
-    ports:
-      - "80:80"  # Expose on port 80 (Standard Web)
-    depends_on:
-      - api
-    networks:
-      - nexdefend-net
-
+  # --- 2. AI Microservice ---
   ai:
-    image: nexdefend-ai:latest
-    restart: unless-stopped
+    image: nexdefend/core:v1.0.0
+    container_name: nexdefend-ai
+    restart: always
+    # OVERRIDE: Run only the Python API
+    command: gunicorn --bind 0.0.0.0:5000 --chdir /app/nexdefend-ai api:app
     environment:
-      - DB_HOST=db
-      - DB_PASSWORD=${DB_PASSWORD:-secure_password}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_USER=nexdefend
+      - DB_PASSWORD=secure_password
+      - DB_NAME=nexdefend
     networks:
       - nexdefend-net
 
-  # --- Infrastructure ---
-  db:
+  # --- 3. Enterprise Database (PostgreSQL) ---
+  postgres:
     image: postgres:15-alpine
-    restart: unless-stopped
+    container_name: nexdefend-postgres
+    restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-nexdefend}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
-      POSTGRES_DB: ${DB_NAME:-nexdefend_db}
+      POSTGRES_USER: nexdefend
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: nexdefend
     volumes:
-      - db_data:/var/lib/postgresql/data
-      # Mount your init.sql to automatically create schema on first run
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nexdefend} -d ${DB_NAME:-nexdefend_db}"]
-      interval: 5s
-      retries: 5
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - nexdefend-net
 
-  suricata:
-    image: jasonish/suricata:latest
-    command: -i eth0 -D -v --eve-log-output /var/log/suricata/eve.json
-    cap_add: [NET_ADMIN, NET_RAW, SYS_NICE]
-    network_mode: "service:api" # Monitor API traffic
+  # --- 4. Message Broker (Kafka) ---
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: nexdefend-kafka
+    restart: always
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
     volumes:
-      - suricata_logs:/var/log/suricata
+      - kafka_data:/bitnami/kafka
+    networks:
+      - nexdefend-net
 
-  # --- Monitoring & Search ---
+  # --- 5. Search Engine (OpenSearch) ---
   opensearch:
     image: opensearchproject/opensearch:latest
+    container_name: nexdefend-opensearch
+    restart: always
     environment:
       - discovery.type=single-node
-      - "DISABLE_SECURITY_PLUGIN=true"
+      - plugins.security.disabled=true # Simplified for offline/local
     volumes:
       - opensearch_data:/usr/share/opensearch/data
     networks:
       - nexdefend-net
 
-  otel-collector:
-    image: otel/opentelemetry-collector:0.87.0
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./configs/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+  # --- 6. Frontend ---
+  frontend:
+    image: nexdefend/frontend:v1.0.0
+    container_name: nexdefend-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - api
     networks:
       - nexdefend-net
 
-volumes:
-  db_data:
-  opensearch_data:
-  suricata_logs:
-
 networks:
   nexdefend-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  kafka_data:
+  opensearch_data:

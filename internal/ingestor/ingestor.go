@@ -107,11 +107,6 @@ func saveKubernetesPod(event *models.CommonEvent, db *gorm.DB) {
 func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEvents <-chan models.CommonEvent, db *gorm.DB) {
 	log.Println("Initializing ingestor service...")
 
-	// Migrate new tables
-	if err := db.AutoMigrate(&models.CloudAsset{}, &models.KubernetesPod{}); err != nil {
-		log.Printf("Failed to auto-migrate assets: %v", err)
-	}
-
 	// --- OpenSearch/Zinc Client ---
 	opensearchAddr := os.Getenv("OPENSEARCH_ADDR")
 	if opensearchAddr == "" {
@@ -125,13 +120,12 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 		log.Printf("Warning: Failed to create Search client: %v", err)
 	}
 
-	// --- Worker Pool ---
-	// FIX: Reduced to 3 workers to prevent Out-Of-Memory on Render Free Tier
-	numWorkers := 3 
+	// Worker Pool Setup
+	numWorkers := 3
 	jobQueue := make(chan *models.CommonEvent, 1000)
 	var wg sync.WaitGroup
 
-	// Start workers
+	// Start Workers
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func(workerID int) {
@@ -142,23 +136,19 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 		}(i)
 	}
 
-	// --- Internal Event Loop (NDR) ---
+	// 1. Internal Channel Listener (Always Active - for API/Agents)
 	go func() {
-		if internalEvents == nil {
-			return
-		}
+		if internalEvents == nil { return }
 		for event := range internalEvents {
 			evt := event
 			jobQueue <- &evt
 		}
 	}()
 
-	// --- Kafka Consumer (Optional) ---
+	// 2. Kafka Consumer (Enterprise Mode Only)
 	kafkaBroker := os.Getenv("KAFKA_BROKER")
-	
-	// FIX: Only start Kafka consumer if the Env Var is explicitly set. 
-	// This prevents "1/1 brokers are down" errors in Standalone/Demo mode.
 	if kafkaBroker != "" {
+		log.Printf("--- ENTERPRISE MODE: Starting Kafka Consumer at %s ---", kafkaBroker)
 		go func() {
 			consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 				"bootstrap.servers": kafkaBroker,
@@ -197,9 +187,8 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 			}
 		}()
 	} else {
-		log.Println("Kafka Consumer disabled (KAFKA_BROKER not set). Running in Standalone Mode.")
+		log.Println("--- DEMO MODE: Kafka Consumer Disabled (Using Internal Channels) ---")
 	}
 
-	// Block forever to keep the service running
-	select {}
+	select {} // Keep running
 }
