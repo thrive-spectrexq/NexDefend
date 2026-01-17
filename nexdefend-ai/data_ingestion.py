@@ -1,9 +1,14 @@
 import sqlite3
 import json
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
+
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None
+    RealDictCursor = None
 
 load_dotenv()
 
@@ -22,6 +27,8 @@ def get_db_connection():
     """Establishes a connection to either SQLite or PostgreSQL based on env."""
     try:
         if DB_TYPE == "postgres":
+            if psycopg2 is None:
+                raise ImportError("psycopg2 module not found. Cannot connect to PostgreSQL.")
             conn = psycopg2.connect(
                 host=DB_HOST,
                 user=DB_USER,

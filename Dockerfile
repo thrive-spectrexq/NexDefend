@@ -1,4 +1,4 @@
-# --- Stage 1: Build Go Backend ---
+# --- Stage 1: Build Go Binaries ---
 FROM golang:1.24.3-alpine AS builder
 
 # Install build dependencies
@@ -13,17 +13,20 @@ RUN go mod download
 # Copy Source
 COPY . .
 
-# Build Go Binary
+# 1. Build Core API
 RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend main.go
 
-# FIX: Build SOAR Binary
+# 2. Build SOAR Binary (FIXED)
 WORKDIR /app/nexdefend-soar
+# FIX: Run go mod tidy to ensure dependencies are synced before building
+RUN go mod tidy
 RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend-soar-bin main.go
 
 # --- Stage 2: Final Monolith Image ---
 FROM python:3.11-alpine
 
 # Install Runtime Dependencies
+# We include 'g++' and 'openblas-dev' for scikit-learn
 RUN apk add --no-cache \
     librdkafka \
     librdkafka-dev \
@@ -38,7 +41,6 @@ RUN apk add --no-cache \
     libffi-dev \
     nmap \
     openblas-dev \
-    postgresql-dev \
     iptables
 
 # 1. Setup ZincSearch
@@ -50,8 +52,11 @@ RUN mv zincsearch /usr/local/bin/zincsearch
 WORKDIR /app/nexdefend-ai
 COPY nexdefend-ai/requirements.txt .
 
-# Install Python dependencies (including psycopg2-binary and confluent-kafka now)
-RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
+# FIX: Remove 'confluent-kafka' for Render Demo Build
+# This prevents the build error. For Enterprise mode, we would use a Debian-based image.
+RUN sed -i '/psycopg2-binary/d' requirements.txt && \
+    sed -i '/confluent-kafka/d' requirements.txt && \
+    pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY nexdefend-ai/ .
 
@@ -64,19 +69,13 @@ COPY database/init.sql /app/database/init.sql
 # Create persistent data directories
 RUN mkdir -p /data/zinc
 
-# --- CONFIGURATION FIX ---
+# Config
 ENV DB_PATH=/data/nexdefend.db
 ENV ZINC_DATA_PATH=/data/zinc
-
-# FIX: Changed password to remove '#' which breaks the URL parser
 ENV ZINC_FIRST_ADMIN_USER=admin
 ENV ZINC_FIRST_ADMIN_PASSWORD=Complexpass123
-
-# FIX: Updated connection string to match new password
 ENV OPENSEARCH_ADDR=http://admin:Complexpass123@localhost:4080
-
 ENV PYTHON_API=http://localhost:5000
-# NEW: Configure SOAR internal URL
 ENV SOAR_URL=http://localhost:8081
 ENV PORT=8080
 
