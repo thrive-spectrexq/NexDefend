@@ -1,101 +1,72 @@
 import React from 'react';
-import { Box, Container, Typography, Link, Grid, Stack, IconButton, Divider, Chip } from '@mui/material';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import CircleIcon from '@mui/icons-material/Circle';
-import BoltIcon from '@mui/icons-material/Bolt';
+import { Link } from 'react-router-dom';
+import { Github, Twitter, Linkedin, Bolt, Circle } from 'lucide-react';
 
-const Footer: React.FC = () => {
+const Footer = () => {
   return (
-    <Box component="footer" sx={{ bgcolor: '#050505', position: 'relative', mt: 'auto' }}>
-
-      {/* Gradient Top Line */}
-      <Box sx={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0, 209, 255, 0.5), transparent)' }} />
-
-      <Container maxWidth="xl" sx={{ py: 8 }}>
-        <Grid container spacing={8}>
-
+    <footer className="bg-[#050505] border-t border-white/5 pt-20 pb-10">
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          
           {/* Brand Column */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <BoltIcon sx={{ color: 'primary.main', mr: 1 }} />
-                <Typography variant="h6" fontWeight="bold" color="white">NexDefend</Typography>
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 300, lineHeight: 1.7 }}>
-              Next-generation infrastructure monitoring and threat detection for modern enterprises. Secure your digital frontier.
-            </Typography>
-
-            {/* Status Indicator */}
-            <Chip
-                icon={<CircleIcon sx={{ fontSize: '10px !important', color: '#4caf50 !important' }} />}
-                label="All Systems Operational"
-                variant="outlined"
-                sx={{
-                    borderColor: 'rgba(76, 175, 80, 0.3)',
-                    color: '#4caf50',
-                    bgcolor: 'rgba(76, 175, 80, 0.05)',
-                    height: 28,
-                    fontSize: '0.75rem'
-                }}
-            />
-          </Grid>
+          <div className="lg:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-6">
+              <Bolt className="text-cyan-500 w-6 h-6" fill="currentColor" />
+              <span className="text-xl font-bold text-white">NexDefend</span>
+            </Link>
+            <p className="text-slate-500 mb-6 leading-relaxed">
+              Next-generation infrastructure monitoring and threat detection for modern enterprises.
+            </p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+              <Circle className="w-2 h-2 text-green-500 fill-current animate-pulse" />
+              <span className="text-xs font-medium text-green-400">All Systems Operational</span>
+            </div>
+          </div>
 
           {/* Links Columns */}
-          <Grid size={{ xs: 6, md: 2 }}>
-            <Typography variant="subtitle2" color="white" fontWeight="bold" sx={{ mb: 3, letterSpacing: 1 }}>PRODUCT</Typography>
-            <Stack spacing={1.5}>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Features</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Integrations</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Pricing</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Changelog</Link>
-            </Stack>
-          </Grid>
+          <div>
+            <h4 className="text-white font-bold mb-6">Product</h4>
+            <ul className="space-y-4">
+              <li><Link to="/features" className="text-slate-500 hover:text-cyan-400 transition-colors">Features</Link></li>
+              <li><Link to="/integrations" className="text-slate-500 hover:text-cyan-400 transition-colors">Integrations</Link></li>
+              <li><Link to="/pricing" className="text-slate-500 hover:text-cyan-400 transition-colors">Pricing</Link></li>
+              <li><Link to="/changelog" className="text-slate-500 hover:text-cyan-400 transition-colors">Changelog</Link></li>
+            </ul>
+          </div>
 
-          <Grid size={{ xs: 6, md: 2 }}>
-            <Typography variant="subtitle2" color="white" fontWeight="bold" sx={{ mb: 3, letterSpacing: 1 }}>RESOURCES</Typography>
-            <Stack spacing={1.5}>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Documentation</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>API Reference</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Community</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Blog</Link>
-            </Stack>
-          </Grid>
+          <div>
+            <h4 className="text-white font-bold mb-6">Resources</h4>
+            <ul className="space-y-4">
+              <li><Link to="/docs" className="text-slate-500 hover:text-cyan-400 transition-colors">Documentation</Link></li>
+              <li><Link to="/api" className="text-slate-500 hover:text-cyan-400 transition-colors">API Reference</Link></li>
+              <li><Link to="/blog" className="text-slate-500 hover:text-cyan-400 transition-colors">Security Blog</Link></li>
+              <li><Link to="/community" className="text-slate-500 hover:text-cyan-400 transition-colors">Community</Link></li>
+            </ul>
+          </div>
 
-          <Grid size={{ xs: 6, md: 2 }}>
-            <Typography variant="subtitle2" color="white" fontWeight="bold" sx={{ mb: 3, letterSpacing: 1 }}>COMPANY</Typography>
-            <Stack spacing={1.5}>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>About</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Careers</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Legal</Link>
-                <Link href="#" color="text.secondary" underline="hover" sx={{ fontSize: '0.9rem' }}>Contact</Link>
-            </Stack>
-          </Grid>
+          <div>
+            <h4 className="text-white font-bold mb-6">Company</h4>
+            <ul className="space-y-4">
+              <li><Link to="/about" className="text-slate-500 hover:text-cyan-400 transition-colors">About Us</Link></li>
+              <li><Link to="/careers" className="text-slate-500 hover:text-cyan-400 transition-colors">Careers</Link></li>
+              <li><Link to="/legal" className="text-slate-500 hover:text-cyan-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/contact" className="text-slate-500 hover:text-cyan-400 transition-colors">Contact</Link></li>
+            </ul>
+          </div>
+        </div>
 
-        </Grid>
-
-        <Divider sx={{ my: 6, borderColor: 'rgba(255,255,255,0.05)' }} />
-
-        {/* Bottom Bar */}
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-                © {new Date().getFullYear()} NexDefend Inc. All rights reserved.
-            </Typography>
-
-            <Stack direction="row" spacing={1}>
-                <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
-                    <GitHubIcon fontSize="small" />
-                </IconButton>
-                <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: '#1DA1F2' } }}>
-                    <TwitterIcon fontSize="small" />
-                </IconButton>
-                <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: '#0A66C2' } }}>
-                    <LinkedInIcon fontSize="small" />
-                </IconButton>
-            </Stack>
-        </Box>
-      </Container>
-    </Box>
+        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-slate-600 text-sm">
+            © {new Date().getFullYear()} NexDefend Inc. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6">
+            <a href="#" className="text-slate-500 hover:text-white transition-colors"><Github size={20} /></a>
+            <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors"><Twitter size={20} /></a>
+            <a href="#" className="text-slate-500 hover:text-blue-600 transition-colors"><Linkedin size={20} /></a>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 };
 
