@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Shield, ArrowRight, Cpu, Activity, Cloud, Zap, 
-  Lock, Search, Server, BarChart3, Terminal
+  ChevronRight
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -271,7 +271,7 @@ const HomePage = () => {
                 to="/contact" 
                 className="px-8 py-4 bg-[#0f172a] border border-slate-700 hover:border-cyan-500 text-white font-bold rounded-xl transition-all"
               >
-                Contact Us
+                Contact Sales
               </Link>
             </div>
           </div>
