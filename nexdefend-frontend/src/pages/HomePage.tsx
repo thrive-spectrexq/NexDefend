@@ -27,7 +27,7 @@ const HomePage = () => {
       
       {/* --- BACKGROUND FX --- */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        {/* Grid lines removed here */}
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-cyan-500 opacity-20 blur-[100px]"></div>
         <div className="absolute right-0 bottom-0 -z-10 h-[400px] w-[400px] rounded-full bg-purple-500 opacity-10 blur-[120px]"></div>
       </div>
@@ -57,7 +57,7 @@ const HomePage = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]"
           >
-            AI-Powered <br />
+            NextGen AI-Powered <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient bg-300%">
               Threat Intelligence
             </span>
@@ -82,7 +82,7 @@ const HomePage = () => {
               to="/register" 
               className="w-full sm:w-auto px-8 py-4 bg-white text-[#0f172a] hover:bg-slate-200 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-transform hover:-translate-y-1 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
             >
-              Deploy Agent <ArrowRight className="h-5 w-5" />
+              Get Started <ArrowRight className="h-5 w-5" />
             </Link>
             <Link 
               to="/login" 
