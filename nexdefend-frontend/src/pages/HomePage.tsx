@@ -74,7 +74,7 @@ const HomePage = () => {
             // CONSOLE LOGIN
           </Link>
           <Link to="/register" className="group relative px-6 py-2 bg-cyan-500/10 border border-cyan-500/50 rounded text-cyan-400 font-mono text-sm font-bold overflow-hidden hover:bg-cyan-500/20 transition-all">
-            <span className="relative z-10 group-hover:text-white transition-colors">INITIALIZE ></span>
+            <span className="relative z-10 group-hover:text-white transition-colors">INITIALIZE &gt;</span>
             <div className="absolute inset-0 bg-cyan-500/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
           </Link>
         </div>
