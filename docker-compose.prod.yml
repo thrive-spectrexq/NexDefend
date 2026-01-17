@@ -17,6 +17,7 @@ services:
       - KAFKA_BROKER=kafka:9092      # Triggers Enterprise Kafka Mode
       - OPENSEARCH_ADDR=http://opensearch:9200
       - PYTHON_API=http://ai:5000    # Points to separate AI container
+      - SOAR_URL=http://soar:8000    # Points to separate SOAR container
       - DEMO_MODE=false              # Disables fake traffic
       - ENABLE_COLLECTORS=true
       - JWT_SECRET_KEY=change_this_to_a_secure_random_string
@@ -26,6 +27,7 @@ services:
       - postgres
       - kafka
       - opensearch
+      - soar
     networks:
       - nexdefend-net
 
@@ -45,7 +47,25 @@ services:
     networks:
       - nexdefend-net
 
-  # --- 3. Enterprise Database (PostgreSQL) ---
+  # --- 3. SOAR Engine (Remediation) ---
+  soar:
+    image: nexdefend/core:v1.0.0
+    container_name: nexdefend-soar
+    restart: always
+    command: /nexdefend-soar-bin
+    cap_add:
+      - NET_ADMIN  # Required for iptables
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_USER=nexdefend
+      - DB_PASSWORD=secure_password
+      - DB_NAME=nexdefend
+      - DEMO_MODE=false
+    networks:
+      - nexdefend-net
+
+  # --- 4. Enterprise Database (PostgreSQL) ---
   postgres:
     image: postgres:15-alpine
     container_name: nexdefend-postgres
@@ -59,7 +79,7 @@ services:
     networks:
       - nexdefend-net
 
-  # --- 4. Message Broker (Kafka) ---
+  # --- 5. Message Broker (Kafka) ---
   kafka:
     image: bitnami/kafka:latest
     container_name: nexdefend-kafka
@@ -76,7 +96,7 @@ services:
     networks:
       - nexdefend-net
 
-  # --- 5. Search Engine (OpenSearch) ---
+  # --- 6. Search Engine (OpenSearch) ---
   opensearch:
     image: opensearchproject/opensearch:latest
     container_name: nexdefend-opensearch
@@ -89,7 +109,7 @@ services:
     networks:
       - nexdefend-net
 
-  # --- 6. Frontend ---
+  # --- 7. Frontend ---
   frontend:
     image: nexdefend/frontend:v1.0.0
     container_name: nexdefend-frontend

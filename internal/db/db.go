@@ -93,6 +93,12 @@ func InitDB() *Database {
 	return dbInstance
 }
 
+// GetDB returns the underlying gorm.DB instance.
+// This method ensures compatibility with code that calls db.InitDB().GetDB().
+func (d *Database) GetDB() *gorm.DB {
+	return d.DB
+}
+
 func GetDB() *gorm.DB {
 	if dbInstance == nil {
 		return InitDB().DB
