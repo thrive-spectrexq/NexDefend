@@ -17,7 +17,7 @@ import {
 } from '@mui/icons-material';
 
 interface Message {
-  role: 'user' | 'sentinel';
+  role: 'user' | 'ai';
   text: string;
 }
 
@@ -25,7 +25,7 @@ const SentinelChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'sentinel', text: 'Hello, I am Sentinel. How can I assist with your security analysis today?' }
+    { role: 'ai', text: 'Hello, I am NexDefend AI. How can I assist with your security analysis today?' }
   ]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,9 +46,9 @@ const SentinelChat: React.FC = () => {
 
     try {
       const res = await aiApi.chat(userMsg);
-      setMessages(prev => [...prev, { role: 'sentinel', text: res.response }]);
+      setMessages(prev => [...prev, { role: 'ai', text: res.response }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'sentinel', text: "I'm having trouble connecting to the AI core right now." }]);
+      setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting to the AI core right now." }]);
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ const SentinelChat: React.FC = () => {
           <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', p: 1.5, borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#00D1FF' }}>
               <BotIcon fontSize="small" />
-              <Typography variant="subtitle2" fontWeight="bold">Sentinel AI</Typography>
+              <Typography variant="subtitle2" fontWeight="bold">NexDefend AI</Typography>
             </Box>
             <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>
               <CloseIcon fontSize="small" />
@@ -107,7 +107,7 @@ const SentinelChat: React.FC = () => {
             {loading && (
                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary', fontSize: '0.75rem' }}>
                  <CircularProgress size={10} color="inherit" />
-                 Sentinel is thinking...
+                 NexDefend AI is thinking...
                </Box>
             )}
             <div ref={messagesEndRef} />
@@ -116,7 +116,7 @@ const SentinelChat: React.FC = () => {
           <Box sx={{ p: 1.5, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: 1, bgcolor: 'rgba(255,255,255,0.02)' }}>
             <TextField
               variant="standard"
-              placeholder="Ask Sentinel..."
+              placeholder="Ask NexDefend AI..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}

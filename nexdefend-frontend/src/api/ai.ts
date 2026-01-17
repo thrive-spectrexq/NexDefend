@@ -7,7 +7,7 @@ export interface ForecastPoint {
 }
 
 export const aiApi = {
-  // Chat with Sentinel
+  // Chat with NexDefend AI
   chat: async (query: string, context?: any) => {
     const response = await client.post('/ai/chat', { query, context });
     return response.data;

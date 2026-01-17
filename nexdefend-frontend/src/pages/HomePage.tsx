@@ -172,7 +172,7 @@ const HomePage = () => {
               title="Cognitive AI"
               description="GenAI Copilot and predictive modeling for next-level operations."
               color="cyan"
-              features={["Sentinel Copilot (Ollama/Mistral)", "24h Usage Forecasting", "Natural Language Querying"]}
+              features={["NexDefend Copilot (Ollama/Mistral)", "24h Usage Forecasting", "Natural Language Querying"]}
               colSpan="lg:col-span-2"
             />
           </motion.div>
@@ -187,14 +187,14 @@ const HomePage = () => {
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2">
               <div className="inline-block px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono mb-6">
-                &gt; initiation_sequence: sentinel_ai
+                &gt; initiation_sequence: nexdefend_ai
               </div>
               <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Meet <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Sentinel</span>, <br />
+                Meet <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">NexDefend AI</span>, <br />
                 Your AI Security Analyst.
               </h2>
               <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                Stop sifting through logs. Sentinel uses GenAI to understand your infrastructure in plain English. Ask questions, get insights, and predict failures before they happen.
+                Stop sifting through logs. NexDefend AI uses GenAI to understand your infrastructure in plain English. Ask questions, get insights, and predict failures before they happen.
               </p>
               
               <ul className="space-y-4 mb-10">
@@ -222,7 +222,7 @@ const HomePage = () => {
                   <div className="w-3 h-3 rounded-full bg-red-500" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500" />
                   <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span className="ml-2 text-xs text-slate-500 font-mono">sentinel_core.exe</span>
+                  <span className="ml-2 text-xs text-slate-500 font-mono">nexdefend_core.exe</span>
                 </div>
                 
                 <div className="space-y-4 font-mono text-sm">

@@ -19,7 +19,7 @@ class LLMHandler:
         """
         # 1. System Prompt (The Persona)
         system_prompt = (
-            "You are Sentinel, an elite cybersecurity AI analyst for the NexDefend platform. "
+            "You are NexDefend AI, an elite cybersecurity AI analyst for the NexDefend platform. "
             "Your goal is to explain security events, analyze logs, and suggest remediation steps. "
             "Be concise, professional, and actionable. Do not hallucinate facts."
         )
@@ -34,7 +34,7 @@ class LLMHandler:
                 context_str = context_str[:2000] + "...(truncated)"
             full_prompt += f"SYSTEM CONTEXT:\n{context_str}\n\n"
 
-        full_prompt += f"USER QUERY: {user_query}\n\nSENTINEL:"
+        full_prompt += f"USER QUERY: {user_query}\n\nNEXDEFEND AI:"
 
         payload = {
             "model": OLLAMA_MODEL,
