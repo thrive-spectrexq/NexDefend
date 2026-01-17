@@ -1,525 +1,204 @@
 import React from 'react';
-import { Box, Container, Grid, Typography, Paper, List, ListItem, ListItemIcon, ListItemText, useTheme, Button, Stack, Divider, Chip } from '@mui/material';
-import { motion } from 'framer-motion';
-import ShieldIcon from '@mui/icons-material/Shield';
-import MemoryIcon from '@mui/icons-material/Memory';
-import CloudQueueIcon from '@mui/icons-material/CloudQueue';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import BuildIcon from '@mui/icons-material/Build';
-import HubIcon from '@mui/icons-material/Hub';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import BoltIcon from '@mui/icons-material/Bolt';
-import SecurityIcon from '@mui/icons-material/Security';
-import SpeedIcon from '@mui/icons-material/Speed';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import {
+  Shield, Activity, Lock, Cloud, Brain,
+  Search, Server, Zap, ArrowRight, CheckCircle
+} from 'lucide-react';
 
-// --- Hero Animation Component ---
-const HeroAnimation: React.FC = () => {
-  const theme = useTheme();
-  const primaryColor = theme.palette.primary.main || '#00d1ff';
-  const secondaryColor = theme.palette.secondary.main || '#F50057';
-
-  return (
-    <Box sx={{ position: 'relative', width: '100%', height: { xs: '350px', md: '550px' }, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-
-      {/* Background Glow */}
-      <Box
-        component={motion.div}
-        animate={{ opacity: [0.2, 0.4, 0.2], scale: [1, 1.2, 1] }}
-        transition={{ duration: 5, repeat: Infinity }}
-        sx={{
-          position: 'absolute',
-          width: '60%',
-          height: '60%',
-          background: `radial-gradient(circle, ${primaryColor}33 0%, transparent 70%)`,
-          filter: 'blur(60px)',
-          zIndex: 0
-        }}
-      />
-
-      {/* Outer Rotating Radar Ring */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        style={{ position: 'absolute', zIndex: 1 }}
-      >
-        <Box sx={{
-          width: '450px',
-          height: '450px',
-          borderRadius: '50%',
-          border: `1px dashed ${primaryColor}22`,
-          borderTop: `1px solid ${primaryColor}`,
-          boxShadow: `inset 0 0 20px ${primaryColor}05`
-        }} />
-      </motion.div>
-
-      {/* Middle Rotating Ring */}
-      <motion.div
-        animate={{ rotate: -360 }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        style={{ position: 'absolute', zIndex: 1 }}
-      >
-        <Box sx={{
-          width: '320px',
-          height: '320px',
-          borderRadius: '50%',
-          border: `1px solid ${primaryColor}11`,
-          borderLeft: `2px solid ${secondaryColor}`,
-        }} />
-      </motion.div>
-
-      {/* Orbiting Cloud Node */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-        style={{ position: 'absolute', width: '380px', height: '380px', zIndex: 2 }}
-      >
-        <Paper
-          elevation={4}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            p: 1.5,
-            borderRadius: '50%',
-            bgcolor: '#0f172a',
-            border: `1px solid ${primaryColor}44`,
-            boxShadow: `0 0 15px ${primaryColor}33`
-          }}
-        >
-          <motion.div animate={{ rotate: -360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}>
-             <CloudQueueIcon sx={{ color: primaryColor, fontSize: 28 }} />
-          </motion.div>
-        </Paper>
-      </motion.div>
-
-      {/* Scanning Radar Sector */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        style={{
-          position: 'absolute',
-          width: '320px',
-          height: '320px',
-          zIndex: 1,
-          borderRadius: '50%',
-          background: `conic-gradient(from 0deg, transparent 0deg, transparent 270deg, ${primaryColor}15 360deg)`
-        }}
-      />
-
-      {/* Detected Threat Animation */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0, x: 100, y: -60 }}
-        animate={{
-          opacity: [0, 1, 1, 0],
-          scale: [0, 1, 1, 0],
-          x: [100, 80, 80, 100]
-        }}
-        transition={{ duration: 5, repeat: Infinity, repeatDelay: 2 }}
-        style={{ position: 'absolute', zIndex: 3 }}
-      >
-        <Paper sx={{ px: 1.5, py: 0.5, bgcolor: 'rgba(245, 0, 87, 0.1)', border: `1px solid ${secondaryColor}`, borderRadius: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <BugReportIcon sx={{ fontSize: 18, color: secondaryColor }} />
-                <Typography variant="caption" sx={{ color: secondaryColor, fontWeight: 'bold' }}>THREAT BLOCKED</Typography>
-            </Box>
-        </Paper>
-      </motion.div>
-
-      {/* Central Shield Core */}
-      <motion.div
-        animate={{
-            scale: [1, 1.05, 1],
-            filter: [`drop-shadow(0 0 15px ${primaryColor}44)`, `drop-shadow(0 0 30px ${primaryColor}88)`, `drop-shadow(0 0 15px ${primaryColor}44)`]
-        }}
-        transition={{ duration: 3, repeat: Infinity }}
-        style={{ position: 'absolute', zIndex: 10 }}
-      >
-        <ShieldIcon sx={{ fontSize: 120, color: primaryColor }} />
-      </motion.div>
-    </Box>
-  );
-};
-
-// --- Stat Card Component ---
-const StatItem: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 3, py: 1 }}>
-        <Box sx={{
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: 'rgba(0, 209, 255, 0.1)',
-            color: 'primary.main',
-            display: 'flex'
-        }}>
-            {icon}
-        </Box>
-        <Box>
-            <Typography variant="h5" fontWeight="800" color="white">{value}</Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>{label}</Typography>
-        </Box>
-    </Box>
-);
-
-// --- Feature Section Component ---
-interface FeatureSectionProps {
-  title: string;
-  icon: React.ReactNode;
-  features: { title: string; description: string }[];
-  delay: number;
-}
-
-const FeatureSection: React.FC<FeatureSectionProps> = ({ title, icon, features, delay }) => {
-    const theme = useTheme();
-    return (
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay }}
-            style={{ height: '100%' }}
-            >
-            <Paper
-                sx={{
-                p: 4,
-                height: '100%',
-                bgcolor: 'rgba(30, 41, 59, 0.4)', // Glassmorphism base
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 4,
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                '&:hover': {
-                    transform: 'translateY(-8px)',
-                    borderColor: 'primary.main',
-                    boxShadow: `0 20px 40px -10px ${theme.palette.primary.main}22`,
-                    '& .icon-glow': {
-                        bgcolor: 'primary.main',
-                        color: 'black'
-                    }
-                },
-                }}
-            >
-                {/* Gradient Top Line */}
-                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, #00D1FF, transparent)' }} />
-
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <Box className="icon-glow" sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: 'rgba(255,255,255,0.05)',
-                        color: 'primary.main',
-                        transition: 'all 0.3s ease',
-                        mr: 2
-                    }}>
-                        {icon}
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: -0.5 }}>
-                        {title}
-                    </Typography>
-                </Box>
-
-                <List disablePadding>
-                {features.map((feature, index) => (
-                    <ListItem key={index} alignItems="flex-start" sx={{ px: 0, py: 1 }}>
-                    <ListItemIcon sx={{ minWidth: 28, mt: 0.5 }}>
-                        <CheckCircleIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                    </ListItemIcon>
-                    <ListItemText
-                        primary={
-                        <Typography variant="body1" color="text.primary" fontWeight="600" sx={{ mb: 0.5 }}>
-                            {feature.title}
-                        </Typography>
-                        }
-                        secondary={
-                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                            {feature.description}
-                        </Typography>
-                        }
-                    />
-                    </ListItem>
-                ))}
-                </List>
-            </Paper>
-            </motion.div>
-        </Grid>
-    );
-};
-
-// --- Main Page Component ---
 const HomePage: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#0B1120' }}>
-      <Navbar />
+    <div className="min-h-screen bg-gray-950 text-white overflow-hidden selection:bg-cyan-500 selection:text-white">
 
-      {/* Hero Section */}
-      <Box
-        sx={{
-          pt: { xs: 14, md: 22 },
-          pb: { xs: 8, md: 16 },
-          position: 'relative',
-          overflow: 'hidden',
-          // Subtle mesh gradient background
-          background: `
-            radial-gradient(at 0% 0%, rgba(0, 209, 255, 0.15) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(245, 0, 87, 0.1) 0px, transparent 50%)
-          `,
-        }}
-      >
-        <Container maxWidth="xl">
-          <Grid container spacing={6} alignItems="center">
+      {/* Background Grid Effect */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-grid-pattern mask-image-gradient" />
 
-            {/* Left Column: Text Content */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <Chip
-                    icon={<BoltIcon sx={{ fontSize: '16px !important' }} />}
-                    label="NexDefend v2.0 Live"
-                    size="small"
-                    sx={{
-                        mb: 3,
-                        bgcolor: 'rgba(0, 209, 255, 0.1)',
-                        color: 'primary.main',
-                        border: '1px solid rgba(0, 209, 255, 0.2)',
-                        fontWeight: 'bold'
-                    }}
-                />
+      {/* --- HERO SECTION --- */}
+      <section className="relative z-10 container mx-auto px-6 pt-20 pb-32 flex flex-col lg:flex-row items-center gap-16">
 
-                <Typography variant="h1" sx={{
-                    fontWeight: 900,
-                    mb: 2,
-                    fontSize: { xs: '2.5rem', md: '4rem', lg: '5rem' },
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
-                    color: 'white'
-                }}>
-                  Defend Your <br/>
-                  <Box component="span" sx={{
-                      background: 'linear-gradient(90deg, #00D1FF 0%, #00ff9d 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent'
-                  }}>
-                    Digital Frontier
-                  </Box>
-                </Typography>
+        {/* Left Content */}
+        <div className="flex-1 space-y-8 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-900/30 border border-cyan-700/50 text-cyan-400 text-sm font-medium animate-float">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            </span>
+            NexDefend Platform v1.0 Live
+          </div>
 
-                <Typography variant="h5" color="text.secondary" sx={{ mb: 5, lineHeight: 1.6, fontWeight: 400, maxWidth: '650px' }}>
-                  Unified system monitoring, AI-powered threat detection, and automated incident response for the modern enterprise.
-                </Typography>
+          <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight leading-tight">
+            Secure Your <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
+              Digital Infrastructure
+            </span>
+          </h1>
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                    <Button
-                        variant="contained"
-                        size="large"
-                        onClick={() => navigate('/register')}
-                        sx={{
-                            px: 4,
-                            py: 1.8,
-                            fontSize: '1rem',
-                            fontWeight: 'bold',
-                            borderRadius: '50px',
-                            background: 'linear-gradient(45deg, #00D1FF, #0099FF)',
-                            boxShadow: '0 0 20px rgba(0, 209, 255, 0.4)',
-                            '&:hover': {
-                                boxShadow: '0 0 30px rgba(0, 209, 255, 0.6)',
-                            }
-                        }}
-                    >
-                        Get Started
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={() => navigate('/docs')} // Assuming a docs route or demo
-                        endIcon={<ArrowForwardIcon />}
-                        sx={{
-                            px: 4,
-                            py: 1.8,
-                            fontSize: '1rem',
-                            fontWeight: 'bold',
-                            borderRadius: '50px',
-                            borderColor: 'rgba(255,255,255,0.2)',
-                            color: 'white',
-                            '&:hover': {
-                                borderColor: 'white',
-                                bgcolor: 'rgba(255,255,255,0.05)'
-                            }
-                        }}
-                    >
-                        Live Demo
-                    </Button>
-                </Stack>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            The all-in-one AI-native security platform. Monitor endpoints, detect anomalies,
+            and automate response with military-grade precision across Cloud, On-Prem, and IoT.
+          </p>
 
-                <Box sx={{ mt: 6, display: 'flex', alignItems: 'center', gap: 2, opacity: 0.8 }}>
-                    <Typography variant="caption" color="text.secondary">TRUSTED BY MODERN TEAMS</Typography>
-                    <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
-                    <Box sx={{ display: 'flex', gap: 2, opacity: 0.5 }}>
-                        {/* Placeholders for logos */}
-                        <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: 'white' }} />
-                        <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: 'white' }} />
-                        <Box sx={{ width: 20, height: 20, borderRadius: '50%', bgcolor: 'white' }} />
-                    </Box>
-                </Box>
-
-              </motion.div>
-            </Grid>
-
-            {/* Right Column: Animation */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1, delay: 0.2 }}
-              >
-                <HeroAnimation />
-              </motion.div>
-            </Grid>
-
-          </Grid>
-        </Container>
-      </Box>
-
-      {/* Stats Bar */}
-      <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', bgcolor: 'rgba(0,0,0,0.2)' }}>
-          <Container maxWidth="xl">
-            <Grid container spacing={0} justifyContent="center" alignItems="center" sx={{ py: 2 }}>
-                <Grid size={{ xs: 12, md: 4 }} sx={{ borderRight: { md: '1px solid rgba(255,255,255,0.05)' } }}>
-                    <StatItem label="Active Monitoring" value="24/7" icon={<SecurityIcon />} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }} sx={{ borderRight: { md: '1px solid rgba(255,255,255,0.05)' } }}>
-                    <StatItem label="Threats Blocked" value="99.9%" icon={<BugReportIcon />} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                    <StatItem label="System Latency" value="< 10ms" icon={<SpeedIcon />} />
-                </Grid>
-            </Grid>
-          </Container>
-      </Box>
-
-      {/* Features Grid */}
-      <Box sx={{ py: 12, position: 'relative' }}>
-        {/* Background blobs for depth */}
-        <Box sx={{ position: 'absolute', top: '20%', left: '-10%', width: '500px', height: '500px', bgcolor: 'primary.main', filter: 'blur(200px)', opacity: 0.05, zIndex: 0 }} />
-
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-            <Box sx={{ textAlign: 'center', mb: 10 }}>
-                <Typography variant="overline" color="primary.main" fontWeight="bold" letterSpacing={2}>
-                    CAPABILITIES
-                </Typography>
-                <Typography variant="h2" sx={{ fontWeight: 800, mt: 1, mb: 2 }}>
-                    Comprehensive Security <br />
-                    <span style={{ opacity: 0.5 }}>Without the Complexity</span>
-                </Typography>
-            </Box>
-
-            <Grid container spacing={4}>
-            <FeatureSection
-                title="System Monitoring"
-                icon={<MemoryIcon fontSize="large" />}
-                delay={0.1}
-                features={[
-                { title: 'Resource Tracking', description: 'Real-time telemetry for CPU, Memory, Disk, and Network IO across your entire fleet.' },
-                { title: 'Process Forensics', description: 'Deep inspection of process trees to identify unauthorized execution paths.' },
-                { title: 'FIM Integrity', description: 'Cryptographic tracking of critical system files to detect tampering immediately.' },
-                ]}
-            />
-            <FeatureSection
-                title="Threat Intelligence"
-                icon={<ShieldIcon fontSize="large" />}
-                delay={0.2}
-                features={[
-                { title: 'AI Anomaly Detection', description: 'Unsupervised learning (Isolation Forest) detects deviations from baseline behavior.' },
-                { title: 'CVE Scanning', description: 'Automated vulnerability assessments powered by integrated Trivy and Nmap engines.' },
-                { title: 'Proactive Hunting', description: 'Query your infrastructure state like a database to find hidden threats.' },
-                ]}
-            />
-            <FeatureSection
-                title="Automated SOAR"
-                icon={<BuildIcon fontSize="large" />}
-                delay={0.3}
-                features={[
-                { title: 'Instant Remediation', description: 'Trigger automated playbooks to isolate infected hosts or kill malicious processes.' },
-                { title: 'Incident Workflows', description: 'Streamlined case management for tracking alerts from detection to resolution.' },
-                { title: 'Compliance Checks', description: 'Continuous auditing of SSH, Firewall, and OS configurations.' },
-                ]}
-            />
-            <FeatureSection
-                title="Cloud Native"
-                icon={<CloudQueueIcon fontSize="large" />}
-                delay={0.4}
-                features={[
-                { title: 'K8s & Docker', description: 'Native visibility into container orchestration and microservices health.' },
-                { title: 'Cloud Posture (CSPM)', description: 'Validate configurations across AWS, Azure, and GCP environments.' },
-                { title: 'Workload Protection', description: 'Runtime security for ephemeral cloud workloads.' },
-                ]}
-            />
-            <FeatureSection
-                title="Cognitive Core"
-                icon={<PsychologyIcon fontSize="large" />}
-                delay={0.5}
-                features={[
-                { title: 'Sentinel AI Copilot', description: 'Conversational interface to query system health and explain security alerts.' },
-                { title: 'Predictive Metrics', description: 'Forecast resource exhaustion incidents before they cause downtime.' },
-                { title: 'Smart Scoring', description: 'Context-aware risk scoring to reduce alert fatigue.' },
-                ]}
-            />
-            <FeatureSection
-                title="Network Defense"
-                icon={<HubIcon fontSize="large" />}
-                delay={0.6}
-                features={[
-                { title: 'Traffic Visualizer', description: 'Interactive topology maps showing lateral movement and external connections.' },
-                { title: 'IDS/IPS Engine', description: 'Signature-based detection (Suricata) for known exploit patterns.' },
-                { title: 'DNS Security', description: 'Identification of DGA (Domain Generation Algorithms) and C2 communication.' },
-                ]}
-            />
-            </Grid>
-        </Container>
-      </Box>
-
-      {/* Final CTA Section */}
-      <Box sx={{
-          py: 12,
-          bgcolor: 'rgba(0, 209, 255, 0.03)',
-          borderTop: '1px solid rgba(255,255,255,0.05)'
-      }}>
-          <Container maxWidth="md" sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight="bold" gutterBottom>
-                  Ready to Secure Your Infrastructure?
-              </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ mb: 4, opacity: 0.8 }}>
-                  Join thousands of developers and security engineers using NexDefend.
-              </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => navigate('/register')}
-                sx={{
-                    px: 6, py: 2,
-                    borderRadius: '50px',
-                    fontSize: '1.1rem',
-                    boxShadow: '0 0 30px rgba(0, 209, 255, 0.3)'
-                }}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <Link
+              to="/auth/register"
+              className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-lg font-bold text-white shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-105 flex items-center justify-center gap-2"
             >
-                  Create Free Account
-              </Button>
-          </Container>
-      </Box>
+              Get Started Free <ArrowRight size={20} />
+            </Link>
+            <Link
+              to="/docs"
+              className="px-8 py-4 bg-gray-900 border border-gray-700 hover:border-gray-500 rounded-lg font-bold text-gray-300 hover:text-white transition-all flex items-center justify-center gap-2"
+            >
+              Documentation
+            </Link>
+          </div>
 
-      <Footer />
-    </Box>
+          <div className="pt-8 flex items-center justify-center lg:justify-start gap-8 text-gray-500 text-sm">
+            <span className="flex items-center gap-2"><CheckCircle size={16} className="text-cyan-500"/> Open Source</span>
+            <span className="flex items-center gap-2"><CheckCircle size={16} className="text-cyan-500"/> Privacy First</span>
+            <span className="flex items-center gap-2"><CheckCircle size={16} className="text-cyan-500"/> No Agent Bloat</span>
+          </div>
+        </div>
+
+        {/* Right Content: The "Orbit" Animation */}
+        <div className="flex-1 relative w-full max-w-[600px] aspect-square flex items-center justify-center">
+
+          {/* Central Core (Pulsing Globe) */}
+          <div className="absolute z-20 bg-gradient-to-br from-cyan-500 to-blue-700 w-32 h-32 rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(6,182,212,0.6)] animate-pulse-slow">
+            <Shield size={64} className="text-white drop-shadow-md" />
+          </div>
+
+          {/* Inner Ring (Orbiting CW) */}
+          <div className="absolute border border-cyan-800/30 w-64 h-64 rounded-full animate-orbit-cw">
+            {/* Planet 1: Brain (AI) */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 p-3 rounded-full border border-cyan-500/50 shadow-lg counter-rotate">
+              <Brain size={24} className="text-purple-400" />
+            </div>
+            {/* Planet 2: Activity (Monitoring) */}
+            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 p-3 rounded-full border border-cyan-500/50 shadow-lg counter-rotate">
+              <Activity size={24} className="text-green-400" />
+            </div>
+          </div>
+
+          {/* Outer Ring (Orbiting CCW) */}
+          <div className="absolute border border-blue-800/20 w-96 h-96 rounded-full animate-orbit-ccw">
+            {/* Planet 3: Cloud */}
+            <div className="absolute top-1/2 -right-6 -translate-y-1/2 bg-gray-900 p-4 rounded-full border border-blue-500/50 shadow-lg counter-rotate-slow">
+              <Cloud size={28} className="text-blue-400" />
+            </div>
+            {/* Planet 4: Lock (Security) */}
+            <div className="absolute top-1/2 -left-6 -translate-y-1/2 bg-gray-900 p-4 rounded-full border border-blue-500/50 shadow-lg counter-rotate-slow">
+              <Lock size={28} className="text-red-400" />
+            </div>
+            {/* Planet 5: Server (Infra) - Top Left ish */}
+            <div className="absolute top-[15%] left-[15%] bg-gray-900 p-3 rounded-full border border-blue-500/50 shadow-lg counter-rotate-slow">
+              <Server size={24} className="text-orange-400" />
+            </div>
+          </div>
+
+          {/* Decorative Glows behind everything */}
+          <div className="absolute inset-0 bg-cyan-500/10 blur-[100px] rounded-full z-0" />
+        </div>
+      </section>
+
+      {/* --- FEATURES BENTO GRID --- */}
+      <section className="py-24 bg-gray-950/50 relative z-10">
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-cyan-400 font-semibold tracking-wide uppercase text-sm mb-3">Capabilities</h2>
+            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Complete Visibility. Total Control.</h3>
+            <p className="text-gray-400">NexDefend unifies disjointed security tools into one cohesive platform powered by cognitive intelligence.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            {/* Feature 1: AI Analysis */}
+            <div className="glass-panel p-8 rounded-2xl hover:border-cyan-500/50 transition-colors group">
+              <div className="bg-purple-500/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Brain className="text-purple-400" size={24} />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2">Cognitive AI Core</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                "Sentinel" GenAI analyzes logs, explains alerts in plain English, and forecasts resource exhaustion 24 hours in advance.
+              </p>
+            </div>
+
+            {/* Feature 2: Threat Detection */}
+            <div className="glass-panel p-8 rounded-2xl hover:border-cyan-500/50 transition-colors group">
+              <div className="bg-red-500/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Activity className="text-red-400" size={24} />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2">Real-Time Threat Detection</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Powered by Isolation Forest ML. Detects SSH brute force, malware beacons, and anomalous data exfiltration instantly.
+              </p>
+            </div>
+
+            {/* Feature 3: Automated SOAR */}
+            <div className="glass-panel p-8 rounded-2xl hover:border-cyan-500/50 transition-colors group">
+              <div className="bg-green-500/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Zap className="text-green-400" size={24} />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2">Automated Response (SOAR)</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Don't just watch—act. Auto-block IPs via Firewall, isolate compromised hosts, and execute remediation playbooks.
+              </p>
+            </div>
+
+            {/* Feature 4: Cloud & K8s (Span 2 cols) */}
+            <div className="glass-panel p-8 rounded-2xl md:col-span-2 hover:border-cyan-500/50 transition-colors group flex flex-col md:flex-row gap-6 items-start">
+              <div className="bg-blue-500/10 w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Cloud className="text-blue-400" size={24} />
+              </div>
+              <div>
+                <h4 className="text-xl font-bold text-white mb-2">Hybrid Cloud & Kubernetes</h4>
+                <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                  Native integration with AWS, Azure, and Kubernetes. Monitor pod health, cloud posture, and container vulnerabilities in a single pane of glass.
+                </p>
+                <div className="flex gap-2">
+                  <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300 border border-gray-700">AWS EC2</span>
+                  <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300 border border-gray-700">K8s Pods</span>
+                  <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300 border border-gray-700">Docker</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 5: Search */}
+            <div className="glass-panel p-8 rounded-2xl hover:border-cyan-500/50 transition-colors group">
+              <div className="bg-orange-500/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Search className="text-orange-400" size={24} />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2">Deep Search</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Query terabytes of logs in milliseconds using ZincSearch/OpenSearch integration.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* --- FOOTER --- */}
+      <footer className="border-t border-gray-800 bg-gray-950 pt-16 pb-8">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded flex items-center justify-center text-white font-bold">
+              N
+            </div>
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              NexDefend
+            </span>
+          </div>
+          <div className="text-gray-500 text-sm">
+            © 2026 NexDefend Open Source. Licensed under MIT.
+          </div>
+          <div className="flex gap-6 text-gray-400">
+            <a href="#" className="hover:text-cyan-400 transition-colors">GitHub</a>
+            <a href="#" className="hover:text-cyan-400 transition-colors">Docs</a>
+            <a href="#" className="hover:text-cyan-400 transition-colors">Twitter</a>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 

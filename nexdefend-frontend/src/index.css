@@ -8,3 +8,71 @@ html, body, #root {
   /* overflow: hidden; Removed to allow scrolling on landing page */
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
+
+/* --- Cyber-Security Animations --- */
+
+/* 1. Rotations */
+@keyframes orbit-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit-ccw {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 2. Floating/Pulse */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* --- Utility Classes for Animations --- */
+.animate-orbit-cw {
+  animation: orbit-cw 20s linear infinite;
+}
+
+.animate-orbit-ccw {
+  animation: orbit-ccw 25s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 15s linear infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Keeps icons upright while the container rotates */
+.counter-rotate {
+  animation: orbit-ccw 20s linear infinite; /* Must match parent speed but reverse */
+}
+.counter-rotate-slow {
+  animation: orbit-cw 25s linear infinite;
+}
+
+/* --- Glassmorphism --- */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+}
+
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, #1f2937 1px, transparent 1px),
+    linear-gradient(to bottom, #1f2937 1px, transparent 1px);
+  background-size: 40px 40px;
+}
