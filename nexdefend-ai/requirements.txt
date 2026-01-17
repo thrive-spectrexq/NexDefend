@@ -29,3 +29,4 @@ Werkzeug==3.1.5
 confluent-kafka
 pytest
 cachetools
+psycopg2-binary

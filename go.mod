@@ -1,13 +1,11 @@
 module github.com/thrive-spectrexq/NexDefend
 
-go 1.24.0
-
-toolchain go1.24.3
+go 1.24.3
 
 require github.com/gorilla/mux v1.8.1
 
 require (
-	github.com/confluentinc/confluent-kafka-go/v2 v2.12.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.13.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/hpcloud/tail v1.0.0

@@ -33,7 +33,8 @@ RUN apk add --no-cache \
     python3-dev \
     libffi-dev \
     nmap \
-    openblas-dev
+    openblas-dev \
+    postgresql-dev
 
 # 1. Setup ZincSearch
 WORKDIR /zinc
@@ -44,10 +45,8 @@ RUN mv zincsearch /usr/local/bin/zincsearch
 WORKDIR /app/nexdefend-ai
 COPY nexdefend-ai/requirements.txt .
 
-# Remove conflicting dependencies
-RUN sed -i '/psycopg2-binary/d' requirements.txt && \
-    sed -i '/confluent-kafka/d' requirements.txt && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt
+# Install Python dependencies (including psycopg2-binary and confluent-kafka now)
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY nexdefend-ai/ .
 

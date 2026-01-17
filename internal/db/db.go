@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
-	"gorm.io/driver/postgres" // Enterprise Driver
-	"gorm.io/driver/sqlite"   // Demo Driver
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -28,8 +28,6 @@ func InitDB() *Database {
 	var err error
 
 	// DUAL-MODE SWITCH
-	// If DB_TYPE is 'postgres', we run in Enterprise Mode.
-	// Otherwise, we default to 'sqlite' (Demo/Standalone Mode).
 	dbType := os.Getenv("DB_TYPE")
 
 	if dbType == "postgres" {
@@ -45,8 +43,9 @@ func InitDB() *Database {
 			Logger: logger.Default.LogMode(logger.Warn),
 		})
 	} else {
-		log.Println("--- DEMO MODE: Connecting to SQLite ---")
+		// Default to SQLite (Demo Mode)
 		dbPath := getEnv("DB_PATH", "/data/nexdefend.db")
+		log.Printf("--- DEMO MODE: Connecting to SQLite at %s ---", dbPath)
 		gormDB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Info),
 		})
@@ -61,42 +60,51 @@ func InitDB() *Database {
 		log.Fatalf("Failed to get underlying sql.DB: %v", err)
 	}
 
-	// Performance Tuning based on Mode
+	// Tweak connection pool based on mode
 	if dbType == "postgres" {
-		// Enterprise: High concurrency
 		sqlDB.SetMaxOpenConns(50)
 		sqlDB.SetMaxIdleConns(10)
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	} else {
-		// SQLite: Single writer to prevent locking
 		sqlDB.SetMaxOpenConns(1)
 		sqlDB.SetMaxIdleConns(1)
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
-	// Unified Schema Migration (Works for both DBs)
+	// Unified Schema Migration
 	log.Println("Running AutoMigrate...")
-	// Note: models.Organization, models.Role, models.SuricataEvent, models.Alert are commented out
-	// because they are not currently defined in the models package.
 	err = gormDB.AutoMigrate(
 		&models.User{},
-		// &models.Organization{}, &models.Role{},
+		&models.Organization{}, &models.Role{},
 		&models.SystemSettings{}, &models.SystemMetric{}, &models.Asset{},
-		// &models.SuricataEvent{},
+		&models.SuricataEvent{},
 		&models.Threat{},
-		// &models.Alert{},
+		&models.Alert{},
 		&models.Incident{}, &models.Vulnerability{}, &models.CloudAsset{}, &models.KubernetesPod{},
 	)
 	if err != nil {
 		log.Printf("Migration Warning: %v", err)
 	}
 
-	// Seed default data if empty
 	SeedSettings(gormDB)
 	SeedDefaultUser(gormDB)
 
 	dbInstance = &Database{gormDB}
 	return dbInstance
+}
+
+func GetDB() *gorm.DB {
+	if dbInstance == nil {
+		return InitDB().DB
+	}
+	return dbInstance.DB
+}
+
+func CloseDB() {
+	if dbInstance != nil {
+		sqlDB, _ := dbInstance.DB.DB()
+		sqlDB.Close()
+	}
 }
 
 // getEnv retrieves an environment variable or returns a default value.
@@ -105,25 +113,6 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
-}
-
-// GetDB returns the underlying GORM database instance.
-func (d *Database) GetDB() *gorm.DB {
-	return d.DB
-}
-
-// CloseDB closes the database connection.
-func CloseDB() {
-	if dbInstance != nil {
-		sqlDB, err := dbInstance.DB.DB()
-		if err != nil {
-			log.Printf("Error getting sql.DB from gorm DB: %v", err)
-			return
-		}
-		if err := sqlDB.Close(); err != nil {
-			log.Printf("Error closing database connection: %v", err)
-		}
-	}
 }
 
 // SeedSettings seeds default system settings if they don't exist.
