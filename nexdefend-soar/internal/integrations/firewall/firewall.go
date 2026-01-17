@@ -1,18 +1,54 @@
-
 package firewall
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+)
 
-// Firewall defines the interface for a firewall.
-type Firewall interface {
-	BlockIP(ip string) error
+type FirewallManager struct {
+	DemoMode bool
 }
 
-// MockFirewall is a mock implementation of the Firewall interface.
-type MockFirewall struct{}
+func NewFirewallManager() *FirewallManager {
+	return &FirewallManager{
+		DemoMode: os.Getenv("DEMO_MODE") == "true",
+	}
+}
 
-// BlockIP blocks an IP address on the firewall.
-func (f *MockFirewall) BlockIP(ip string) error {
-	log.Printf("Blocking IP address %s on the firewall", ip)
+// BlockIP blocks an IP address using the system firewall (iptables)
+func (f *FirewallManager) BlockIP(ip string) error {
+	if f.DemoMode {
+		log.Printf("[SOAR-SIMULATION] 🛡️ Firewall Rule Applied: DROP traffic from %s", ip)
+		return nil
+	}
+
+	// Real Execution (Linux iptables)
+	// Requires root privileges (CAP_NET_ADMIN)
+	log.Printf("[SOAR-REAL] Executing: iptables -A INPUT -s %s -j DROP", ip)
+
+	cmd := exec.Command("iptables", "-A", "INPUT", "-s", ip, "-j", "DROP")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to block IP %s: %v | Output: %s", ip, err, string(output))
+	}
+
+	return nil
+}
+
+// UnblockIP removes the block rule
+func (f *FirewallManager) UnblockIP(ip string) error {
+	if f.DemoMode {
+		log.Printf("[SOAR-SIMULATION] 🛡️ Firewall Rule Removed: ALLOW traffic from %s", ip)
+		return nil
+	}
+
+	cmd := exec.Command("iptables", "-D", "INPUT", "-s", ip, "-j", "DROP")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to unblock IP %s: %v | Output: %s", ip, err, string(output))
+	}
+
 	return nil
 }

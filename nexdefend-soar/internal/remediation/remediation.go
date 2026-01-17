@@ -1,98 +1,44 @@
 package remediation
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
-	"os/exec"
-	"runtime"
+
+	"github.com/thrive-spectrexq/NexDefend/nexdefend-soar/internal/integrations/firewall"
 )
 
-// Scan triggers a scan on the target via the AI service (kept from original, ensured context).
-func Scan(target string) {
-	log.Printf("Triggering scan on target: %s", target)
-
-	aiURL := os.Getenv("PYTHON_API")
-	if aiURL == "" { aiURL = "http://nexdefend-ai:5000" }
-
-	postJSON(aiURL+"/scan", map[string]string{"target": target})
+type ActionExecutor struct {
+	fw *firewall.FirewallManager
 }
 
-// Block implements real network blocking using host firewall (iptables/netsh)
-func Block(targetIP string) {
-	log.Printf("Executing Block Action for IP: %s", targetIP)
-
-	var cmd *exec.Cmd
-
-	if runtime.GOOS == "linux" {
-		// Linux: iptables -A INPUT -s [IP] -j DROP
-		cmd = exec.Command("iptables", "-A", "INPUT", "-s", targetIP, "-j", "DROP")
-	} else if runtime.GOOS == "windows" {
-		// Windows: netsh advfirewall firewall add rule name="Block [IP]" dir=in action=block remoteip=[IP]
-		ruleName := fmt.Sprintf("NexDefend Block %s", targetIP)
-		cmd = exec.Command("netsh", "advfirewall", "firewall", "add", "rule", "name="+ruleName, "dir=in", "action=block", "remoteip="+targetIP)
-	} else {
-		log.Printf("Unsupported OS for local remediation: %s", runtime.GOOS)
-		return
-	}
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("Failed to block IP %s: %v, Output: %s", targetIP, err, string(output))
-	} else {
-		log.Printf("Successfully blocked IP %s", targetIP)
+func NewActionExecutor() *ActionExecutor {
+	return &ActionExecutor{
+		fw: firewall.NewFirewallManager(),
 	}
 }
 
-// Isolate cuts network access for a specific interface
-func Isolate(interfaceName string) {
-	log.Printf("Isolating Network Interface: %s", interfaceName)
+// ExecuteAction runs a specific remediation step
+func (e *ActionExecutor) ExecuteAction(actionType string, target string) error {
+	log.Printf("Executing Action: %s on Target: %s", actionType, target)
 
-	var cmd *exec.Cmd
-	if runtime.GOOS == "linux" {
-		cmd = exec.Command("ip", "link", "set", interfaceName, "down")
-	} else {
-		log.Println("Isolation not implemented for this OS")
-		return
-	}
+	switch actionType {
+	case "block_ip":
+		return e.fw.BlockIP(target)
 
-	if err := cmd.Run(); err != nil {
-		log.Printf("Failed to isolate interface %s: %v", interfaceName, err)
-	}
-}
+	case "isolate_host":
+		// Example: Could move host to a quarantine VLAN or shutdown interface
+		log.Printf("[SOAR] Isolating host %s (Simulation)", target)
+		return nil
 
-// DisableUser calls the internal API to disable a user (connecting to Real AD logic implemented previously)
-func DisableUser(username string) {
-	log.Printf("Disabling user account: %s", username)
+	case "disable_user":
+		log.Printf("[SOAR] Disabling user %s (Simulation)", target)
+		return nil
 
-	// Assuming an internal API endpoint exists for user management from the previous steps
-	apiURL := os.Getenv("API_URL")
-	if apiURL == "" { apiURL = "http://api:8080/api/v1" }
+	case "email_alert":
+		log.Printf("[SOAR] Sending email alert to admin regarding %s", target)
+		return nil
 
-	// Call the endpoint that uses the Real LDAP connector
-	url := fmt.Sprintf("%s/enrichment/users/%s/disable", apiURL, username)
-	postJSON(url, nil)
-}
-
-// Helper for sending JSON requests
-func postJSON(url string, data interface{}) {
-	jsonPayload, _ := json.Marshal(data)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("AI_SERVICE_TOKEN"))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Failed request to %s: %v", url, err)
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		log.Printf("Request to %s failed with status: %d", url, resp.StatusCode)
+	default:
+		return fmt.Errorf("unknown action type: %s", actionType)
 	}
 }

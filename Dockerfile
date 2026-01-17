@@ -16,6 +16,10 @@ COPY . .
 # Build Go Binary
 RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend main.go
 
+# FIX: Build SOAR Binary
+WORKDIR /app/nexdefend-soar
+RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend-soar-bin main.go
+
 # --- Stage 2: Final Monolith Image ---
 FROM python:3.11-alpine
 
@@ -34,7 +38,8 @@ RUN apk add --no-cache \
     libffi-dev \
     nmap \
     openblas-dev \
-    postgresql-dev
+    postgresql-dev \
+    iptables
 
 # 1. Setup ZincSearch
 WORKDIR /zinc
@@ -50,9 +55,10 @@ RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY nexdefend-ai/ .
 
-# 3. Setup Go Backend
+# 3. Setup Go Backend & SOAR
 WORKDIR /app
 COPY --from=builder /nexdefend /nexdefend
+COPY --from=builder /nexdefend-soar-bin /nexdefend-soar-bin
 COPY database/init.sql /app/database/init.sql
 
 # Create persistent data directories
@@ -70,9 +76,11 @@ ENV ZINC_FIRST_ADMIN_PASSWORD=Complexpass123
 ENV OPENSEARCH_ADDR=http://admin:Complexpass123@localhost:4080
 
 ENV PYTHON_API=http://localhost:5000
+# NEW: Configure SOAR internal URL
+ENV SOAR_URL=http://localhost:8081
 ENV PORT=8080
 
-EXPOSE 8080 5000 4080
+EXPOSE 8080 5000 4080 8081
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
