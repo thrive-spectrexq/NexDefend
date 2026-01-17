@@ -1,9 +1,8 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Shield, ArrowRight, Lock, Globe, Cpu, 
-  Activity, Cloud, Zap, AlertTriangle, FileCheck
+  Shield, ArrowRight, Cpu,
+  Activity, Cloud, Zap
 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 
@@ -14,7 +13,7 @@ const circleVariants = {
     transition: {
       duration: 20,
       repeat: Infinity,
-      ease: "linear"
+      ease: "linear" as const
     }
   }
 };
@@ -25,7 +24,7 @@ const reverseCircleVariants = {
     transition: {
       duration: 15,
       repeat: Infinity,
-      ease: "linear"
+      ease: "linear" as const
     }
   }
 };
