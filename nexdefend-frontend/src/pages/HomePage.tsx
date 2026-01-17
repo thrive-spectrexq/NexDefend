@@ -70,7 +70,7 @@ const HomePage = () => {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight leading-tight">
-              NextGen AI-Powered <br />
+              AI-Powered <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient">
                 Threat Intelligence
               </span>
@@ -82,7 +82,7 @@ const HomePage = () => {
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-6">
               <Link to="/register" className="w-full md:w-auto px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold text-lg flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all hover:scale-105">
-                Get Started <ArrowRight className="h-5 w-5" />
+                Deploy Sentinel Agent <ArrowRight className="h-5 w-5" />
               </Link>
               <Link to="/login" className="w-full md:w-auto px-8 py-4 bg-surface/50 border border-white/10 hover:border-cyan-500/50 rounded-lg font-bold text-lg text-gray-300 hover:text-white transition-all backdrop-blur-md">
                 View Live Demo
