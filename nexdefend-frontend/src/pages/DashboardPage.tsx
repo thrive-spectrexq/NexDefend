@@ -1,274 +1,101 @@
-import React, { useEffect, useState } from 'react';
-import { Typography, Paper, Grid, Box, Button, Chip, Alert, CircularProgress } from '@mui/material';
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  RadialBarChart, RadialBar
-} from 'recharts';
-import { getDashboardStats } from '@/api/dashboard';
-import ForecastChart from '../components/ForecastChart';
+import { Activity, Server, Shield, Globe, Lock } from 'lucide-react';
+import { MainLayout } from '../components/layout/MainLayout';
+import { GlassCard } from '../components/ui/GlassCard';
+import { NeonButton } from '../components/ui/NeonButton';
+import { SentinelChat } from '../components/dashboard/SentinelChat';
+import { ResourceGauge } from '../components/dashboard/ResourceGauge';
 
-// Types matching your Go Backend 'DashboardSummary' and 'ModuleStat' structs
-interface ModuleStat {
-  name: string;
-  count: number;
-  status: 'critical' | 'warning' | 'healthy';
-  trend: 'up' | 'down' | 'flat';
-}
-
-interface DashboardData {
-  modules: ModuleStat[];
-  compliance: any[];
-  total_events_24h: number;
-}
-
-// Sparkline Data (Simulated for visual design as backend doesn't provide history yet)
-const sparklineData1 = [{ value: 10 }, { value: 12 }, { value: 15 }, { value: 18 }, { value: 20 }, { value: 22 }, { value: 25 }];
-const sparklineData2 = [{ value: 5 }, { value: 8 }, { value: 12 }, { value: 4 }, { value: 6 }, { value: 3 }, { value: 2 }];
-const sparklineData3 = [{ value: 2 }, { value: 4 }, { value: 3 }, { value: 5 }, { value: 8 }, { value: 6 }, { value: 9 }];
-
-const KPICard = ({ title, value, subtext, trend, data, color }: any) => {
-    // Map backend status/trend to UI colors/labels
-    const isPositive = trend === 'up';
-    const trendLabel = trend === 'up' ? '+5%' : trend === 'down' ? '-5%' : '0%';
-
-    return (
-      <Paper
-        sx={{
-          p: 2.5,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          bgcolor: 'background.paper',
-          border: '1px solid rgba(255,255,255,0.08)'
-        }}
-      >
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-            <Typography variant="subtitle2" color="text.secondary" fontWeight="bold">
-              {title}
-            </Typography>
-             <Chip
-                 label={trendLabel}
-                 size="small"
-                 sx={{
-                   height: 20,
-                   fontSize: '0.7rem',
-                   fontWeight: 'bold',
-                   bgcolor: isPositive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                   color: isPositive ? '#4caf50' : '#f44336'
-                 }}
-               />
-          </Box>
-          <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
-            {value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {subtext}
-          </Typography>
-        </Box>
-
-        <Box sx={{ height: 60, mt: 2 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id={`color${title.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <Area
-                 type="monotone"
-                 dataKey="value"
-                 stroke={color}
-                 strokeWidth={2}
-                 fillOpacity={1}
-                 fill={`url(#color${title.replace(/\s/g, '')})`}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Box>
-      </Paper>
-    );
-};
-
-const DashboardPage: React.FC = () => {
-  const [stats, setStats] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await getDashboardStats();
-        setStats(data);
-      } catch (err) {
-        console.error("Failed to fetch dashboard stats", err);
-        setError("Failed to load live statistics. Connecting to backup display.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  // Helper to extract count from modules array safely
-  const getModuleCount = (name: string) => {
-      return stats?.modules?.find(m => m.name === name)?.count || 0;
-  };
-
-  // Mapped Data from Backend
-  const totalAgents = getModuleCount('Active Agents');
-  const totalVulns = getModuleCount('Vulnerability Detector');
-  const totalFim = getModuleCount('Integrity Monitoring');
-  const totalEvents = stats?.total_events_24h || 0;
-
-  // Chart Data (Mocked for now as backend doesn't provide time-series yet)
-  const activityData = [
-    { name: 'Mon', events: 1200 },
-    { name: 'Tue', events: 3500 },
-    { name: 'Wed', events: 2200 },
-    { name: 'Thu', events: 4800 },
-    { name: 'Fri', events: 6000 },
-    { name: 'Sat', events: 3800 },
-    { name: 'Sun', events: totalEvents > 0 ? totalEvents : 2500 },
-  ];
-
-  // const threatData = useMemo(() => [
-  //   { name: 'Jan', low: 40, critical: 24 },
-  //   { name: 'Feb', low: 30, critical: 13 },
-  //   { name: 'Mar', low: 20, critical: 98 },
-  //   { name: 'Apr', low: 27, critical: 39 },
-  //   { name: 'May', low: 18, critical: 48 },
-  //   { name: 'Jun', low: 23, critical: 38 },
-  // ], []);
-
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-
+const DashboardPage = () => {
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" fontWeight="bold">Security Dashboard</Typography>
-        {error && <Alert severity="warning" sx={{ mt: 2 }}>{error}</Alert>}
-      </Box>
+    <MainLayout>
+      {/* Top Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        {[
+          { label: 'Threat Score', value: 'LOW', color: 'text-green-400', icon: Shield },
+          { label: 'Active Agents', value: '42/42', color: 'text-cyan-400', icon: Server },
+          { label: 'Network Load', value: '1.2 GB/s', color: 'text-blue-400', icon: Activity },
+          { label: 'Global Status', value: 'SECURE', color: 'text-purple-400', icon: Globe },
+        ].map((stat, idx) => (
+          <GlassCard key={idx} className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">{stat.label}</p>
+              <h2 className={`text-2xl font-bold font-mono ${stat.color} drop-shadow-sm`}>{stat.value}</h2>
+            </div>
+            <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
+              <stat.icon size={24} />
+            </div>
+          </GlassCard>
+        ))}
+      </div>
 
-      <Grid container spacing={3}>
-        {/* Row 1: KPI Cards */}
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <KPICard
-            title="Active Agents"
-            value={totalAgents}
-            subtext="Online endpoints"
-            trend="up"
-            data={sparklineData1}
-            color="#4caf50"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-           <KPICard
-            title="Open Vulnerabilities"
-            value={totalVulns}
-            subtext="Detected in scans"
-            trend={totalVulns > 0 ? "down" : "flat"} // Logic: High vulns is "bad" so we might want to color differently, keeping simple for now
-            data={sparklineData2}
-            color="#f44336"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-           <KPICard
-            title="Integrity Events"
-            value={totalFim}
-            subtext="File changes detected"
-            trend="flat"
-            data={sparklineData3}
-            color="#00D1FF"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <Paper
-            sx={{
-              p: 2,
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: 'background.paper',
-              border: '1px solid rgba(255,255,255,0.08)',
-              position: 'relative'
-            }}
-          >
-            <Typography variant="subtitle2" color="text.secondary" sx={{ position: 'absolute', top: 20, left: 20 }}>
-              System Health Score
-            </Typography>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <Box sx={{ height: 180, width: '100%', mt: 2 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart
-                  innerRadius="70%"
-                  outerRadius="100%"
-                  data={[{ name: 'Health', value: 85, fill: '#00D1FF' }]}
-                  startAngle={180}
-                  endAngle={0}
-                >
-                  <RadialBar background dataKey="value" cornerRadius={10} />
-                </RadialBarChart>
-              </ResponsiveContainer>
-            </Box>
+        {/* Left Column: System Health */}
+        <div className="space-y-6">
+           <GlassCard title="Resource Monitor" icon={<Activity size={18} />}>
+              <div className="grid grid-cols-2 gap-4 h-40">
+                <ResourceGauge value={45} label="CPU Load" />
+                <ResourceGauge value={72} label="Memory" color="#8b5cf6" />
+              </div>
+              <div className="mt-4 space-y-2">
+                 <div className="flex justify-between text-sm text-gray-400 font-mono">
+                    <span>/dev/sda1</span>
+                    <span className="text-green-400">HEALTHY</span>
+                 </div>
+                 <div className="w-full bg-slate-800 rounded-full h-1.5">
+                    <div className="bg-green-500 h-1.5 rounded-full w-3/4 shadow-[0_0_10px_lime]" />
+                 </div>
+              </div>
+           </GlassCard>
 
-            <Box sx={{ position: 'absolute', top: '55%', textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight="bold">85%</Typography>
-              <Typography variant="caption" color="text.secondary">Optimal</Typography>
-            </Box>
+           <GlassCard title="Active Incidents">
+              <div className="space-y-3">
+                 {[
+                    { id: 'INC-2091', type: 'Port Scan', sev: 'High', time: '2m ago' },
+                    { id: 'INC-2092', type: 'Auth Fail', sev: 'Low', time: '15m ago' },
+                 ].map((inc, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                       <div>
+                          <p className="text-red-400 font-bold text-sm font-mono">{inc.type}</p>
+                          <p className="text-xs text-gray-500">{inc.id}</p>
+                       </div>
+                       <span className="text-xs font-mono px-2 py-1 rounded bg-red-500/10 text-red-400">{inc.time}</span>
+                    </div>
+                 ))}
+              </div>
+              <div className="mt-4 text-center">
+                 <NeonButton variant="danger" className="w-full justify-center text-sm cursor-pointer">View All Incidents</NeonButton>
+              </div>
+           </GlassCard>
+        </div>
 
-            <Button
-                variant="outlined"
-                size="small"
-                href="/data-explorer"
-                sx={{ mt: 1, borderRadius: 20, textTransform: 'none' }}
-            >
-                View Threat Map
-            </Button>
-          </Paper>
-        </Grid>
+        {/* Center Column: Threat Map (Placeholder Visual) */}
+        <div className="lg:col-span-2">
+           <GlassCard title="Global Threat Vector" icon={<Globe size={18} />} className="h-full min-h-[400px]">
+              <div className="relative h-full w-full rounded-xl overflow-hidden bg-black/40 border border-white/5 flex items-center justify-center group">
+                 {/* Decorative Map Background */}
+                 <div className="absolute inset-0 opacity-30 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center invert filter brightness-50" />
 
-        {/* Row 2: Large Charts */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper sx={{ p: 3, height: 400, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' }}>
-             <Box sx={{ mb: 3 }}>
-               <Typography variant="subtitle2" color="text.secondary">Event Volume</Typography>
-               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                 <Typography variant="h4" fontWeight="bold">{totalEvents}</Typography>
-                 <Chip label="+8%" size="small" sx={{ bgcolor: 'rgba(76, 175, 80, 0.1)', color: '#4caf50', height: 20, fontSize: '0.7rem' }} />
-               </Box>
-               <Typography variant="caption" color="text.secondary">Total processed events (Last 24h)</Typography>
-             </Box>
-             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={activityData}>
-                <defs>
-                  <linearGradient id="colorEvents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#00D1FF" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} />
-                <Tooltip contentStyle={{ backgroundColor: '#1E293B', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8 }} itemStyle={{ color: '#F8FAFC' }} />
-                <Area type="monotone" dataKey="events" stroke="#00D1FF" strokeWidth={3} fillOpacity={1} fill="url(#colorEvents)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
+                 {/* Animated Pings */}
+                 <div className="absolute top-1/3 left-1/4 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                 <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-cyan-500 rounded-full animate-ping delay-75" />
+                 <div className="absolute bottom-1/3 right-1/4 w-3 h-3 bg-yellow-500 rounded-full animate-ping delay-150" />
 
-        <Grid size={{ xs: 12, lg: 6 }}>
-           {/* Replaced Vulnerability Trends with Forecast Chart for Demo */}
-           {/* <Paper sx={{ p: 3, height: 400, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' }}> ... </Paper> */}
-           <ForecastChart />
-        </Grid>
-      </Grid>
-    </Box>
+                 <div className="z-10 text-center">
+                    <Lock className="h-12 w-12 text-cyan-500 mx-auto mb-4 opacity-80" />
+                    <p className="text-gray-400 font-mono text-sm">Real-time Visualization Active</p>
+                 </div>
+              </div>
+           </GlassCard>
+        </div>
+
+        {/* Bottom Wide: Sentinel */}
+        <div className="lg:col-span-3">
+           <SentinelChat />
+        </div>
+      </div>
+    </MainLayout>
   );
 };
 
