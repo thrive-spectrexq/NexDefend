@@ -44,6 +44,7 @@ import {
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/store/authSlice';
+import SentinelChat from '../components/SentinelChat'; // Import Chat
 
 const drawerWidth = 260;
 
@@ -395,6 +396,7 @@ const MainLayout: React.FC = () => {
       >
         <Outlet />
       </Box>
+      <SentinelChat /> {/* Add Chat Here */}
     </Box>
   );
 };

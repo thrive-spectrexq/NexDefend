@@ -29,6 +29,9 @@ func ProxyToPython(w http.ResponseWriter, r *http.Request) {
 	// Re-create the body reader for the new request
 	proxyReq, _ := http.NewRequest(r.Method, targetURL, bytes.NewBuffer(body))
 
+	// Copy Query Parameters
+	proxyReq.URL.RawQuery = r.URL.RawQuery
+
 	// Copy Headers
 	for name, values := range r.Header {
 		for _, value := range values {

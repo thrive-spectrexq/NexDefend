@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Typography, Paper, Grid, Box, Button, Chip, Alert, CircularProgress } from '@mui/material';
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar
 } from 'recharts';
 import { getDashboardStats } from '@/api/dashboard';
+import ForecastChart from '../components/ForecastChart';
 
 // Types matching your Go Backend 'DashboardSummary' and 'ModuleStat' structs
 interface ModuleStat {
@@ -134,21 +135,21 @@ const DashboardPage: React.FC = () => {
     { name: 'Sun', events: totalEvents > 0 ? totalEvents : 2500 },
   ];
 
-  const threatData = useMemo(() => [
-    { name: 'Jan', low: 40, critical: 24 },
-    { name: 'Feb', low: 30, critical: 13 },
-    { name: 'Mar', low: 20, critical: 98 },
-    { name: 'Apr', low: 27, critical: 39 },
-    { name: 'May', low: 18, critical: 48 },
-    { name: 'Jun', low: 23, critical: 38 },
-  ], []);
+  // const threatData = useMemo(() => [
+  //   { name: 'Jan', low: 40, critical: 24 },
+  //   { name: 'Feb', low: 30, critical: 13 },
+  //   { name: 'Mar', low: 20, critical: 98 },
+  //   { name: 'Apr', low: 27, critical: 39 },
+  //   { name: 'May', low: 18, critical: 48 },
+  //   { name: 'Jun', low: 23, critical: 38 },
+  // ], []);
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
 
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" fontWeight="bold">Security Overview</Typography>
+        <Typography variant="h5" fontWeight="bold">Security Dashboard</Typography>
         {error && <Alert severity="warning" sx={{ mt: 2 }}>{error}</Alert>}
       </Box>
 
@@ -262,25 +263,9 @@ const DashboardPage: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
-           <Paper sx={{ p: 3, height: 400, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' }}>
-             <Box sx={{ mb: 3 }}>
-               <Typography variant="subtitle2" color="text.secondary">Vulnerability Trends</Typography>
-               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                 <Typography variant="h4" fontWeight="bold">Critical & Low</Typography>
-               </Box>
-               <Typography variant="caption" color="text.secondary">Detected vulnerabilities by severity</Typography>
-             </Box>
-             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={threatData} barSize={30}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#1E293B', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8 }} itemStyle={{ color: '#F8FAFC' }} />
-                <Bar dataKey="low" name="Low Severity" stackId="a" fill="#00D1FF" radius={[0, 0, 4, 4]} />
-                <Bar dataKey="critical" name="Critical" stackId="a" fill="#f44336" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
+           {/* Replaced Vulnerability Trends with Forecast Chart for Demo */}
+           {/* <Paper sx={{ p: 3, height: 400, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.08)' }}> ... </Paper> */}
+           <ForecastChart />
         </Grid>
       </Grid>
     </Box>
