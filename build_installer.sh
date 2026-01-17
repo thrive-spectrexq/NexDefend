@@ -1,54 +1,42 @@
 #!/bin/bash
-VERSION=${1:-"1.0.0"}
-BUNDLE_DIR="nexdefend_installer"
+set -e
 
-echo "🚀 Building NexDefend Enterprise v${VERSION}..."
+VERSION="v1.0.0"
+echo "--- NexDefend Enterprise Builder ($VERSION) ---"
 
-mkdir -p $BUNDLE_DIR/configs
-mkdir -p $BUNDLE_DIR/database
+# 1. Build the Unified Core Image (Go + Python + Tools)
+echo "[1/3] Building Core Image..."
+docker build -t nexdefend/core:$VERSION .
 
-# 1. Build Production Images
-echo "🔨 Building API..."
-docker build -t nexdefend-api:latest -f Dockerfile .
+# 2. Build the Frontend Image
+echo "[2/3] Building Frontend Image..."
+cd nexdefend-frontend
+docker build -t nexdefend/frontend:$VERSION -f Dockerfile.prod .
+cd ..
 
-echo "🔨 Building Frontend (Production)..."
-# Note: Using Dockerfile.prod here!
-docker build -t nexdefend-frontend:latest -f nexdefend-frontend/Dockerfile.prod nexdefend-frontend/
-
-echo "🔨 Building AI Service..."
-docker build -t nexdefend-ai:latest -f nexdefend-ai/Dockerfile nexdefend-ai/
-
-# 2. Pull Infrastructure Images
-echo "⬇️  Pulling dependencies..."
+# 3. Pull Dependency Images (Postgres, Kafka, OpenSearch)
+echo "[3/3] Pulling Dependencies..."
 docker pull postgres:15-alpine
-docker pull jasonish/suricata:latest
+docker pull bitnami/kafka:latest
 docker pull opensearchproject/opensearch:latest
-docker pull otel/opentelemetry-collector:0.87.0
 
-# 3. Save Images to Archive
-echo "💾 Saving images to offline archive..."
+# 4. Package for Offline Use
+echo "--- Packaging for Offline Deployment ---"
+mkdir -p release/images
+
+# Save all images into one tarball (or separate ones)
+echo "Saving Docker images (this may take a while)..."
 docker save \
-    nexdefend-api:latest \
-    nexdefend-frontend:latest \
-    nexdefend-ai:latest \
+    nexdefend/core:$VERSION \
+    nexdefend/frontend:$VERSION \
     postgres:15-alpine \
-    jasonish/suricata:latest \
+    bitnami/kafka:latest \
     opensearchproject/opensearch:latest \
-    otel/opentelemetry-collector:0.87.0 \
-    | gzip > $BUNDLE_DIR/images.tar.gz
+    | gzip > release/images/nexdefend-offline-bundle.tar.gz
 
-# 4. Copy Configs & Scripts
-echo "📂 Copying configurations..."
-cp docker-compose.prod.yml $BUNDLE_DIR/docker-compose.yml
-cp database/init.sql $BUNDLE_DIR/database/
-cp otel-collector-config.yaml $BUNDLE_DIR/configs/
-cp sample_eve.json $BUNDLE_DIR/configs/
-cp install.sh $BUNDLE_DIR/
-cp install.ps1 $BUNDLE_DIR/
+# Copy deployment configs
+cp docker-compose.prod.yml release/docker-compose.yml
+cp install.sh release/install.sh
+chmod +x release/install.sh
 
-# 5. Compress Final Bundle
-echo "📦 Finalizing Bundle..."
-tar -czf nexdefend-enterprise-v${VERSION}.tar.gz $BUNDLE_DIR
-rm -rf $BUNDLE_DIR
-
-echo "✅ DONE! Artifact: nexdefend-enterprise-v${VERSION}.tar.gz"
+echo "✅ Build Complete! Installer located in 'release/' folder."
