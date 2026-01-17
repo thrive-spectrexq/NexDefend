@@ -25,7 +25,7 @@ Powered by advanced AI and real-time analytics, NexDefend provides deep visibili
 * **Workload Health**: Continuous health checks for distributed cloud services.
 
 ### Cognitive Intelligence (GenAI & Predictive)
-* **GenAI Copilot ("Sentinel")**: Context-aware AI assistant powered by Ollama (Mistral) for querying system state and threat insights.
+* **GenAI Copilot ("NexDefend AI")**: Context-aware AI assistant powered by Ollama (Mistral) for querying system state and threat insights.
 * **Predictive Forecasting**: Linear regression modeling to forecast resource usage trends for the next 24 hours.
 
 ## Architecture
