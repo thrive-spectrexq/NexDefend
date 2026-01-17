@@ -123,7 +123,7 @@ export const MainLayout = () => {
               </div>
               {isSidebarOpen && (
                 <div className="flex-1 min-w-0">
-                   <p className="text-sm font-bold text-white truncate">Bright Asiedu</p>
+                   <p className="text-sm font-bold text-white truncate">Nexdefend Admin</p>
                    <div className="flex items-center gap-2">
                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                      <p className="text-xs text-gray-500">Lead Admin</p>
