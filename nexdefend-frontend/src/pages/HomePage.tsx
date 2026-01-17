@@ -5,6 +5,8 @@ import {
   Activity, Cloud, Zap
 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 // Animation variants for the "Circle Motion Graphics"
 const circleVariants = {
@@ -57,27 +59,7 @@ const HomePage = () => {
         <div className="absolute w-[200px] h-[200px] bg-cyan-500/10 blur-[80px] rounded-full animate-pulse" />
       </div>
 
-      {/* --- NAVIGATION --- */}
-      <nav className="relative z-10 container mx-auto px-6 h-24 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Shield className="h-8 w-8 text-cyan-400" />
-            <div className="absolute inset-0 bg-cyan-400 blur-lg opacity-40" />
-          </div>
-          <span className="text-2xl font-mono font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-            NEXDEFEND
-          </span>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link to="/login" className="text-gray-400 hover:text-cyan-400 font-mono text-sm transition-colors tracking-wide">
-            // CONSOLE LOGIN
-          </Link>
-          <Link to="/register" className="group relative px-6 py-2 bg-cyan-500/10 border border-cyan-500/50 rounded text-cyan-400 font-mono text-sm font-bold overflow-hidden hover:bg-cyan-500/20 transition-all">
-            <span className="relative z-10 group-hover:text-white transition-colors">INITIALIZE &gt;</span>
-            <div className="absolute inset-0 bg-cyan-500/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* --- HERO SECTION --- */}
       <main className="relative z-10 container mx-auto px-6 pt-20 pb-32">
@@ -228,6 +210,8 @@ const HomePage = () => {
 
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 };
