@@ -23,6 +23,12 @@ DB_PASS = os.getenv("DB_PASSWORD", "nexdefend")
 DB_NAME = os.getenv("DB_NAME", "nexdefend")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
+# Define columns explicitly for consistency
+EVENT_COLUMNS = [
+    "id", "timestamp", "event_type", "src_ip", "dest_ip", "dest_port",
+    "http", "tls", "dns", "alert", "is_analyzed"
+]
+
 def get_db_connection():
     """Establishes a connection to either SQLite or PostgreSQL based on env."""
     try:
@@ -73,13 +79,16 @@ def execute_query(query, params=()):
         conn.close()
 
 def fetch_all_suricata_events():
-    return execute_query("SELECT id, timestamp, event_type, src_ip, dest_ip, dest_port, http, tls, dns, alert, is_analyzed FROM suricata_events;")
+    cols = ", ".join(EVENT_COLUMNS)
+    return execute_query(f"SELECT {cols} FROM suricata_events;")
 
 def fetch_unprocessed_suricata_events():
-    return execute_query("SELECT id, timestamp, event_type, src_ip, dest_ip, dest_port, http, tls, dns, alert, is_analyzed FROM suricata_events WHERE is_analyzed = 0 OR is_analyzed IS NULL;")
+    cols = ", ".join(EVENT_COLUMNS)
+    return execute_query(f"SELECT {cols} FROM suricata_events WHERE is_analyzed = 0 OR is_analyzed IS NULL;")
 
 def fetch_suricata_event_by_id(event_id):
-    results = execute_query("SELECT id, timestamp, event_type, src_ip, dest_ip, dest_port, http, tls, dns, alert, is_analyzed FROM suricata_events WHERE id = ?;", (event_id,))
+    cols = ", ".join(EVENT_COLUMNS)
+    results = execute_query(f"SELECT {cols} FROM suricata_events WHERE id = ?;", (event_id,))
     return results[0] if results else None
 
 def update_event_analysis_status(event_id, status):
