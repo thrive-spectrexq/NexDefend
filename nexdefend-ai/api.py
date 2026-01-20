@@ -1,6 +1,8 @@
 import os
 import logging
 import time
+import requests
+import nmap
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 from prometheus_client import Counter, make_wsgi_app, Histogram
@@ -37,7 +39,13 @@ cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "*").split(",")
 CORS(app, origins=cors_origins)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
+app.config["AI_SERVICE_TOKEN"] = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
+CORE_API_URL = os.getenv("CORE_API_URL", "http://localhost:8080/api/v1")
+
+# Internal Counters
+EVENTS_PROCESSED = Counter('events_processed_total', 'Total events processed')
+ANOMALIES_DETECTED = Counter('anomalies_detected_total', 'Total anomalies detected')
+INCIDENTS_CREATED = Counter('incidents_created_total', 'Total incidents created')
 
 # --- Routes ---
 
@@ -80,14 +88,9 @@ def get_forecast():
 # 3. Anomaly Detection (Existing)
 @app.route("/analyze-event/<int:event_id>", methods=["POST"])
 def analyze_single_event(event_id):
-    # This is a simplified version of the original handler to maintain structure
-    # while acknowledging the refactoring request.
-    # In a real merge, we would carefully preserve the full logic from the previous file.
-    # For now, we will return the basic structure as requested by the prompt which seems
-    # to want to simplify/clean up the API.
     try:
         auth_header = request.headers.get("Authorization")
-        if not auth_header or auth_header != f"Bearer {AI_SERVICE_TOKEN}":
+        if not auth_header or auth_header != f"Bearer {app.config['AI_SERVICE_TOKEN']}":
             return make_response(jsonify({"error": "Unauthorized"}), 401)
 
         event = fetch_suricata_event_by_id(event_id)
@@ -97,11 +100,51 @@ def analyze_single_event(event_id):
         features = preprocess_events([event], is_training=False)
         anomaly_result = detect_anomalies(features)
 
+        EVENTS_PROCESSED.inc()
+
         update_event_analysis_status(event_id, True)
 
         is_anomaly = False
         if len(anomaly_result) > 0 and anomaly_result[0] == -1:
             is_anomaly = True
+            ANOMALIES_DETECTED.inc()
+
+            # Trigger Incident Creation in Core API
+            try:
+                # Safely handle sqlite3.Row and potentially None alert
+                # Convert row to dict
+                if isinstance(event, dict):
+                    event_dict = event
+                elif hasattr(event, 'keys'):
+                     # sqlite3.Row supports keys() and iteration over values
+                    event_dict = dict(zip(event.keys(), event))
+                else:
+                    event_dict = dict(event)
+
+                alert_data = event_dict.get('alert')
+
+                if not alert_data:
+                    alert_data = {}
+                elif isinstance(alert_data, str):
+                    try:
+                        import json
+                        alert_data = json.loads(alert_data)
+                    except:
+                        pass
+
+                if not isinstance(alert_data, dict):
+                    alert_data = {}
+
+                signature = alert_data.get('signature', 'Unknown Alert')
+
+                requests.post(f'{CORE_API_URL}/incidents', json={
+                    "description": f"AI Anomaly Detected: {signature}",
+                    "severity": "Critical",
+                    "related_event_id": event_id
+                })
+                INCIDENTS_CREATED.inc()
+            except Exception as req_err:
+                logging.error(f"Failed to create incident: {req_err}")
 
         return jsonify({"status": "analyzed", "event_id": event_id, "is_anomaly": is_anomaly})
     except Exception as e:
@@ -119,6 +162,71 @@ def train():
         train_model(features)
         return jsonify({"message": "Training complete"})
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 5. Scan Endpoint (Restored)
+@app.route('/scan', methods=['POST'])
+def scan_host():
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or auth_header != f"Bearer {app.config['AI_SERVICE_TOKEN']}":
+        return make_response(jsonify({"error": "Unauthorized"}), 401)
+
+    data = request.get_json()
+    target = data.get('target')
+
+    # Basic validation to prevent command injection
+    if not target or ';' in target or ' ' in target:
+         return jsonify({"error": "Invalid target format"}), 400
+
+    try:
+        nm = nmap.PortScanner()
+        nm.scan(target, arguments='-sV')
+
+        open_ports = []
+        for host in nm.all_hosts():
+            for proto in nm[host].all_protocols():
+                lport = nm[host][proto].keys()
+                for port in lport:
+                    state = nm[host][proto][port]['state']
+                    if state == 'open':
+                         service = nm[host][proto][port]['name']
+                         open_ports.append(f"{port}/{service}")
+
+                         # Report Vulnerability to Core API
+                         try:
+                             requests.post(f'{CORE_API_URL}/vulnerabilities', json={
+                                 "description": f"Open port discovered: {port}/{service}",
+                                 "severity": "High",
+                                 "host": target
+                             })
+                         except Exception as req_err:
+                             logging.error(f"Failed to report vulnerability: {req_err}")
+
+        return jsonify({"status": "Scan complete", "open_ports": open_ports})
+    except Exception as e:
+        logging.error(f"Scan error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# 6. API Metrics (Restored)
+@app.route('/api-metrics', methods=['GET'])
+def api_metrics():
+    return jsonify({
+        "events_processed": EVENTS_PROCESSED._value.get(),
+        "anomalies_detected": ANOMALIES_DETECTED._value.get(),
+        "incidents_created": INCIDENTS_CREATED._value.get()
+    })
+
+# 7. Score Endpoint (Restored)
+@app.route('/score', methods=['POST'])
+def score_event():
+    try:
+        data = request.get_json()
+        features = preprocess_events([data], is_training=False)
+        scores = score_anomalies(features)
+        score_val = scores[0] if len(scores) > 0 else 0
+        return jsonify({"score": score_val})
+    except Exception as e:
+        logging.error(f"Score error: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":

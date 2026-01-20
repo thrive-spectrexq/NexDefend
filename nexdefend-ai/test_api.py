@@ -42,12 +42,19 @@ def test_scan_host_success(mock_requests_post, mock_port_scanner, client):
     target = '127.0.0.1'
     mock_nm = MagicMock()
     mock_nm.all_hosts.return_value = [target]
-    mock_nm.__getitem__.return_value = {
+
+    # Mock host object that behaves like a dict but has all_protocols method
+    mock_host_data = {
         'tcp': {
             22: {'state': 'open', 'name': 'ssh'},
             80: {'state': 'open', 'name': 'http'}
         }
     }
+    mock_host = MagicMock()
+    mock_host.all_protocols.return_value = list(mock_host_data.keys())
+    mock_host.__getitem__.side_effect = mock_host_data.__getitem__
+
+    mock_nm.__getitem__.return_value = mock_host
     mock_port_scanner.return_value = mock_nm
     
     # Mock the backend vulnerability creation
@@ -92,8 +99,19 @@ def test_scan_host_command_injection(mock_port_scanner, client):
 def test_analyze_event_creates_incident(mock_requests_post, mock_detect, mock_preprocess, mock_fetch, mock_update_status, client):
     """Tests that an anomalous event triggers an incident creation call."""
     # Mock the data
-    mock_event = (1, '2025-11-11T20:00:00', 'alert', '1.2.3.4', '5.6.7.8', 80, 
-                  None, None, None, {'signature': 'Test Attack', 'severity': 1}, False)
+    mock_event = {
+        'id': 1,
+        'timestamp': '2025-11-11T20:00:00',
+        'event_type': 'alert',
+        'src_ip': '1.2.3.4',
+        'dest_ip': '5.6.7.8',
+        'dest_port': 80,
+        'http': None,
+        'tls': None,
+        'dns': None,
+        'alert': {'signature': 'Test Attack', 'severity': 1},
+        'is_analyzed': False
+    }
     mock_fetch.return_value = mock_event
     mock_preprocess.return_value = MagicMock() # Just needs to exist
     mock_detect.return_value = [-1] # -1 means anomaly
