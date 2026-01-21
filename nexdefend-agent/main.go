@@ -381,11 +381,11 @@ func startHeartbeat() {
 			log.Printf("Failed to send heartbeat: %v", err)
 			continue
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			log.Printf("Failed to send heartbeat, status code: %d", resp.StatusCode)
 		}
+		resp.Body.Close()
 	}
 }
 
