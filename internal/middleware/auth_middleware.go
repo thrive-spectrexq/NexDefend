@@ -36,3 +36,12 @@ func AuthMiddleware(secretKey []byte) func(http.Handler) http.Handler {
 		})
 	}
 }
+
+// GetUserClaims retrieves claims from context
+func GetUserClaims(ctx context.Context) *auth.Claims {
+	claims, ok := ctx.Value(userClaimsKey).(*auth.Claims)
+	if !ok {
+		return nil
+	}
+	return claims
+}

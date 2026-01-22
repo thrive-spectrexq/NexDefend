@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/thrive-spectrexq/NexDefend/internal/auth"
+	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -112,20 +113,15 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 // GetProfile returns the authenticated user's details
 func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	// Extract user ID from context (set by AuthMiddleware)
-	userID, ok := r.Context().Value("user_id").(float64) // JWT often decodes numbers as float64
-	if !ok {
-		// Fallback for int if middleware sets it as int
-		if uidInt, okInt := r.Context().Value("user_id").(int); okInt {
-			userID = float64(uidInt)
-		} else {
-			http.Error(w, "Unauthorized: User ID missing", http.StatusUnauthorized)
-			return
-		}
+	claims := middleware.GetUserClaims(r.Context())
+	if claims == nil {
+		http.Error(w, "Unauthorized: User ID missing", http.StatusUnauthorized)
+		return
 	}
+	userID := claims.UserID
 
 	var user models.User
-	if err := h.db.First(&user, int(userID)).Error; err != nil {
+	if err := h.db.First(&user, userID).Error; err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
@@ -137,7 +133,12 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 // UpdateProfile allows users to change their info
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	userID := int(r.Context().Value("user_id").(float64)) // Type assertion based on middleware
+	claims := middleware.GetUserClaims(r.Context())
+	if claims == nil {
+		http.Error(w, "Unauthorized: User ID missing", http.StatusUnauthorized)
+		return
+	}
+	userID := claims.UserID
 
 	var req UpdateProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

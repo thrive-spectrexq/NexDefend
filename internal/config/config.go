@@ -37,7 +37,7 @@ func LoadConfig() *Config {
 
 	soarURL := os.Getenv("SOAR_URL")
 	if soarURL == "" {
-		soarURL = "http://localhost:8082" // Default fallback (assuming SOAR is on a different port locally)
+		soarURL = "http://localhost:8081" // Default fallback to match Monolith mode port
 	}
 
 	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
