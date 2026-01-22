@@ -16,6 +16,7 @@ python api.py &
 # 3. Start SOAR Engine (Background)
 # FIX: Force SOAR to use port 8081 instead of inheriting Render's PORT=8080
 echo "Starting SOAR Engine..."
+export SOAR_URL="http://localhost:8081"
 PORT=8081 /nexdefend-soar-bin &
 
 # 4. Start Go Backend (Foreground)
