@@ -6,25 +6,30 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"time"
+
+	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
 // Scanner defines the interface for a Trivy scanner.
 type Scanner interface {
-	Scan(target string) ([]Vulnerability, error)
+	Scan(target string) ([]models.Vulnerability, error)
 }
 
 // MockScanner is a mock implementation of the Scanner interface for testing.
 type MockScanner struct{}
 
 // Scan performs a mock scan.
-func (s *MockScanner) Scan(target string) ([]Vulnerability, error) {
-	return []Vulnerability{
+func (s *MockScanner) Scan(target string) ([]models.Vulnerability, error) {
+	return []models.Vulnerability{
 		{
-			ID:          "CVE-2023-1234",
+			Title:       "CVE-2023-1234",
 			Severity:    "HIGH",
 			Description: "Mock vulnerability",
-			Package:     "openssl",
-			FixedIn:     "3.0.0",
+			PackageName: "openssl",
+			Status:      "Open",
+			HostIP:      target,
+			DiscoveredAt: time.Now(),
 		},
 	}, nil
 }
@@ -40,17 +45,19 @@ func NewScanner() *CLIWrapper {
 }
 
 // Scan performs a real scan using the Trivy CLI
-func (s *CLIWrapper) Scan(target string) ([]Vulnerability, error) {
+func (s *CLIWrapper) Scan(target string) ([]models.Vulnerability, error) {
 	log.Printf("Executing Trivy scan on: %s", target)
 
 	// Command: trivy image --format json --severity HIGH,CRITICAL [target]
+	// Note: 'image' is default, but for host scan we might use 'fs' or 'repo'.
+	// Assuming 'image' for container/docker targets as per context, or generic usage.
 	cmd := exec.Command(s.BinaryPath, "image", "--format", "json", "--severity", "HIGH,CRITICAL", "--quiet", target)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("trivy execution failed: %v, output: %s", err, string(output))
 	}
 
-	return parseTrivyOutput(output)
+	return parseTrivyOutput(output, target)
 }
 
 // Internal structures for parsing Trivy JSON
@@ -62,38 +69,32 @@ type trivyResult struct {
 			Severity         string `json:"Severity"`
 			Description      string `json:"Description"`
 			FixedVersion     string `json:"FixedVersion"`
+			Title            string `json:"Title"`
 		} `json:"Vulnerabilities"`
 	} `json:"Results"`
 }
 
-// Vulnerability represents a normalized finding
-type Vulnerability struct {
-	ID          string
-	Severity    string
-	Description string
-	Package     string
-	FixedIn     string
-}
-
-func parseTrivyOutput(data []byte) ([]Vulnerability, error) {
+func parseTrivyOutput(data []byte, target string) ([]models.Vulnerability, error) {
 	var report trivyResult
 	if err := json.Unmarshal(data, &report); err != nil {
 		// Handle empty or malformed output gracefully
 		if strings.Contains(string(data), "null") {
-			return []Vulnerability{}, nil
+			return []models.Vulnerability{}, nil
 		}
 		return nil, fmt.Errorf("failed to parse trivy JSON: %v", err)
 	}
 
-	var vulns []Vulnerability
+	var vulns []models.Vulnerability
 	for _, result := range report.Results {
 		for _, v := range result.Vulnerabilities {
-			vulns = append(vulns, Vulnerability{
-				ID:          v.VulnerabilityID,
+			vulns = append(vulns, models.Vulnerability{
+				Title:       v.VulnerabilityID,
 				Severity:    v.Severity,
 				Description: v.Description,
-				Package:     v.PkgName,
-				FixedIn:     v.FixedVersion,
+				PackageName: v.PkgName,
+				Status:      "Open",
+				HostIP:      target,
+				DiscoveredAt: time.Now(),
 			})
 		}
 	}
