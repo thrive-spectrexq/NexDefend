@@ -40,7 +40,7 @@ func NewRouter(
 	caseHandler := handlers.NewCaseManagementHandler(database.GetDB())
 	settingsHandler := handlers.NewSettingsHandler(database.GetDB())
 	metricsHandler := handlers.NewMetricsHandler(database)
-	scanHandler := handlers.NewScanHandler()
+	scanHandler := handlers.NewScanHandler(database.GetDB())
 	hostHandler := handlers.NewHostHandler(database.GetDB())
 
 	// Proxies
