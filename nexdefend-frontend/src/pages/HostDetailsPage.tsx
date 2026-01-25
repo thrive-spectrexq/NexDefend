@@ -10,15 +10,45 @@ import {
 import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import client from '@/api/client';
 
-// Types matching Backend
+interface Process {
+  pid: number;
+  name: string;
+  user: string;
+  cpu: number;
+  memory: number;
+  state: string;
+}
+
+interface Disk {
+  mount_point: string;
+  filesystem: string;
+  used: number;
+  total: number;
+  percent: number;
+}
+
+interface NetworkInterface {
+  name: string;
+  ip: string;
+  mac: string;
+  bytes_sent: number;
+  bytes_recv: number;
+}
+
+interface User {
+  username: string;
+  terminal: string;
+  login_time: string;
+}
+
 interface HostDetails {
   summary: { hostname: string; ip: string; status: string; uptime: string; agent_version: string; last_seen: string };
   system: { os: string; kernel: string; model: string; manufacturer: string; serial: string };
   resources: { cpu_percent: number; memory_percent: number; memory_used: number; memory_total: number };
-  processes: any[];
-  disks: any[];
-  network: any[];
-  users: any[];
+  processes: Process[];
+  disks: Disk[];
+  network: NetworkInterface[];
+  users: User[];
 }
 
 const HostDetailsPage: React.FC = () => {
@@ -42,6 +72,7 @@ const HostDetailsPage: React.FC = () => {
 
   useEffect(() => {
     fetchDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (loading || !data) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;

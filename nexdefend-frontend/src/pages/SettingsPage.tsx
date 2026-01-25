@@ -45,8 +45,7 @@ const SettingsPage: React.FC = () => {
       const response = await client.get<Setting[]>('/settings');
       setSettings(response.data || []);
       setError(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError('Failed to load settings.');
     } finally {
       setLoading(false);
@@ -67,8 +66,7 @@ const SettingsPage: React.FC = () => {
       await client.put('/settings', settings); // Uses existing UpdateSettings endpoint
       setSuccess('Settings saved successfully.');
       fetchSettings();
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError('Failed to save settings.');
     } finally {
       setSaving(false);
@@ -88,7 +86,7 @@ const SettingsPage: React.FC = () => {
           await client.put('/settings', defaults); // Use PUT (UpdateSettings) which handles creation in your backend
           setSuccess('Default settings initialized.');
           fetchSettings();
-      } catch (err) {
+      } catch {
           setError('Failed to initialize settings.');
       } finally {
           setSaving(false);
@@ -100,8 +98,9 @@ const SettingsPage: React.FC = () => {
           // Assuming a backend endpoint '/settings/test' exists
           await client.post('/settings/test', { key, value });
           setSuccess(`Connection test for ${key} passed!`);
-      } catch (err: any) {
-          setError(`Connection test failed: ${err.message || err}`);
+      } catch (err: unknown) {
+          const errorMessage = (err as { message?: string })?.message || String(err);
+          setError(`Connection test failed: ${errorMessage}`);
       }
   };
 

@@ -10,6 +10,14 @@ interface ConsoleLine {
   text: string;
 }
 
+interface Agent {
+  id: number;
+  hostname: string;
+  ip_address: string;
+  status: string;
+  [key: string]: unknown;
+}
+
 const ConsolePage: React.FC = () => {
   const [history, setHistory] = useState<ConsoleLine[]>([
       { type: 'out', text: 'NexDefend Security Protocol v2.5.0 initialized...' },
@@ -37,85 +45,70 @@ const ConsolePage: React.FC = () => {
     setProcessing(true);
 
     try {
-        switch (cmd) {
-            case 'help':
-                addLine('out', `Available Commands:
+        if (cmd === 'help') {
+            addLine('out', `Available Commands:
   help            - Show this help message
   status          - Check API connection health
   clear           - Clear terminal history
   agents          - List connected security agents (Real-time)
   scan <target>   - Initiate vulnerability scan (API)
   whoami          - Display current session info`);
-                break;
-
-            case 'clear':
-                setHistory([]);
-                break;
-
-            case 'whoami':
-                // Simple check for token or user info
-                const token = localStorage.getItem('token');
-                addLine('out', token ? 'User: Authenticated Admin (JWT)' : 'User: Guest (Limited Access)');
-                break;
-
-            case 'status':
-                // Ping the stats endpoint as a health check
-                try {
-                    const start = Date.now();
-                    await client.get('/dashboard/stats');
-                    const latency = Date.now() - start;
-                    addLine('out', `[SYSTEM STATUS]
+        } else if (cmd === 'clear') {
+            setHistory([]);
+        } else if (cmd === 'whoami') {
+            // Simple check for token or user info
+            const token = localStorage.getItem('token');
+            addLine('out', token ? 'User: Authenticated Admin (JWT)' : 'User: Guest (Limited Access)');
+        } else if (cmd === 'status') {
+            // Ping the stats endpoint as a health check
+            try {
+                const start = Date.now();
+                await client.get('/dashboard/stats');
+                const latency = Date.now() - start;
+                addLine('out', `[SYSTEM STATUS]
 ---------------------------
 API Gateway    : ONLINE (${latency}ms)
 Database       : CONNECTED
 Services       : ACTIVE`);
-                } catch (e) {
-                    addLine('err', `[!] System Unreachable: ${e}`);
-                }
-                break;
-
-            case 'agents':
-                addLine('out', '[*] Fetching agent list from /api/v1/assets...');
-                try {
-                    const assets = await getAgents();
-                    if (assets.length === 0) {
-                         addLine('out', 'No agents found registered in the system.');
-                    } else {
-                        let table = 'ID       HOSTNAME       IP              STATUS\n';
-                        table += '------------------------------------------------\n';
-                        assets.forEach((a: any) => {
-                            table += `${a.id.toString().padEnd(8)} ${a.hostname.padEnd(14)} ${a.ip_address.padEnd(15)} [${a.status.toUpperCase()}]\n`;
-                        });
-                        addLine('out', table);
-                    }
-                } catch (e) {
-                    addLine('err', `Failed to retrieve agents: ${e}`);
-                }
-                break;
-
-            case 'scan':
-                const target = args[1];
-                if (!target) {
-                    addLine('err', 'Usage: scan <target_ip_or_hostname>');
+            } catch (e) {
+                addLine('err', `[!] System Unreachable: ${e}`);
+            }
+        } else if (cmd === 'agents') {
+            addLine('out', '[*] Fetching agent list from /api/v1/assets...');
+            try {
+                const assets = await getAgents();
+                if (assets.length === 0) {
+                     addLine('out', 'No agents found registered in the system.');
                 } else {
-                    addLine('out', `[+] Initiating scan for target: ${target}...`);
-                    try {
-                        // Call your actual backend endpoint (scan_handler.go)
-                        // Note: The backend handler currently doesn't read the body, but we send it for future proofing
-                        await client.post('/scans', { target: target });
-                        addLine('out', `[SUCCESS] Scan job submitted for ${target}.`);
-                        addLine('out', `[INFO] Check 'Vulnerabilities' page for results.`);
-                    } catch (e) {
-                         addLine('err', `[!] Failed to start scan: ${e}`);
-                    }
+                    let table = 'ID       HOSTNAME       IP              STATUS\n';
+                    table += '------------------------------------------------\n';
+                    // Cast assets to any[] to iterate safely or use Asset interface
+                    (assets as Agent[]).forEach((a) => {
+                        table += `${a.id.toString().padEnd(8)} ${a.hostname.padEnd(14)} ${a.ip_address.padEnd(15)} [${a.status.toUpperCase()}]\n`;
+                    });
+                    addLine('out', table);
                 }
-                break;
-
-            case '':
-                break;
-
-            default:
-                addLine('err', `bash: ${cmd}: command not found`);
+            } catch (e) {
+                addLine('err', `Failed to retrieve agents: ${e}`);
+            }
+        } else if (cmd === 'scan') {
+            const target = args[1];
+            if (!target) {
+                addLine('err', 'Usage: scan <target_ip_or_hostname>');
+            } else {
+                addLine('out', `[+] Initiating scan for target: ${target}...`);
+                try {
+                    // Call your actual backend endpoint (scan_handler.go)
+                    // Note: The backend handler currently doesn't read the body, but we send it for future proofing
+                    await client.post('/scans', { target: target });
+                    addLine('out', `[SUCCESS] Scan job submitted for ${target}.`);
+                    addLine('out', `[INFO] Check 'Vulnerabilities' page for results.`);
+                } catch (e) {
+                     addLine('err', `[!] Failed to start scan: ${e}`);
+                }
+            }
+        } else if (cmd !== '') {
+            addLine('err', `bash: ${cmd}: command not found`);
         }
     } catch (err) {
         addLine('err', `Unexpected error: ${err}`);

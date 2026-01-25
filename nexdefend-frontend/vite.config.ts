@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/setupTests.ts',
     },
-    define: {} as any
+    define: {}
   }
 
   return config

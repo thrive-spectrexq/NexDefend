@@ -47,7 +47,7 @@ const SentinelChat: React.FC = () => {
     try {
       const res = await aiApi.chat(userMsg);
       setMessages(prev => [...prev, { role: 'ai', text: res.response }]);
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting to the AI core right now." }]);
     } finally {
       setLoading(false);

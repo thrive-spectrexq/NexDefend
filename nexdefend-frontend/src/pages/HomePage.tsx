@@ -285,8 +285,17 @@ const HomePage = () => {
 
 // --- SUB-COMPONENTS ---
 
-const FeatureCard = ({ icon, title, description, color, features, colSpan = "" }: any) => {
-  const colorClasses: any = {
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: 'blue' | 'red' | 'yellow' | 'purple' | 'cyan';
+  features: string[];
+  colSpan?: string;
+}
+
+const FeatureCard = ({ icon, title, description, color, features, colSpan = "" }: FeatureCardProps) => {
+  const colorClasses = {
     blue: "group-hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)]",
     red: "group-hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(239,68,68,0.15)]",
     yellow: "group-hover:border-yellow-500/50 hover:shadow-[0_0_30px_rgba(234,179,8,0.15)]",

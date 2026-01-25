@@ -8,7 +8,7 @@ export interface ForecastPoint {
 
 export const aiApi = {
   // Chat with NexDefend AI
-  chat: async (query: string, context?: any) => {
+  chat: async (query: string, context?: unknown) => {
     const response = await client.post('/ai/chat', { query, context });
     return response.data;
   },

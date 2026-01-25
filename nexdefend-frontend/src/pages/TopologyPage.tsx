@@ -35,7 +35,9 @@ const TopologyGraph: React.FC = () => {
         if (response && Array.isArray(response.nodes) && Array.isArray(response.links)) {
             // Create deep copies because D3 mutates objects directly
             setData({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 nodes: response.nodes.map((n: any) => ({ ...n })),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 links: response.links.map((l: any) => ({ ...l }))
             });
         } else {
@@ -68,7 +70,7 @@ const TopologyGraph: React.FC = () => {
     const color = d3.scaleOrdinal(d3.schemeCategory10);
 
     const simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id((d: any) => d.id).distance(100))
+      .force("link", d3.forceLink(links).id((d) => (d as Node).id).distance(100))
       .force("charge", d3.forceManyBody().strength(-300))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
@@ -86,11 +88,11 @@ const TopologyGraph: React.FC = () => {
       .selectAll("path") // Changed from circle to path
       .data(nodes)
       .join("path")
-      .attr("d", (d: any) => d.group === 1 ? ICONS.server : ICONS.router) // Conditional Icon
-      .attr("fill", (d: any) => color(String(d.group)))
+      .attr("d", (d) => d.group === 1 ? ICONS.server : ICONS.router) // Conditional Icon
+      .attr("fill", (d) => color(String(d.group)))
       .attr("transform", "scale(1.5)") // Scale up icons
       // Add Tooltip Events
-      .on("mouseover", (event, d: any) => {
+      .on("mouseover", (event, d) => {
           d3.select("#tooltip")
             .style("opacity", 1)
             .html(`<strong>${d.id}</strong><br/>Group: ${d.group}<br/>Status: Active`)
@@ -98,7 +100,7 @@ const TopologyGraph: React.FC = () => {
             .style("top", (event.pageY - 28) + "px");
       })
       .on("mouseout", () => d3.select("#tooltip").style("opacity", 0))
-      // @ts-ignore
+      // @ts-expect-error - d3 drag types are complex with custom nodes
       .call(drag(simulation));
 
     const labels = svg.append("g")
@@ -111,33 +113,37 @@ const TopologyGraph: React.FC = () => {
         .style("fill", "#e2e8f0") // Lighter text for dark mode
         .style("font-size", "12px")
         .style("font-family", "Roboto, sans-serif")
-        .text((d: any) => d.id);
+        .text((d) => d.id);
 
     simulation.on("tick", () => {
       link
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
+        .attr("x1", (d) => (d.source as Node).x!)
+        .attr("y1", (d) => (d.source as Node).y!)
+        .attr("x2", (d) => (d.target as Node).x!)
+        .attr("y2", (d) => (d.target as Node).y!);
 
       node
-        .attr("transform", (d: any) => `translate(${d.x},${d.y}) scale(1.5)`);
+        .attr("transform", (d) => `translate(${d.x},${d.y}) scale(1.5)`);
 
       labels
-        .attr("x", (d: any) => d.x)
-        .attr("y", (d: any) => d.y);
+        .attr("x", (d) => d.x!)
+        .attr("y", (d) => d.y!);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function drag(simulation: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function dragstarted(event: any) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function dragged(event: any) {
         event.subject.fx = event.x;
         event.subject.fy = event.y;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function dragended(event: any) {
         if (!event.active) simulation.alphaTarget(0);
         event.subject.fx = null;

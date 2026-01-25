@@ -65,7 +65,7 @@ const ProfilePage: React.FC = () => {
       }
       setMessage({ type: 'success', text: 'Profile updated successfully' });
       // In real app we would refetch, but for demo we just keep state
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Failed to update profile' });
     } finally {
       setLoading(false);
@@ -91,9 +91,11 @@ const ProfilePage: React.FC = () => {
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
+    } catch (err: unknown) {
         // Backend returns 401 for bad old password
-        if (err.response?.status === 401) {
+        // Use type assertion for basic Axios-like error structure if needed
+        const error = err as { response?: { status: number } };
+        if (error.response?.status === 401) {
             setMessage({ type: 'error', text: 'Incorrect old password' });
         } else {
             setMessage({ type: 'error', text: 'Failed to update password' });

@@ -4,7 +4,7 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut
+  LogOut, LucideIcon
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -44,7 +44,14 @@ const NAV_ITEMS = [
   },
 ];
 
-const SidebarItem = ({ icon: Icon, label, path, active }: any) => (
+interface SidebarItemProps {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+  active: boolean;
+}
+
+const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => (
   <Link
     to={path}
     className={clsx(
