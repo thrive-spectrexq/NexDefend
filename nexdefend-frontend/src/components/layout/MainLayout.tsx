@@ -4,8 +4,9 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut, LucideIcon
+  LogOut
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 // Sidebar Navigation Groups
