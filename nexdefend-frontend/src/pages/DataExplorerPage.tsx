@@ -3,16 +3,25 @@ import { Typography, Box, CircularProgress, Alert, TextField, Button, Paper } fr
 import DataTable from '@/components/DataTable';
 import { getEvents } from '@/api/events';
 
+interface LogEvent {
+  timestamp: string;
+  event_type: string;
+  source_ip: string;
+  destination_ip: string;
+  details: unknown;
+  [key: string]: unknown;
+}
+
 const columns = [
   { id: 'timestamp', label: 'Timestamp', minWidth: 170 },
   { id: 'event_type', label: 'Type', minWidth: 120 },
   { id: 'source_ip', label: 'Source IP', minWidth: 130 },
   { id: 'destination_ip', label: 'Dest IP', minWidth: 130 },
-  { id: 'details', label: 'Details', minWidth: 250, format: (val: any) => typeof val === 'object' ? JSON.stringify(val) : val },
+  { id: 'details', label: 'Details', minWidth: 250, format: (val: unknown) => typeof val === 'object' ? JSON.stringify(val) : String(val) },
 ];
 
 const DataExplorerPage: React.FC = () => {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

@@ -52,14 +52,14 @@ const ProcessNode = ({ process }: { process: Process }) => (
   </Paper>
 );
 
-const buildTree = (processes: Process[], rootPid: number): any => {
+const buildTree = (processes: Process[], rootPid: number): React.ReactNode => {
     const root = processes.find(p => p.pid === rootPid);
     if (!root) return null;
 
     const children = processes.filter(p => p.ppid === rootPid);
 
     return (
-        <TreeNode label={<ProcessNode process={root} />}>
+        <TreeNode key={root.pid} label={<ProcessNode process={root} />}>
             {children.map(child => buildTree(processes, child.pid))}
         </TreeNode>
     );

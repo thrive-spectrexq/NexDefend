@@ -96,9 +96,9 @@ const PlaybookEditorPage: React.FC = () => {
     setPlaybook({ ...playbook, actions: newActions });
   };
 
-  const updateAction = (index: number, field: keyof PlaybookAction, value: any) => {
+  const updateAction = (index: number, field: keyof PlaybookAction, value: string) => {
     const newActions = [...playbook.actions];
-    // @ts-ignore
+    // @ts-expect-error - indexing works but TS complains about union types
     newActions[index][field] = value;
     setPlaybook({ ...playbook, actions: newActions });
   };

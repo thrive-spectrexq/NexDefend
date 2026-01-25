@@ -14,10 +14,28 @@ import {
 } from '@mui/material';
 import ProcessTreeViewer from './ProcessTreeViewer';
 
+interface ProcessNode {
+  pid: number;
+  ppid: number;
+  name: string;
+  cmdline: string;
+  username: string;
+}
+
+interface Incident {
+  id: number;
+  description: string;
+  severity: string;
+  entity_name?: string;
+  status: string;
+  process_tree?: ProcessNode[];
+  [key: string]: unknown;
+}
+
 interface IncidentModalProps {
   open: boolean;
   onClose: () => void;
-  incident: any;
+  incident: Incident | null;
 }
 
 const IncidentModal: React.FC<IncidentModalProps> = ({ open, onClose, incident }) => {

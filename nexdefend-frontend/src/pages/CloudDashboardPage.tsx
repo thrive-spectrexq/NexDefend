@@ -4,9 +4,27 @@ import { Cloud as CloudIcon, Storage as StorageIcon, Refresh as RefreshIcon } fr
 import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import client from '@/api/client';
 
+interface CloudAsset {
+  instance_id: string;
+  name: string;
+  type: string;
+  state: string;
+  public_ip: string;
+  region: string;
+}
+
+interface K8sPod {
+  uid?: string;
+  name: string;
+  namespace: string;
+  phase: string;
+  node_name: string;
+  pod_ip: string;
+}
+
 const CloudDashboardPage: React.FC = () => {
-  const [cloudAssets, setCloudAssets] = useState<any[]>([]);
-  const [k8sPods, setK8sPods] = useState<any[]>([]);
+  const [cloudAssets, setCloudAssets] = useState<CloudAsset[]>([]);
+  const [k8sPods, setK8sPods] = useState<K8sPod[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +56,7 @@ const CloudDashboardPage: React.FC = () => {
           // Trigger backend to pull fresh data from AWS/K8s
           await client.post('/assets/sync');
           await fetchData();
-      } catch (e) {
+      } catch {
           setError("Failed to sync cloud assets.");
       } finally {
           setSyncing(false);
@@ -129,7 +147,7 @@ const CloudDashboardPage: React.FC = () => {
                 <DataGrid
                     rows={cloudAssets}
                     columns={cloudColumns}
-                    getRowId={(row: any) => row.instance_id || Math.random()} // Fallback ID
+                    getRowId={(row: CloudAsset) => row.instance_id || Math.random()} // Fallback ID
                     sx={{ border: '1px solid rgba(255,255,255,0.08)', color: 'text.secondary' }}
                 />
             </Box>
@@ -141,7 +159,7 @@ const CloudDashboardPage: React.FC = () => {
                 <DataGrid
                     rows={k8sPods}
                     columns={k8sColumns}
-                    getRowId={(row: any) => row.uid || `${row.namespace}-${row.name}`} // Use UID if available
+                    getRowId={(row: K8sPod) => row.uid || `${row.namespace}-${row.name}`} // Use UID if available
                     sx={{ border: '1px solid rgba(255,255,255,0.08)', color: 'text.secondary' }}
                 />
             </Box>

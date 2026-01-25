@@ -5,6 +5,17 @@ import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import { getAgents } from '@/api/agents';
 
+interface Agent {
+  id: number;
+  hostname: string;
+  ip_address: string;
+  os_version: string;
+  agent_version: string;
+  status: string;
+  last_heartbeat: string;
+  [key: string]: unknown;
+}
+
 // Update columns to match backend JSON tags from models.Asset
 const columns = [
   { id: 'hostname', label: 'Hostname', minWidth: 150 },
@@ -15,19 +26,19 @@ const columns = [
     id: 'status',
     label: 'Status',
     minWidth: 120,
-    format: (value: string) => <StatusChip status={value} />
+    format: (value: unknown) => <StatusChip status={String(value)} />
   },
   {
     id: 'last_heartbeat',
     label: 'Last Seen',
     minWidth: 150,
-    format: (value: string) => value ? new Date(value).toLocaleString() : 'Never'
+    format: (value: unknown) => value ? new Date(String(value)).toLocaleString() : 'Never'
   },
 ];
 
 const AgentsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [agents, setAgents] = useState<any[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

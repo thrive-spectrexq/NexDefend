@@ -38,8 +38,10 @@ const RegisterPage: React.FC = () => {
     try {
         await registerUser(email, password);
         navigate('/login');
-    } catch (err: any) {
-        setError(err.response?.data?.message || 'Registration failed');
+    } catch (err: unknown) {
+        // Safe type assertion or check
+        const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Registration failed';
+        setError(errorMessage);
     } finally {
         setLoading(false);
     }

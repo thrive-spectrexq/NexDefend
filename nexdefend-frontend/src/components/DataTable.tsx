@@ -17,23 +17,26 @@ import {
   InputLabel,
 } from '@mui/material';
 
-interface Column {
+// Define a generic type for rows
+type RowData = Record<string, unknown>;
+
+interface Column<T = RowData> {
   id: string;
   label: string;
   minWidth?: number;
   align?: 'right' | 'left' | 'center';
-  format?: (value: any) => React.ReactNode;
+  format?: (value: unknown, row: T) => React.ReactNode;
 }
 
-interface DataTableProps {
-  columns: Column[];
-  rows: any[];
+interface DataTableProps<T = RowData> {
+  columns: Column<T>[];
+  rows: T[];
   title?: string;
-  onRowClick?: (row: any) => void;
+  onRowClick?: (row: T) => void;
   statusOptions?: string[];
 }
 
-const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick, statusOptions }) => {
+const DataTable = <T extends RowData>({ columns, rows, title, onRowClick, statusOptions }: DataTableProps<T>) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filter, setFilter] = useState('');
@@ -52,7 +55,9 @@ const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick,
     const matchesSearch = Object.values(row).some((val) =>
       String(val).toLowerCase().includes(filter.toLowerCase())
     );
-    const matchesStatus = statusFilter === 'All' || (row.status && row.status.toLowerCase() === statusFilter.toLowerCase());
+    // Explicitly cast row.status to string since we know we are filtering by it if it exists
+    const status = (row as RowData).status;
+    const matchesStatus = statusFilter === 'All' || (status && String(status).toLowerCase() === statusFilter.toLowerCase());
 
     return matchesSearch && matchesStatus;
   });
@@ -109,20 +114,25 @@ const DataTable: React.FC<DataTableProps> = ({ columns, rows, title, onRowClick,
             {filteredRows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, rowIndex) => {
+                // Use a stable key if possible, falling back to index
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const rowId = (row as any).id || rowIndex;
                 return (
                   <TableRow
                     hover
                     role="checkbox"
                     tabIndex={-1}
-                    key={row.id || rowIndex}
+                    key={rowId}
                     onClick={() => onRowClick && onRowClick(row)}
                     sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
                   >
                     {columns.map((column) => {
-                      const value = row[column.id];
+                      // Need type assertion or index access safely
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const value = (row as any)[column.id];
                       return (
                         <TableCell key={column.id} align={column.align}>
-                          {column.format ? column.format(value) : value}
+                          {column.format ? column.format(value, row) : (value as React.ReactNode)}
                         </TableCell>
                       );
                     })}

@@ -9,6 +9,12 @@ interface AuthState {
   error: string | null;
 }
 
+interface LoginPayload {
+  token: string;
+  username?: string;
+  [key: string]: unknown;
+}
+
 const initialState: AuthState = {
   isAuthenticated: !!localStorage.getItem('token'),
   user: null, // We might decode token or fetch user profile later
@@ -19,12 +25,14 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk(
   'auth/login',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async ({ email, password }: any, { rejectWithValue }) => {
     try {
       const data = await loginUser(email, password);
-      return data; // Expected { token: string, user: ... }
-    } catch (err: any) {
-        return rejectWithValue(err.response?.data?.message || 'Login failed');
+      return data as unknown as LoginPayload; // Expected { token: string, user: ... }
+    } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
+        return rejectWithValue(error.response?.data?.message || 'Login failed');
     }
   }
 );
@@ -46,7 +54,7 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<any>) => {
+      .addCase(login.fulfilled, (state, action: PayloadAction<LoginPayload>) => {
         state.loading = false;
         state.isAuthenticated = true;
         // Adjust based on actual backend response structure

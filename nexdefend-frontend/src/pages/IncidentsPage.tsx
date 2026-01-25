@@ -5,6 +5,16 @@ import StatusChip from '@/components/StatusChip';
 import IncidentModal from '@/components/IncidentModal';
 import { getIncidents } from '@/api/alerts'; // Assuming this maps to /incidents endpoint
 
+interface Incident {
+  id: number;
+  description: string;
+  severity: string;
+  assigned_to: string;
+  status: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+
 const columns = [
   {
       id: 'description', // Backend uses 'description', no 'title' field
@@ -15,14 +25,14 @@ const columns = [
     id: 'severity', // Backend uses 'severity', no 'priority' field
     label: 'Severity',
     minWidth: 100,
-    format: (value: string) => {
+    format: (value: unknown) => {
         // Handle case-insensitive standard severity levels
-        const v = (value || '').toLowerCase();
+        const v = (String(value) || '').toLowerCase();
         let status = 'info';
         if(v === 'critical' || v === 'p1') status = 'critical';
         if(v === 'high' || v === 'warning' || v === 'p2') status = 'warning';
         if(v === 'medium') status = 'warning';
-        return <StatusChip status={status} label={value} />;
+        return <StatusChip status={status} label={String(value)} />;
     }
   },
   { id: 'assigned_to', label: 'Assignee', minWidth: 150 }, // Backend JSON tag is 'assigned_to'
@@ -30,21 +40,21 @@ const columns = [
     id: 'status',
     label: 'Status',
     minWidth: 120,
-    format: (value: string) => <StatusChip status={value} />
+    format: (value: unknown) => <StatusChip status={String(value)} />
   },
   {
     id: 'created_at', // Backend JSON tag is 'created_at'
     label: 'Created Date',
     minWidth: 150,
-    format: (value: string) => value ? new Date(value).toLocaleDateString() + ' ' + new Date(value).toLocaleTimeString() : 'N/A'
+    format: (value: unknown) => value ? new Date(String(value)).toLocaleDateString() + ' ' + new Date(String(value)).toLocaleTimeString() : 'N/A'
   },
 ];
 
 const IncidentsPage: React.FC = () => {
-  const [incidents, setIncidents] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedIncident, setSelectedIncident] = useState<any | null>(null);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -61,7 +71,7 @@ const IncidentsPage: React.FC = () => {
     fetchIncidents();
   }, []);
 
-  const handleRowClick = (row: any) => {
+  const handleRowClick = (row: Incident) => {
     setSelectedIncident(row);
   };
 

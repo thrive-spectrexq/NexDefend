@@ -5,13 +5,30 @@ import StatusChip from '@/components/StatusChip';
 import client from '@/api/client';
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 
+interface AlertData {
+  id?: string | number;
+  timestamp: string;
+  severity: string;
+  rule_name: string;
+  source_ip: string;
+  destination_ip: string;
+  action: string;
+  alert?: {
+    signature?: string;
+    severity?: string;
+  };
+  message?: string;
+  // Allow indexing for generic DataTable use
+  [key: string]: unknown;
+}
+
 const columns = [
-  { id: 'timestamp', label: 'Time', minWidth: 160, format: (val: string) => new Date(val).toLocaleString() },
+  { id: 'timestamp', label: 'Time', minWidth: 160, format: (val: unknown) => new Date(String(val)).toLocaleString() },
   {
     id: 'severity',
     label: 'Severity',
     minWidth: 100,
-    format: (value: string) => <StatusChip status={value ? value.toLowerCase() : 'info'} />
+    format: (value: unknown) => <StatusChip status={value ? String(value).toLowerCase() : 'info'} />
   },
   {
     id: 'rule_name', // Mapped from backend 'rule_name' or 'event_type'
@@ -24,12 +41,12 @@ const columns = [
     id: 'action', // Often 'allowed', 'blocked', or 'alerted'
     label: 'Action',
     minWidth: 120,
-    format: (value: string) => <StatusChip status={value === 'blocked' ? 'critical' : 'success'} label={value} />
+    format: (value: unknown) => <StatusChip status={value === 'blocked' ? 'critical' : 'success'} label={String(value)} />
   },
 ];
 
 const AlertsPage: React.FC = () => {
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +60,7 @@ const AlertsPage: React.FC = () => {
         const rows = Array.isArray(data) ? data : (data?.hits || []);
 
         // Map any necessary fields if backend names differ
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedRows = rows.map((r: any) => ({
             ...r,
             // Fallbacks if specific alert fields are missing

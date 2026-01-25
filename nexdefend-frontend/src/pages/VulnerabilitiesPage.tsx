@@ -4,6 +4,17 @@ import DataTable from '@/components/DataTable';
 import StatusChip from '@/components/StatusChip';
 import { getVulnerabilities } from '@/api/vulnerabilities';
 
+interface Vulnerability {
+  id: number;
+  title: string;
+  package_name: string;
+  severity: string;
+  description: string;
+  status: string;
+  discovered_at: string;
+  [key: string]: unknown;
+}
+
 // Update columns to match Backend JSON tags (vulnerability.go)
 const columns = [
   { id: 'title', label: 'CVE ID', minWidth: 120 }, // Backend maps CVE to 'title'
@@ -12,20 +23,20 @@ const columns = [
     id: 'severity',
     label: 'Severity',
     minWidth: 100,
-    format: (value: string) => <StatusChip status={value} />
+    format: (value: unknown) => <StatusChip status={String(value)} />
   },
   { id: 'description', label: 'Description', minWidth: 250 },
-  { id: 'status', label: 'Status', minWidth: 120, format: (value: string) => <StatusChip status={value} /> },
+  { id: 'status', label: 'Status', minWidth: 120, format: (value: unknown) => <StatusChip status={String(value)} /> },
   {
     id: 'discovered_at', // Matched 'discovered_at' from backend
     label: 'Detected At',
     minWidth: 150,
-    format: (value: string) => value ? new Date(value).toLocaleDateString() : 'N/A'
+    format: (value: unknown) => value ? new Date(String(value)).toLocaleDateString() : 'N/A'
   },
 ];
 
 const VulnerabilitiesPage: React.FC = () => {
-  const [vulnerabilities, setVulnerabilities] = useState<any[]>([]);
+  const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
