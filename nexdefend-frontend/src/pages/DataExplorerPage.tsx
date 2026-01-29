@@ -1,46 +1,43 @@
 import React, { useEffect, useState } from 'react';
+import { Typography, Box, CircularProgress, Alert, TextField, Button, Paper } from '@mui/material';
+import DataTable from '@/components/DataTable';
 import { getEvents } from '@/api/events';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { Download, Calendar, Terminal } from 'lucide-react';
-import { BarChart, Bar, Tooltip, ResponsiveContainer, Cell, XAxis } from 'recharts';
 
 interface LogEvent {
   timestamp: string;
   event_type: string;
-  severity?: string;
   source_ip: string;
   destination_ip: string;
   details: unknown;
   [key: string]: unknown;
 }
 
-// Mock Histogram Data
-const volumeData = Array.from({ length: 24 }, (_, i) => ({
-    time: `${i}:00`,
-    count: Math.floor(Math.random() * 500) + 50,
-    severity: Math.random() > 0.8 ? 'high' : 'normal'
-}));
+const columns = [
+  { id: 'timestamp', label: 'Timestamp', minWidth: 170 },
+  { id: 'event_type', label: 'Type', minWidth: 120 },
+  { id: 'source_ip', label: 'Source IP', minWidth: 130 },
+  { id: 'destination_ip', label: 'Dest IP', minWidth: 130 },
+  { id: 'details', label: 'Details', minWidth: 250, format: (val: unknown) => typeof val === 'object' ? JSON.stringify(val) : String(val) },
+];
 
 const DataExplorerPage: React.FC = () => {
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('severity:high AND event_type:network_flow');
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchEvents = async (query?: string) => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getEvents(query);
+      // Backend might return { hits: [...] } or just [...]
+      // Assuming array or hits array
       const rows = Array.isArray(data) ? data : (data?.hits || []);
       setEvents(rows);
     } catch (err) {
       console.error("Failed to fetch events", err);
-      // Fallback Mock Data
-      setEvents([
-          { timestamp: new Date().toISOString(), event_type: 'network_flow', severity: 'low', source_ip: '192.168.1.105', destination_ip: '10.0.0.1', details: { port: 443, proto: 'TCP' } },
-          { timestamp: new Date(Date.now() - 50000).toISOString(), event_type: 'auth_failed', severity: 'high', source_ip: '192.168.1.105', destination_ip: '10.0.0.5', details: { user: 'root' } },
-          { timestamp: new Date(Date.now() - 120000).toISOString(), event_type: 'file_mod', severity: 'medium', source_ip: '10.0.0.2', destination_ip: '-', details: { path: '/etc/passwd' } },
-          { timestamp: new Date(Date.now() - 300000).toISOString(), event_type: 'process_start', severity: 'low', source_ip: '10.0.0.5', destination_ip: '-', details: { cmd: 'curl google.com' } },
-      ]);
+      setError("Failed to load events.");
     } finally {
       setLoading(false);
     }
@@ -56,114 +53,33 @@ const DataExplorerPage: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col space-y-4">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Data Explorer</h1>
-          <p className="text-gray-400">Advanced log analysis and threat hunting using Lucene queries.</p>
-        </div>
-        <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-300 text-sm border border-white/10 transition-colors">
-                <Calendar size={14}/> Last 24 Hours
-            </button>
-            <button className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg text-cyan-400 text-sm border border-cyan-500/20 transition-colors">
-                <Download size={14}/> Export
-            </button>
-        </div>
-      </div>
+    <Box sx={{ height: '100%', width: '100%' }}>
+      <Typography variant="h4" gutterBottom>
+        Data Explorer
+      </Typography>
 
-      {/* 1. Histogram (Timeline) */}
-      <GlassCard className="h-48 p-4">
-          <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xs font-bold text-gray-500 uppercase">Event Volume (24h)</h3>
-              <span className="text-xs font-mono text-cyan-400">Total: 4,215 Events</span>
-          </div>
-          <div className="w-full h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={volumeData} barGap={2}>
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#09090b', borderColor: '#ffffff20', color: '#fff' }}
-                        cursor={{ fill: '#ffffff10' }}
-                      />
-                      <XAxis dataKey="time" hide />
-                      <Bar dataKey="count">
-                          {volumeData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.severity === 'high' ? '#ef4444' : '#3b82f6'} />
-                          ))}
-                      </Bar>
-                  </BarChart>
-              </ResponsiveContainer>
-          </div>
-      </GlassCard>
+      <Paper component="form" onSubmit={handleSearch} sx={{ p: 2, mb: 3, display: 'flex', gap: 2 }}>
+        <TextField
+          fullWidth
+          label="Search Logs (Lucene Query)"
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="e.g. event_type:alert AND severity:high"
+        />
+        <Button type="submit" variant="contained" size="large">
+            Search
+        </Button>
+      </Paper>
 
-      {/* 2. Search Bar */}
-      <div className="sticky top-0 z-20">
-        <form onSubmit={handleSearch} className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Terminal className="h-4 w-4 text-cyan-500" />
-            </div>
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-4 py-3 bg-[#09090b] border border-cyan-500/30 rounded-xl text-cyan-100 font-mono text-sm placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all"
-                placeholder="Search query..."
-            />
-            <button type="submit" className="absolute inset-y-1 right-1 px-4 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg text-xs font-bold border border-cyan-500/20 transition-colors">
-                RUN QUERY
-            </button>
-        </form>
-      </div>
-
-      {/* 3. Log Grid */}
-      <GlassCard className="flex-1 overflow-hidden flex flex-col p-0">
-          <div className="overflow-x-auto flex-1 custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-                <thead className="bg-white/5 sticky top-0 z-10">
-                    <tr className="text-xs text-gray-500 uppercase tracking-wider font-mono">
-                        <th className="py-2 px-4 border-b border-white/10">Time</th>
-                        <th className="py-2 px-4 border-b border-white/10">Severity</th>
-                        <th className="py-2 px-4 border-b border-white/10">Type</th>
-                        <th className="py-2 px-4 border-b border-white/10">Source</th>
-                        <th className="py-2 px-4 border-b border-white/10">Destination</th>
-                        <th className="py-2 px-4 border-b border-white/10 w-full">Message / Details</th>
-                    </tr>
-                </thead>
-                <tbody className="text-xs font-mono text-gray-300">
-                    {events.map((evt, idx) => (
-                        <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                            <td className="py-2 px-4 text-gray-500 whitespace-nowrap">
-                                {new Date(evt.timestamp).toLocaleTimeString()}
-                            </td>
-                            <td className="py-2 px-4">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                    evt.severity === 'high' ? 'bg-red-500/20 text-red-400' :
-                                    evt.severity === 'medium' ? 'bg-orange-500/20 text-orange-400' :
-                                    'bg-blue-500/20 text-blue-400'
-                                }`}>
-                                    {evt.severity || 'INFO'}
-                                </span>
-                            </td>
-                            <td className="py-2 px-4 text-cyan-300">{evt.event_type}</td>
-                            <td className="py-2 px-4">{evt.source_ip}</td>
-                            <td className="py-2 px-4">{evt.destination_ip}</td>
-                            <td className="py-2 px-4 text-gray-400 truncate max-w-md group-hover:text-white group-hover:whitespace-normal transition-all">
-                                {JSON.stringify(evt.details)}
-                            </td>
-                        </tr>
-                    ))}
-                    {loading && (
-                        <tr><td colSpan={6} className="py-10 text-center text-cyan-400">Searching...</td></tr>
-                    )}
-                </tbody>
-            </table>
-          </div>
-          <div className="p-2 border-t border-white/10 bg-black/20 text-[10px] text-gray-500 font-mono flex justify-between">
-              <span>Showing {events.length} results</span>
-              <span>Query Time: 42ms</span>
-          </div>
-      </GlassCard>
-    </div>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : (
+        <DataTable columns={columns} rows={events} title="Log Events" />
+      )}
+    </Box>
   );
 };
 

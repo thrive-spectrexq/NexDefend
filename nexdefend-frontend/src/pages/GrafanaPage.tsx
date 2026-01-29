@@ -1,24 +1,28 @@
 import React from 'react';
-import MockDashboard from '../components/MockDashboard';
+import { Box, Typography } from '@mui/material';
 
 const GrafanaPage: React.FC = () => {
-  const grafanaUrl = import.meta.env.VITE_GRAFANA_URL;
+  const grafanaUrl = import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3001';
 
-  // Use iframe if URL is explicitly set in env, otherwise mock
-  if (grafanaUrl) {
-      return (
-        <div className="h-[calc(100vh-100px)] flex flex-col">
-          <h2 className="text-xl font-mono font-bold text-white mb-4">Grafana Dashboard</h2>
-          <iframe
-            src={grafanaUrl}
-            className="w-full h-full border-none rounded-xl bg-[#181b1f]"
-            title="Grafana"
-          />
-        </div>
-      );
-  }
-
-  return <MockDashboard title="System Performance (Grafana View)" color="#F59E0B" />;
+  return (
+    <Box sx={{ height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+        Grafana Dashboard
+      </Typography>
+      <Box
+        component="iframe"
+        src={grafanaUrl}
+        sx={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          borderRadius: 2,
+          bgcolor: '#181b1f' // Matches Grafana dark theme roughly
+        }}
+        title="Grafana"
+      />
+    </Box>
+  );
 };
 
 export default GrafanaPage;
