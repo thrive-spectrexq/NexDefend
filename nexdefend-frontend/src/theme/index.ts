@@ -10,8 +10,8 @@ const theme = createTheme({
       main: '#F50057', // Neon Pink
     },
     background: {
-      default: '#0F172A', // Dark Slate
-      paper: '#1E293B',
+      default: '#050505', // Deep Black
+      paper: '#09090b', // Zinc 950
     },
     text: {
       primary: '#F8FAFC',

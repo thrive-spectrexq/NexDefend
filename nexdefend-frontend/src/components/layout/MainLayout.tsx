@@ -87,7 +87,7 @@ export const MainLayout = () => {
       {/* 1. Sidebar */}
       <aside
         className={clsx(
-          "fixed md:relative z-50 h-full bg-[#0b1221]/90 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col",
+          "fixed md:relative z-50 h-full bg-[#050505]/95 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col",
           isSidebarOpen ? "w-72" : "w-20"
         )}
       >
@@ -156,13 +156,22 @@ export const MainLayout = () => {
       {/* 2. Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-background/50 backdrop-blur-md z-40">
-          <button
-            onClick={() => setSidebarOpen(!isSidebarOpen)}
-            className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md z-40">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(!isSidebarOpen)}
+              className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            {/* Breadcrumb Navigation */}
+            <div className="hidden md:flex items-center text-sm font-mono text-gray-400">
+                <span className="text-gray-600 mr-2">/</span>
+                <span className="text-cyan-400 uppercase tracking-wider">
+                  {location.pathname === '/' ? 'DASHBOARD' : location.pathname.substring(1).replace('-', ' ')}
+                </span>
+            </div>
+          </div>
 
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">

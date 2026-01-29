@@ -3,42 +3,57 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 interface ResourceGaugeProps {
   value: number;
   label: string;
-  color?: string;
+  color?: string; // Optional override, otherwise dynamic
 }
 
-export const ResourceGauge = ({ value, label, color = "#06b6d4" }: ResourceGaugeProps) => {
+export const ResourceGauge = ({ value, label, color }: ResourceGaugeProps) => {
+  // Dynamic color logic: Green < 60% < Yellow < 90% < Red
+  const getColor = (val: number) => {
+      if (color) return color;
+      if (val < 60) return '#10b981'; // Green
+      if (val < 90) return '#f59e0b'; // Yellow
+      return '#ef4444'; // Red
+  };
+
+  const activeColor = getColor(value);
+
   const data = [
     { value: value },
     { value: 100 - value }
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full">
-      <div className="relative h-32 w-full">
+    <div className="flex flex-col items-center justify-center h-full relative">
+      <div className="relative h-28 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={40}
-              outerRadius={55}
-              startAngle={180}
-              endAngle={0}
+              innerRadius={42}
+              outerRadius={50}
+              startAngle={90}
+              endAngle={-270}
               paddingAngle={0}
               dataKey="value"
               stroke="none"
             >
-              <Cell fill={color} className="drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-              <Cell fill="#1e293b" />
+              <Cell fill={activeColor} className="drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]" />
+              <Cell fill="rgba(255,255,255,0.05)" />
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1 text-center">
-           <span className="text-2xl font-bold font-mono text-white block">{value}%</span>
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+           <span className="text-xl font-bold font-mono text-white drop-shadow-md">{value}%</span>
         </div>
       </div>
-      <span className="text-gray-400 font-mono text-sm uppercase tracking-wider -mt-4">{label}</span>
+      <span className="text-gray-400 font-mono text-[10px] uppercase tracking-wider mt-1">{label}</span>
+      {/* Glow effect based on color */}
+      <div
+        className="absolute inset-0 rounded-full opacity-10 pointer-events-none blur-xl"
+        style={{ background: activeColor }}
+      />
     </div>
   );
 };
