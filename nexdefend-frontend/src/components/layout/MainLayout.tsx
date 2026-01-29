@@ -4,7 +4,7 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut
+  LogOut, Flame
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -12,10 +12,10 @@ import clsx from 'clsx';
 // Sidebar Navigation Groups
 const NAV_ITEMS = [
   {
-    group: 'Overview',
+    group: 'Operations',
     items: [
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-      { label: 'Security Console', path: '/console', icon: Terminal },
+      { label: 'Console', path: '/console', icon: Terminal },
     ]
   },
   {
@@ -30,17 +30,23 @@ const NAV_ITEMS = [
     group: 'Infrastructure',
     items: [
       { label: 'Network', path: '/network', icon: Network },
-      { label: 'Cloud Monitor', path: '/cloud', icon: Cloud },
-      { label: 'Agents', path: '/agents', icon: Cpu },
       { label: 'Topology', path: '/topology', icon: Globe },
+      { label: 'Cloud', path: '/cloud', icon: Cloud },
+      { label: 'Agents', path: '/agents', icon: Cpu },
     ]
   },
   {
     group: 'Analysis',
     items: [
       { label: 'Data Explorer', path: '/data-explorer', icon: Search },
-      { label: 'Grafana', path: '/grafana', icon: BarChart3 },
       { label: 'Playbooks', path: '/playbooks', icon: FileText },
+    ]
+  },
+  {
+    group: 'Monitoring',
+    items: [
+      { label: 'Grafana', path: '/grafana', icon: BarChart3 },
+      { label: 'Prometheus', path: '/prometheus', icon: Flame },
     ]
   },
 ];
