@@ -4,7 +4,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { RightDrawer } from '../components/ui/RightDrawer';
 import {
     AlertTriangle, Clock,
-    ChevronRight, Terminal, Activity, Zap
+    ChevronRight, Terminal, Activity, Zap, Sparkles, Server, User, CheckCircle
 } from 'lucide-react';
 
 interface Incident {
@@ -143,23 +143,46 @@ const IncidentsPage = () => {
                     </div>
                 </div>
 
-                {/* 2. MITRE ATT&CK Mapping */}
-                <div>
-                    <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">MITRE ATT&CK® Analysis</h4>
-                    <div className="flex flex-wrap gap-2">
-                        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-xs font-mono">
-                            TA0008: Lateral Movement
-                        </span>
-                        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-xs font-mono">
-                            T1059: Command & Scripting
-                        </span>
-                        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-xs font-mono">
-                            T1071: Web Protocols
-                        </span>
+                {/* Contextual Asset Intelligence */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+                        <p className="text-gray-500 text-xs uppercase tracking-wider mb-1 flex items-center gap-1"><Server size={10}/> Involved Host</p>
+                        <p className="text-cyan-300 font-mono text-sm">PROD-WEB-01</p>
+                        <p className="text-gray-500 text-xs">192.168.1.105</p>
+                    </div>
+                     <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+                        <p className="text-gray-500 text-xs uppercase tracking-wider mb-1 flex items-center gap-1"><User size={10}/> Owner</p>
+                        <p className="text-white font-mono text-sm">Jane Doe (DevOps)</p>
+                        <p className="text-red-400 text-xs">3 Critical Vulns</p>
                     </div>
                 </div>
 
-                {/* 3. AI Remediation (Active Defense) */}
+                {/* Unified Timeline (Activity Stream) */}
+                <div>
+                     <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Activity size={14} /> Activity Stream
+                    </h4>
+                    <div className="space-y-4 pl-2 border-l border-white/10 ml-2">
+                        {[
+                            { time: '10:42:05', type: 'AI_INSIGHT', msg: 'Pattern matches Cobalt Strike Beacon', icon: Sparkles, color: 'text-purple-400' },
+                            { time: '10:42:01', type: 'NETWORK', msg: 'Outbound connection to 45.33.2.1 (Malicious)', icon: Activity, color: 'text-red-400' },
+                            { time: '10:41:55', type: 'PROCESS', msg: 'Powershell.exe spawned by cmd.exe', icon: Terminal, color: 'text-yellow-400' },
+                        ].map((item, i) => (
+                            <div key={i} className="relative pl-6">
+                                <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-black border-2 ${item.color.replace('text', 'border')} flex items-center justify-center`}>
+                                   <div className={`w-1.5 h-1.5 rounded-full ${item.color.replace('text', 'bg')}`} />
+                                </div>
+                                <p className="text-[10px] text-gray-500 font-mono mb-0.5">{item.time}</p>
+                                <p className="text-gray-300 text-sm">{item.msg}</p>
+                                <div className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/5 text-[10px] font-bold ${item.color}`}>
+                                    <item.icon size={10} /> {item.type}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* AI Remediation (One-Click SOAR) */}
                 <div>
                     <h4 className="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
                         <Zap size={14} /> AI Recommended Response
@@ -168,25 +191,31 @@ const IncidentsPage = () => {
                         <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-white/5 hover:border-cyan-500/50 transition-colors cursor-pointer group">
                             <div className="flex items-center gap-3">
                                 <div className="w-6 h-6 rounded bg-red-500/20 flex items-center justify-center text-red-400 font-bold text-xs">1</div>
-                                <span className="text-gray-300 group-hover:text-white">Isolate Host (192.168.1.105)</span>
+                                <div>
+                                    <span className="text-gray-300 group-hover:text-white block font-medium">Isolate Host</span>
+                                    <span className="text-gray-500 text-xs">Block all non-management traffic</span>
+                                </div>
                             </div>
-                            <button className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded transition-colors">
+                            <button className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded shadow-[0_0_10px_rgba(239,68,68,0.4)] transition-all transform active:scale-95">
                                 EXECUTE
                             </button>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-white/5 hover:border-cyan-500/50 transition-colors cursor-pointer group">
                             <div className="flex items-center gap-3">
                                 <div className="w-6 h-6 rounded bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-xs">2</div>
-                                <span className="text-gray-300 group-hover:text-white">Kill Process (powershell.exe)</span>
+                                <div>
+                                    <span className="text-gray-300 group-hover:text-white block font-medium">Revoke Token</span>
+                                    <span className="text-gray-500 text-xs">Invalidate active sessions for user</span>
+                                </div>
                             </div>
-                            <button className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded transition-colors">
+                            <button className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded shadow-[0_0_10px_rgba(249,115,22,0.4)] transition-all transform active:scale-95">
                                 EXECUTE
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* 4. Raw Log Data */}
+                {/* Raw Log Data */}
                 <div>
                      <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
                         <Terminal size={14} /> Raw Event Log

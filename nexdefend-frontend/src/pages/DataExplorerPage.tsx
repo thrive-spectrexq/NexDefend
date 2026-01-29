@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getEvents } from '@/api/events';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Download, Calendar, Terminal } from 'lucide-react';
-import { BarChart, Bar, Tooltip, ResponsiveContainer, Cell, XAxis } from 'recharts';
+import { Download, Calendar, Terminal, X, PieChart as PieChartIcon } from 'lucide-react';
+import { BarChart, Bar, Tooltip, ResponsiveContainer, Cell, XAxis, PieChart, Pie } from 'recharts';
 
 interface LogEvent {
   timestamp: string;
@@ -25,6 +25,7 @@ const DataExplorerPage: React.FC = () => {
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('severity:high AND event_type:network_flow');
+  const [pivotData, setPivotData] = useState<{ field: string, value: string, distribution: any[] } | null>(null);
 
   const fetchEvents = async (query?: string) => {
     setLoading(true);
@@ -55,8 +56,77 @@ const DataExplorerPage: React.FC = () => {
     fetchEvents(searchQuery);
   };
 
+  const handlePivot = (field: string, value: any) => {
+      // Calculate top 5 values for this field from current dataset
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const counts = events.reduce((acc: any, evt: any) => {
+          const val = String(evt[field] || 'N/A');
+          acc[val] = (acc[val] || 0) + 1;
+          return acc;
+      }, {});
+
+      const sorted = Object.entries(counts)
+          .sort(([, a]: any, [, b]: any) => b - a)
+          .slice(0, 5)
+          .map(([k, v]) => ({ name: k, value: v }));
+
+      setPivotData({ field, value: String(value), distribution: sorted });
+  };
+
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <div className="h-full flex flex-col space-y-4 relative">
+        {/* Pivot Modal Overlay */}
+        {pivotData && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="w-[500px] bg-[#09090b] border border-cyan-500/30 rounded-2xl shadow-2xl p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <PieChartIcon size={20} className="text-cyan-400"/> Pivot Analysis
+                            </h3>
+                            <p className="text-sm text-gray-400 font-mono mt-1">
+                                Field: <span className="text-cyan-300">{pivotData.field}</span>
+                            </p>
+                        </div>
+                        <button onClick={() => setPivotData(null)} className="text-gray-500 hover:text-white transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="h-64 w-full mb-6">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pivotData.distribution}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {pivotData.distribution.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#ef4444'][index % 5]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Top Values Distribution</h4>
+                        {pivotData.distribution.map((item, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm p-2 rounded bg-white/5 border border-white/5">
+                                <span className="font-mono text-gray-300 truncate w-2/3" title={item.name}>{item.name}</span>
+                                <span className="font-bold text-cyan-400">{item.value} ({Math.round((item.value / events.length) * 100)}%)</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )}
+
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Data Explorer</h1>
@@ -135,7 +205,7 @@ const DataExplorerPage: React.FC = () => {
                             <td className="py-2 px-4 text-gray-500 whitespace-nowrap">
                                 {new Date(evt.timestamp).toLocaleTimeString()}
                             </td>
-                            <td className="py-2 px-4">
+                            <td className="py-2 px-4 cursor-pointer hover:bg-white/10" onClick={() => handlePivot('severity', evt.severity)}>
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                                     evt.severity === 'high' ? 'bg-red-500/20 text-red-400' :
                                     evt.severity === 'medium' ? 'bg-orange-500/20 text-orange-400' :
@@ -144,9 +214,15 @@ const DataExplorerPage: React.FC = () => {
                                     {evt.severity || 'INFO'}
                                 </span>
                             </td>
-                            <td className="py-2 px-4 text-cyan-300">{evt.event_type}</td>
-                            <td className="py-2 px-4">{evt.source_ip}</td>
-                            <td className="py-2 px-4">{evt.destination_ip}</td>
+                            <td className="py-2 px-4 text-cyan-300 cursor-pointer hover:underline decoration-cyan-500/50" onClick={() => handlePivot('event_type', evt.event_type)}>
+                                {evt.event_type}
+                            </td>
+                            <td className="py-2 px-4 cursor-pointer hover:text-white transition-colors" onClick={() => handlePivot('source_ip', evt.source_ip)}>
+                                {evt.source_ip}
+                            </td>
+                            <td className="py-2 px-4 cursor-pointer hover:text-white transition-colors" onClick={() => handlePivot('destination_ip', evt.destination_ip)}>
+                                {evt.destination_ip}
+                            </td>
                             <td className="py-2 px-4 text-gray-400 truncate max-w-md group-hover:text-white group-hover:whitespace-normal transition-all">
                                 {JSON.stringify(evt.details)}
                             </td>
