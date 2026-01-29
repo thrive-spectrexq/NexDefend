@@ -4,43 +4,65 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut
+  LogOut, Flame, CheckCircle, Database, Server,
+  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
+import { SentinelChat } from '../dashboard/SentinelChat'; // Import Chat
 
 // Sidebar Navigation Groups
 const NAV_ITEMS = [
   {
-    group: 'Overview',
+    group: 'Operations',
     items: [
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-      { label: 'Security Console', path: '/console', icon: Terminal },
+      { label: 'Console', path: '/console', icon: Terminal },
     ]
   },
   {
-    group: 'Threat Intel',
+    group: 'Detection & Response',
     items: [
       { label: 'Alerts', path: '/alerts', icon: Bell },
       { label: 'Incidents', path: '/incidents', icon: ShieldAlert },
+      { label: 'Playbooks', path: '/playbooks', icon: FileText },
+    ]
+  },
+  {
+    group: 'Intelligence',
+    items: [
+      { label: 'Threat Feed', path: '/threat-intel', icon: Radar },
+      { label: 'UEBA', path: '/ueba', icon: UserCheck },
       { label: 'Vulnerabilities', path: '/vulnerabilities', icon: Activity },
+    ]
+  },
+  {
+    group: 'GRC',
+    items: [
+      { label: 'Compliance', path: '/compliance', icon: ClipboardCheck },
+      { label: 'Risk Scorecard', path: '/risk', icon: TrendingUp },
     ]
   },
   {
     group: 'Infrastructure',
     items: [
       { label: 'Network', path: '/network', icon: Network },
-      { label: 'Cloud Monitor', path: '/cloud', icon: Cloud },
-      { label: 'Agents', path: '/agents', icon: Cpu },
       { label: 'Topology', path: '/topology', icon: Globe },
+      { label: 'Cloud', path: '/cloud', icon: Cloud },
+      { label: 'Agents', path: '/agents', icon: Cpu },
     ]
   },
   {
     group: 'Analysis',
     items: [
       { label: 'Data Explorer', path: '/data-explorer', icon: Search },
+    ]
+  },
+  {
+    group: 'Monitoring',
+    items: [
       { label: 'Grafana', path: '/grafana', icon: BarChart3 },
-      { label: 'Playbooks', path: '/playbooks', icon: FileText },
+      { label: 'Prometheus', path: '/prometheus', icon: Flame },
     ]
   },
 ];
@@ -74,6 +96,8 @@ const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => (
 
 export const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isStatusOpen, setStatusOpen] = useState(false); // State for Status Popover
+  const [isChatOpen, setChatOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -81,7 +105,7 @@ export const MainLayout = () => {
       {/* 1. Sidebar */}
       <aside
         className={clsx(
-          "fixed md:relative z-50 h-full bg-[#0b1221]/90 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col",
+          "fixed md:relative z-50 h-full bg-[#050505]/95 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col",
           isSidebarOpen ? "w-72" : "w-20"
         )}
       >
@@ -150,18 +174,65 @@ export const MainLayout = () => {
       {/* 2. Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-background/50 backdrop-blur-md z-40">
-          <button
-            onClick={() => setSidebarOpen(!isSidebarOpen)}
-            className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md z-40">
+          <div className="flex items-center gap-4 flex-1">
+            <button
+              onClick={() => setSidebarOpen(!isSidebarOpen)}
+              className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            {/* Breadcrumb Navigation */}
+            <div className="hidden md:flex items-center text-sm font-mono text-gray-400 shrink-0">
+                <span className="text-gray-600 mr-2">/</span>
+                <span className="text-cyan-400 uppercase tracking-wider">
+                  {location.pathname === '/' ? 'DASHBOARD' : location.pathname.substring(1).replace('-', ' ')}
+                </span>
+            </div>
+
+            {/* Global Search Bar (Added) */}
+            <div className="relative max-w-md w-full ml-8 hidden lg:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                    type="text"
+                    placeholder="Search IPs, Assets, or Logs..."
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-colors"
+                />
+            </div>
+          </div>
 
           <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-mono font-medium text-green-400 tracking-wide">SYSTEM OPTIMAL</span>
+
+            {/* System Status with Popover */}
+            <div className="relative">
+                <button
+                    onClick={() => setStatusOpen(!isStatusOpen)}
+                    className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors cursor-pointer"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-mono font-medium text-green-400 tracking-wide">SYSTEM OPTIMAL</span>
+                </button>
+
+                {isStatusOpen && (
+                    <>
+                        <div className="fixed inset-0 z-40" onClick={() => setStatusOpen(false)} />
+                        <div className="absolute top-full right-0 mt-2 w-64 bg-[#09090b] border border-white/10 rounded-xl shadow-2xl z-50 p-4 space-y-3">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Service Status</h4>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-sm text-gray-300"><Server size={14} className="text-blue-400"/> Core API</span>
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-sm text-gray-300"><Database size={14} className="text-purple-400"/> Postgres DB</span>
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-sm text-gray-300"><Activity size={14} className="text-yellow-400"/> Event Ingestor</span>
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div className="h-6 w-px bg-white/10" />
@@ -181,13 +252,25 @@ export const MainLayout = () => {
 
         {/* Dynamic Page Content */}
         <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-          {/* Animated Background Grid */}
-          <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
-               style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-          />
           <div className="max-w-7xl mx-auto space-y-6 pb-10 relative z-10">
              <Outlet />
           </div>
+        </div>
+
+        {/* Global Sentinel Chat Overlay */}
+        <div className="fixed bottom-6 right-6 z-50">
+            {isChatOpen ? (
+                <div className="w-96">
+                    <SentinelChat onClose={() => setChatOpen(false)} />
+                </div>
+            ) : (
+                <button
+                    onClick={() => setChatOpen(true)}
+                    className="p-4 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all hover:scale-110 group backdrop-blur-sm"
+                >
+                    <Sparkles className="h-6 w-6 animate-pulse group-hover:animate-none" />
+                </button>
+            )}
         </div>
       </main>
     </div>

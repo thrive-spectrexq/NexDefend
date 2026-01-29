@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { Bot, Send, Sparkles } from 'lucide-react';
+import { Bot, Send, Sparkles, X } from 'lucide-react';
 import { GlassCard } from '../ui/GlassCard';
 
-export const SentinelChat = () => {
+interface SentinelChatProps {
+  onClose?: () => void;
+}
+
+export const SentinelChat = ({ onClose }: SentinelChatProps) => {
   const [messages, setMessages] = useState([
     { role: 'ai', text: 'NexDefend AI initialized. Monitoring 42 active endpoints. No critical anomalies detected.' }
   ]);
@@ -20,7 +24,22 @@ export const SentinelChat = () => {
   };
 
   return (
-    <GlassCard title="NexDefend Copilot" icon={<Sparkles className="h-5 w-5" />} className="h-[500px] flex flex-col">
+    <GlassCard
+      title="NexDefend Copilot"
+      icon={<Sparkles className="h-5 w-5" />}
+      className="h-[500px] flex flex-col"
+      action={
+        onClose && (
+            <button
+                onClick={onClose}
+                className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                aria-label="Close Chat"
+            >
+                <X size={18} />
+            </button>
+        )
+      }
+    >
       <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>

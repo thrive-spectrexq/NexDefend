@@ -1,131 +1,123 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { GlassCard } from '../components/ui/GlassCard';
 import {
-  Box, Button, Card, CardContent, Typography, Grid, Chip, CircularProgress, Alert, Tooltip, IconButton
-} from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, PlayArrow as RunIcon, Refresh as RefreshIcon } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { fetchPlaybooks, type Playbook } from '@/api/soar';
+    Zap, Shield, Mail, Server, Plus,
+    Settings, Play, Save, Layout
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 
-const PlaybooksPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [usingDemo, setUsingDemo] = useState(false);
+// Mock Node Types
+const NODE_TYPES = [
+    { type: 'Trigger', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+    { type: 'Condition', icon: Shield, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+    { type: 'Action', icon: Server, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+    { type: 'Notification', icon: Mail, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
+];
 
-  const loadData = async () => {
-      setLoading(true);
-      setUsingDemo(false);
-      try {
-        const data = await fetchPlaybooks();
-        setPlaybooks(data);
-      } catch (err) {
-        console.warn("API failed, falling back to demo data", err);
-        // Fallback demo data
-        setPlaybooks([
-            { id: 'pb-101', name: 'Ransomware Containment', trigger: 'alert.type == "ransomware"', actions: [{ type: 'isolate_host', params: { target: '{ip}' } }, { type: 'notify_slack', params: { channel: '#incidents' } }] },
-            { id: 'pb-102', name: 'Phishing Response', trigger: 'email.suspicious == true', actions: [{ type: 'delete_email', params: { msg_id: '{id}' } }] },
-            { id: 'pb-103', name: 'New User Onboarding', trigger: 'manual', actions: [{ type: 'check_compliance', params: { user: '{username}' } }] }
-        ]);
-        setUsingDemo(true);
-        // We do not show a blocking error, just an alert that we are in offline/demo mode
-      } finally {
-        setLoading(false);
-      }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
+const PlaybooksPage = () => {
+  const [nodes] = useState([
+      { id: 1, type: 'Trigger', label: 'Alert: High Severity', x: 100, y: 100 },
+      { id: 2, type: 'Condition', label: 'Is Source External?', x: 400, y: 100 },
+      { id: 3, type: 'Action', label: 'Isolate Host', x: 700, y: 50 },
+      { id: 4, type: 'Notification', label: 'Slack: SOC Channel', x: 700, y: 180 },
+  ]);
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">
-          Security Playbooks
-        </Typography>
-        <Box>
-            <Tooltip title="Reload">
-                <IconButton onClick={loadData} sx={{ mr: 1 }}><RefreshIcon /></IconButton>
-            </Tooltip>
-            <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => navigate('/playbooks/new')}>
-              Create Playbook
-            </Button>
-        </Box>
-      </Box>
+    <div className="h-[calc(100vh-140px)] flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Automation Playbooks</h1>
+          <p className="text-gray-400">Drag-and-drop SOAR workflow builder.</p>
+        </div>
+        <div className="flex gap-3">
+             <button className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors text-sm border border-white/10 flex items-center gap-2">
+                <Save size={16}/> Save Workflow
+             </button>
+             <button className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors font-mono text-sm border border-green-500/30 flex items-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+                <Play size={16}/> Test Run
+            </button>
+        </div>
+      </div>
 
-      {usingDemo && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-            Backend SOAR service unreachable. Showing <strong>offline/demo</strong> playbooks.
-        </Alert>
-      )}
+      <div className="flex-1 flex gap-6 overflow-hidden">
+        {/* Sidebar Toolkit */}
+        <GlassCard className="w-64 flex flex-col gap-4">
+            <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest">Toolkit</h3>
+            <div className="space-y-3">
+                {NODE_TYPES.map((node) => (
+                    <div
+                        key={node.type}
+                        className={`p-3 rounded-lg border ${node.border} ${node.bg} cursor-grab active:cursor-grabbing hover:brightness-110 transition-all flex items-center gap-3`}
+                        draggable
+                    >
+                        <node.icon size={18} className={node.color} />
+                        <span className="text-gray-200 text-sm font-bold">{node.type}</span>
+                    </div>
+                ))}
+            </div>
+            <div className="mt-auto p-4 rounded-xl bg-white/5 border border-white/5">
+                <h4 className="text-xs font-bold text-gray-400 mb-2">Tips</h4>
+                <p className="text-xs text-gray-500">
+                    Connect nodes by dragging from output ports. Right-click to configure node parameters.
+                </p>
+            </div>
+        </GlassCard>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 10 }}><CircularProgress /></Box>
-      ) : (
-        <Grid container spacing={3}>
-          {playbooks.map((playbook) => (
-            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={playbook.id}>
-              <Card sx={{
-                  bgcolor: 'background.paper',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-2px)', boxShadow: 6 }
-              }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem' }}>
-                      {playbook.name}
-                    </Typography>
-                    <Chip
-                        label={playbook.trigger === 'manual' ? 'Manual' : 'Automated'}
-                        size="small"
-                        color={playbook.trigger === 'manual' ? 'default' : 'success'}
-                        variant="filled"
-                        sx={{ height: 20, fontSize: '0.7rem' }}
-                    />
-                  </Box>
+        {/* Canvas Area */}
+        <div className="flex-1 relative bg-[#09090b] rounded-2xl border border-white/10 overflow-hidden"
+             style={{
+                 backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)',
+                 backgroundSize: '20px 20px'
+             }}>
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontFamily: 'monospace' }}>
-                    ID: {playbook.id}
-                  </Typography>
+            {/* SVG Connections Layer */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#4b5563" />
+                    </marker>
+                </defs>
+                {/* Mock Connections */}
+                <path d="M 280 135 C 340 135, 340 135, 400 135" stroke="#4b5563" strokeWidth="2" fill="none" markerEnd="url(#arrowhead)" />
+                <path d="M 580 135 C 640 135, 640 85, 700 85" stroke="#4b5563" strokeWidth="2" fill="none" markerEnd="url(#arrowhead)" />
+                <path d="M 580 135 C 640 135, 640 215, 700 215" stroke="#4b5563" strokeWidth="2" fill="none" markerEnd="url(#arrowhead)" />
+            </svg>
 
-                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary' }}>
-                    Actions Chain:
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {playbook.actions?.map((action, idx) => (
-                      <Chip
-                        key={idx}
-                        label={action.type.replace('_', ' ')}
-                        size="small"
-                        sx={{
-                            bgcolor: 'rgba(0, 209, 255, 0.1)',
-                            color: '#00D1FF',
-                            border: '1px solid rgba(0, 209, 255, 0.2)',
-                            textTransform: 'capitalize'
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </CardContent>
+            {/* Nodes Layer */}
+            {nodes.map((node) => {
+                const typeConfig = NODE_TYPES.find(n => n.type === node.type) || NODE_TYPES[0];
+                return (
+                    <motion.div
+                        key={node.id}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className={`absolute w-44 p-3 rounded-xl border ${typeConfig.border} bg-[#09090b] shadow-xl z-10 flex flex-col gap-2 group cursor-pointer hover:ring-2 ring-cyan-500/50 transition-all`}
+                        style={{ left: node.x, top: node.y }}
+                        drag
+                        dragMomentum={false}
+                    >
+                        <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                            <typeConfig.icon size={14} className={typeConfig.color} />
+                            <span className={`text-xs font-bold ${typeConfig.color}`}>{node.type}</span>
+                            <Settings size={12} className="ml-auto text-gray-600 hover:text-white cursor-pointer" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-200">{node.label}</p>
 
-                <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                  <Button size="small" startIcon={<EditIcon />} onClick={() => navigate(`/playbooks/edit/${playbook.id}`)}>
-                    Edit
-                  </Button>
-                   <Button size="small" variant="contained" color="success" startIcon={<RunIcon />}>
-                    Run
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-    </Box>
+                        {/* Ports */}
+                        <div className="absolute -left-1.5 top-1/2 w-3 h-3 bg-gray-600 rounded-full border border-black" />
+                        <div className="absolute -right-1.5 top-1/2 w-3 h-3 bg-gray-600 rounded-full border border-black hover:bg-cyan-500 transition-colors" />
+                    </motion.div>
+                );
+            })}
+
+            {/* Canvas Controls */}
+            <div className="absolute bottom-4 left-4 flex gap-2">
+                <button className="p-2 bg-black/50 border border-white/10 rounded-lg text-gray-400 hover:text-white"><Plus size={16}/></button>
+                <button className="p-2 bg-black/50 border border-white/10 rounded-lg text-gray-400 hover:text-white"><Layout size={16}/></button>
+            </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
