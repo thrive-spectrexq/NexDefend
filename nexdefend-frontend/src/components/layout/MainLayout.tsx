@@ -4,7 +4,7 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut, CheckCircle, Database, Server,
+  LogOut, CheckCircle, Database, Server, Flame,
   Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Clock, Layers
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
       { label: 'Infrastructure Map', path: '/topology', icon: Globe },
       { label: 'Cloud Telemetry', path: '/cloud', icon: Cloud },
       { label: 'Perf. Explorer', path: '/grafana', icon: BarChart3 },
+      { label: 'Metrics', path: '/prometheus', icon: Flame },
     ]
   },
   {
@@ -176,19 +177,6 @@ export const MainLayout = () => {
             >
               <Menu className="h-5 w-5" />
             </button>
-
-            {/* Global Context Breadcrumb (Persistent Filters) */}
-            <div className="hidden lg:flex items-center gap-4 px-4 py-1.5 bg-white/5 rounded-lg border border-white/10 text-xs font-mono">
-                <div className="flex items-center gap-2 text-gray-400">
-                    <Clock size={14} className="text-cyan-500" />
-                    <span>Time: <span className="text-white">Last 1 hour</span></span>
-                </div>
-                <div className="w-px h-4 bg-white/10" />
-                <div className="flex items-center gap-2 text-gray-400">
-                    <Layers size={14} className="text-purple-500" />
-                    <span>Env: <span className="text-white">Production</span></span>
-                </div>
-            </div>
 
             {/* Omni-Search Bar */}
             <div className="relative max-w-lg w-full ml-4 hidden md:block group">
