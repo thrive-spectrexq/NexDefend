@@ -4,10 +4,11 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut, Flame
+  LogOut, Flame, CheckCircle, Database, Server
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
+import { SentinelChat } from '../dashboard/SentinelChat'; // Import Chat
 
 // Sidebar Navigation Groups
 const NAV_ITEMS = [
@@ -80,6 +81,7 @@ const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => (
 
 export const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isStatusOpen, setStatusOpen] = useState(false); // State for Status Popover
   const location = useLocation();
 
   return (
@@ -157,7 +159,7 @@ export const MainLayout = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Top Header */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md z-40">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
             <button
               onClick={() => setSidebarOpen(!isSidebarOpen)}
               className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
@@ -165,18 +167,56 @@ export const MainLayout = () => {
               <Menu className="h-5 w-5" />
             </button>
             {/* Breadcrumb Navigation */}
-            <div className="hidden md:flex items-center text-sm font-mono text-gray-400">
+            <div className="hidden md:flex items-center text-sm font-mono text-gray-400 shrink-0">
                 <span className="text-gray-600 mr-2">/</span>
                 <span className="text-cyan-400 uppercase tracking-wider">
                   {location.pathname === '/' ? 'DASHBOARD' : location.pathname.substring(1).replace('-', ' ')}
                 </span>
             </div>
+
+            {/* Global Search Bar (Added) */}
+            <div className="relative max-w-md w-full ml-8 hidden lg:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                    type="text"
+                    placeholder="Search IPs, Assets, or Logs..."
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-colors"
+                />
+            </div>
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-mono font-medium text-green-400 tracking-wide">SYSTEM OPTIMAL</span>
+
+            {/* System Status with Popover */}
+            <div className="relative">
+                <button
+                    onClick={() => setStatusOpen(!isStatusOpen)}
+                    className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors cursor-pointer"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-mono font-medium text-green-400 tracking-wide">SYSTEM OPTIMAL</span>
+                </button>
+
+                {isStatusOpen && (
+                    <>
+                        <div className="fixed inset-0 z-40" onClick={() => setStatusOpen(false)} />
+                        <div className="absolute top-full right-0 mt-2 w-64 bg-[#09090b] border border-white/10 rounded-xl shadow-2xl z-50 p-4 space-y-3">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Service Status</h4>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-sm text-gray-300"><Server size={14} className="text-blue-400"/> Core API</span>
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-sm text-gray-300"><Database size={14} className="text-purple-400"/> Postgres DB</span>
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-sm text-gray-300"><Activity size={14} className="text-yellow-400"/> Event Ingestor</span>
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div className="h-6 w-px bg-white/10" />
@@ -199,6 +239,11 @@ export const MainLayout = () => {
           <div className="max-w-7xl mx-auto space-y-6 pb-10 relative z-10">
              <Outlet />
           </div>
+        </div>
+
+        {/* Global Sentinel Chat Overlay */}
+        <div className="fixed bottom-6 right-6 z-50 w-96">
+            <SentinelChat />
         </div>
       </main>
     </div>
