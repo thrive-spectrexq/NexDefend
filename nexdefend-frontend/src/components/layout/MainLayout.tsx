@@ -187,10 +187,6 @@ export const MainLayout = () => {
 
         {/* Dynamic Page Content */}
         <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-          {/* Animated Background Grid */}
-          <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
-               style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-          />
           <div className="max-w-7xl mx-auto space-y-6 pb-10 relative z-10">
              <Outlet />
           </div>
