@@ -4,7 +4,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { RightDrawer } from '../components/ui/RightDrawer';
 import {
     AlertTriangle, Clock,
-    ChevronRight, Terminal, Activity, Zap, Sparkles, Server, User, CheckCircle
+    ChevronRight, Terminal, Activity, Zap, Sparkles, Server, User
 } from 'lucide-react';
 
 interface Incident {

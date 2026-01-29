@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import client from '@/api/client';
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, Brush } from 'recharts';
 import { GlassCard } from '../components/ui/GlassCard';
-import { AlertTriangle, ShieldAlert, Activity, Search, Filter } from 'lucide-react';
+import { ShieldAlert, Activity, Search, Filter } from 'lucide-react';
 
 interface AlertData {
   id?: string | number;
@@ -23,7 +23,9 @@ interface AlertData {
 
 const AlertsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<AlertData[]>([]);
-  const [loading, setLoading] = useState(true);
+  // loading state intentionally kept for future use / suspense integration if needed,
+  // but removing for now to fix build error as it is unused in render.
+  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -63,7 +65,7 @@ const AlertsPage: React.FC = () => {
         }));
         setAlerts(mockAlerts);
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
     fetchAlerts();
