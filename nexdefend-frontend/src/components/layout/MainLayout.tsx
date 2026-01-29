@@ -5,7 +5,7 @@ import {
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
   LogOut, Flame, CheckCircle, Database, Server,
-  Sparkles
+  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -21,11 +21,26 @@ const NAV_ITEMS = [
     ]
   },
   {
-    group: 'Threat Intel',
+    group: 'Detection & Response',
     items: [
       { label: 'Alerts', path: '/alerts', icon: Bell },
       { label: 'Incidents', path: '/incidents', icon: ShieldAlert },
+      { label: 'Playbooks', path: '/playbooks', icon: FileText },
+    ]
+  },
+  {
+    group: 'Intelligence',
+    items: [
+      { label: 'Threat Feed', path: '/threat-intel', icon: Radar },
+      { label: 'UEBA', path: '/ueba', icon: UserCheck },
       { label: 'Vulnerabilities', path: '/vulnerabilities', icon: Activity },
+    ]
+  },
+  {
+    group: 'GRC',
+    items: [
+      { label: 'Compliance', path: '/compliance', icon: ClipboardCheck },
+      { label: 'Risk Scorecard', path: '/risk', icon: TrendingUp },
     ]
   },
   {
@@ -41,7 +56,6 @@ const NAV_ITEMS = [
     group: 'Analysis',
     items: [
       { label: 'Data Explorer', path: '/data-explorer', icon: Search },
-      { label: 'Playbooks', path: '/playbooks', icon: FileText },
     ]
   },
   {
