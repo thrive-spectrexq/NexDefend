@@ -21,6 +21,7 @@ import VulnerabilitiesPage from './pages/VulnerabilitiesPage';
 import TopologyPage from './pages/TopologyPage';
 import DataExplorerPage from './pages/DataExplorerPage';
 import GrafanaPage from './pages/GrafanaPage';
+import PrometheusPage from './pages/PrometheusPage';
 import PlaybooksPage from './pages/PlaybooksPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       // Analytics & Tools
       { path: 'data-explorer', element: <DataExplorerPage /> },
       { path: 'grafana', element: <GrafanaPage /> },
+      { path: 'prometheus', element: <PrometheusPage /> },
       { path: 'playbooks', element: <PlaybooksPage /> },
 
       // User Management
