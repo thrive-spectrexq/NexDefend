@@ -17,7 +17,7 @@ export const GlassCard = ({ children, className, title, icon, action }: GlassCar
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className={clsx(
-        "glass-panel glass-panel-hover rounded-2xl p-6 relative overflow-hidden group border border-[rgba(255,255,255,0.08)] hover:scale-[1.01] hover:z-10 transition-transform duration-300",
+        "glass-panel glass-panel-hover rounded-2xl p-6 relative overflow-hidden group",
         className
       )}
     >
