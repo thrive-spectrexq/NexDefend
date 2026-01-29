@@ -4,7 +4,8 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut, Flame, CheckCircle, Database, Server
+  LogOut, Flame, CheckCircle, Database, Server,
+  Sparkles
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -82,6 +83,7 @@ const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => (
 export const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isStatusOpen, setStatusOpen] = useState(false); // State for Status Popover
+  const [isChatOpen, setChatOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -242,8 +244,19 @@ export const MainLayout = () => {
         </div>
 
         {/* Global Sentinel Chat Overlay */}
-        <div className="fixed bottom-6 right-6 z-50 w-96">
-            <SentinelChat />
+        <div className="fixed bottom-6 right-6 z-50">
+            {isChatOpen ? (
+                <div className="w-96">
+                    <SentinelChat onClose={() => setChatOpen(false)} />
+                </div>
+            ) : (
+                <button
+                    onClick={() => setChatOpen(true)}
+                    className="p-4 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all hover:scale-110 group backdrop-blur-sm"
+                >
+                    <Sparkles className="h-6 w-6 animate-pulse group-hover:animate-none" />
+                </button>
+            )}
         </div>
       </main>
     </div>
