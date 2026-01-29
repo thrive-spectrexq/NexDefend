@@ -5,7 +5,7 @@ import {
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
   LogOut, Flame, CheckCircle, Database, Server,
-  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp
+  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Clock, Layers
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -14,17 +14,20 @@ import { SentinelChat } from '../dashboard/SentinelChat'; // Import Chat
 // Sidebar Navigation Groups
 const NAV_ITEMS = [
   {
-    group: 'Operations',
+    group: 'Observability',
     items: [
-      { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-      { label: 'Console', path: '/console', icon: Terminal },
+      { label: 'Golden Signals', path: '/dashboard', icon: LayoutDashboard },
+      { label: 'Infrastructure Map', path: '/topology', icon: Globe },
+      { label: 'Cloud Telemetry', path: '/cloud', icon: Cloud },
+      { label: 'Perf. Explorer', path: '/grafana', icon: BarChart3 },
     ]
   },
   {
-    group: 'Detection & Response',
+    group: 'Defense',
     items: [
-      { label: 'Alerts', path: '/alerts', icon: Bell },
-      { label: 'Incidents', path: '/incidents', icon: ShieldAlert },
+      { label: 'Notable Events', path: '/alerts', icon: Bell },
+      { label: 'Incident Workbench', path: '/incidents', icon: ShieldAlert },
+      { label: 'Behavioral Analytics', path: '/ueba', icon: UserCheck },
       { label: 'Playbooks', path: '/playbooks', icon: FileText },
     ]
   },
@@ -32,7 +35,6 @@ const NAV_ITEMS = [
     group: 'Intelligence',
     items: [
       { label: 'Threat Feed', path: '/threat-intel', icon: Radar },
-      { label: 'UEBA', path: '/ueba', icon: UserCheck },
       { label: 'Vulnerabilities', path: '/vulnerabilities', icon: Activity },
     ]
   },
@@ -47,22 +49,14 @@ const NAV_ITEMS = [
     group: 'Infrastructure',
     items: [
       { label: 'Network', path: '/network', icon: Network },
-      { label: 'Topology', path: '/topology', icon: Globe },
-      { label: 'Cloud', path: '/cloud', icon: Cloud },
       { label: 'Agents', path: '/agents', icon: Cpu },
+      { label: 'Console', path: '/console', icon: Terminal },
     ]
   },
   {
     group: 'Analysis',
     items: [
       { label: 'Data Explorer', path: '/data-explorer', icon: Search },
-    ]
-  },
-  {
-    group: 'Monitoring',
-    items: [
-      { label: 'Grafana', path: '/grafana', icon: BarChart3 },
-      { label: 'Prometheus', path: '/prometheus', icon: Flame },
     ]
   },
 ];
@@ -182,22 +176,31 @@ export const MainLayout = () => {
             >
               <Menu className="h-5 w-5" />
             </button>
-            {/* Breadcrumb Navigation */}
-            <div className="hidden md:flex items-center text-sm font-mono text-gray-400 shrink-0">
-                <span className="text-gray-600 mr-2">/</span>
-                <span className="text-cyan-400 uppercase tracking-wider">
-                  {location.pathname === '/' ? 'DASHBOARD' : location.pathname.substring(1).replace('-', ' ')}
-                </span>
+
+            {/* Global Context Breadcrumb (Persistent Filters) */}
+            <div className="hidden lg:flex items-center gap-4 px-4 py-1.5 bg-white/5 rounded-lg border border-white/10 text-xs font-mono">
+                <div className="flex items-center gap-2 text-gray-400">
+                    <Clock size={14} className="text-cyan-500" />
+                    <span>Time: <span className="text-white">Last 1 hour</span></span>
+                </div>
+                <div className="w-px h-4 bg-white/10" />
+                <div className="flex items-center gap-2 text-gray-400">
+                    <Layers size={14} className="text-purple-500" />
+                    <span>Env: <span className="text-white">Production</span></span>
+                </div>
             </div>
 
-            {/* Global Search Bar (Added) */}
-            <div className="relative max-w-md w-full ml-8 hidden lg:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            {/* Omni-Search Bar */}
+            <div className="relative max-w-lg w-full ml-4 hidden md:block group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-cyan-500 transition-colors" />
                 <input
                     type="text"
-                    placeholder="Search IPs, Assets, or Logs..."
-                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-colors"
+                    placeholder="Omni-Search: Query OpenSearch, Prometheus, or Assets..."
+                    className="w-full bg-black/50 border border-white/10 rounded-lg pl-10 pr-24 py-2 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 focus:bg-white/5 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all placeholder:text-gray-600 font-mono"
                 />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] text-gray-500 font-mono">⌘K</kbd>
+                </div>
             </div>
           </div>
 

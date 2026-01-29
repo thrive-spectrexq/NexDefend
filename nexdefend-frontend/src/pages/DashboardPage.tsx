@@ -3,43 +3,45 @@ import { Activity, Server, Shield, Globe, X, ExternalLink, ShieldCheck, AlertTri
 import { Link, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
-import { ResourceGauge } from '../components/dashboard/ResourceGauge';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const sparkData = [
-    { v: 10 }, { v: 15 }, { v: 8 }, { v: 12 }, { v: 20 }, { v: 16 }, { v: 22 }, { v: 18 }, { v: 25 }, { v: 20 }
-];
-
-const StatCard = ({ label, value, color, icon: Icon, showSpark = false, to }: any) => (
-  <Link to={to} className="block group">
-      <GlassCard className="flex items-center justify-between p-4 relative overflow-hidden cursor-pointer hover:border-cyan-500/50 transition-all">
-         <div className="z-10">
-           <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 group-hover:text-cyan-400 transition-colors">{label}</p>
-           <h2 className={`text-2xl font-bold font-mono ${color} drop-shadow-sm`}>{value}</h2>
-         </div>
-         <div className="flex flex-col items-end gap-2 z-10">
-           <div className={`p-2 rounded-lg bg-white/5 ${color}`}>
-             <Icon size={20} />
-           </div>
-           {showSpark && (
-             <div className="h-8 w-20 opacity-70 group-hover:opacity-100 transition-opacity">
-                <ResponsiveContainer width="100%" height="100%">
-                   <LineChart data={sparkData}>
-                      <Line type="monotone" dataKey="v" stroke={color === 'text-green-400' ? '#4ade80' : '#3b82f6'} strokeWidth={2} dot={false} />
-                   </LineChart>
-                </ResponsiveContainer>
-             </div>
-           )}
-         </div>
-         {/* Decorative subtle background icon */}
-         <Icon className="absolute -bottom-4 -right-4 w-24 h-24 text-white/[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500" />
-      </GlassCard>
-  </Link>
+const SystemPulseBar = () => (
+    <GlassCard className="mb-6 p-4 flex flex-col md:flex-row items-center justify-between divide-y md:divide-y-0 md:divide-x divide-white/10 gap-4 md:gap-0">
+        <div className="px-4 flex-1 text-center w-full md:w-auto">
+            <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Global Latency</p>
+            <div className="text-2xl font-mono text-cyan-400 font-bold">24ms <span className="text-xs text-green-500">▼ 12%</span></div>
+        </div>
+        <div className="px-4 flex-1 text-center w-full md:w-auto">
+             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Throughput</p>
+             <div className="text-2xl font-mono text-blue-400 font-bold">1.2 GB/s <span className="text-xs text-green-500">▲ 5%</span></div>
+        </div>
+        <div className="px-4 flex-1 text-center w-full md:w-auto">
+             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Error Rate</p>
+             <div className="text-2xl font-mono text-green-400 font-bold">0.02% <span className="text-xs text-gray-500">~</span></div>
+        </div>
+        <div className="px-4 flex-1 text-center w-full md:w-auto">
+             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Threat Velocity</p>
+             <div className="text-2xl font-mono text-purple-400 font-bold">LOW <span className="text-xs text-gray-500">0 events/s</span></div>
+        </div>
+    </GlassCard>
 );
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+  // Mock Data for Area Chart
+  const trafficData = Array.from({ length: 20 }, (_, i) => ({
+      time: `${10 + Math.floor(i/2)}:${(i%2)*30}:00`,
+      network: Math.floor(Math.random() * 800) + 200, // MB/s
+      threats: Math.floor(Math.random() * 50) + 5, // Blocked count
+  }));
+
+  // Mock Agent Data for Heatmap
+  const agents = Array.from({ length: 32 }, (_, i) => ({
+      id: i,
+      score: Math.floor(Math.random() * 100),
+  }));
 
   const events = [
       { id: 1, time: '10:42:05', event: 'SSH Login Attempt', source: '192.168.1.105', status: 'BLOCKED', color: 'text-red-500 border-red-500/30 bg-red-500/10', details: 'Repeated failed login attempts (5) from unknown IP. Geolocation: CN.' },
@@ -52,55 +54,62 @@ const DashboardPage = () => {
 
   return (
     <>
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <StatCard label="Threat Score" value="LOW" color="text-green-400" icon={Shield} showSpark={true} to="/alerts" />
-        <StatCard label="Active Agents" value="42/42" color="text-cyan-400" icon={Server} showSpark={true} to="/agents" />
-        <StatCard label="Network Load" value="1.2 GB/s" color="text-blue-400" icon={Activity} showSpark={true} to="/network" />
-        <StatCard label="Global Status" value="SECURE" color="text-purple-400" icon={Globe} to="/topology" />
-      </div>
+      {/* Global Telemetry Header (System Pulse) */}
+      <SystemPulseBar />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Left Column: System Health */}
+        {/* Left Column: Observability Widgets */}
         <div className="space-y-6">
-           <GlassCard title="Resource Monitor" icon={<Activity size={18} />}>
-              <div className="grid grid-cols-2 gap-4 h-40">
-                <ResourceGauge value={45} label="CPU Load" />
-                <ResourceGauge value={72} label="Memory" color="#8b5cf6" />
-              </div>
-              <div className="mt-4 space-y-2">
-                 <div className="flex justify-between text-sm text-gray-400 font-mono">
-                    <span>/dev/sda1</span>
-                    <span className="text-green-400">HEALTHY</span>
-                 </div>
-                 <div className="w-full bg-slate-800 rounded-full h-1.5">
-                    <div className="bg-green-500 h-1.5 rounded-full w-3/4 shadow-[0_0_10px_lime]" />
-                 </div>
-              </div>
+           {/* Infrastructure Heatmap (Honeycomb) */}
+           <GlassCard title="Infrastructure Risk Heatmap" className="h-auto">
+                <div className="flex flex-wrap gap-1.5 justify-center p-2">
+                    {agents.map((agent) => (
+                        <div
+                            key={agent.id}
+                            className={`w-7 h-7 flex items-center justify-center text-[9px] font-bold transition-all hover:scale-125 hover:z-10 cursor-pointer ${
+                                agent.score > 80 ? 'bg-red-500 text-white shadow-[0_0_10px_red]' :
+                                agent.score > 50 ? 'bg-yellow-500 text-black' :
+                                'bg-green-500/20 text-green-400 border border-green-500/30'
+                            }`}
+                            title={`Agent ${agent.id}: Risk ${agent.score}`}
+                            style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+                        >
+                            {agent.score}
+                        </div>
+                    ))}
+                </div>
+                <div className="flex justify-between px-4 mt-4 text-[10px] text-gray-500 uppercase font-mono">
+                    <span>Healthy</span>
+                    <span>Critical</span>
+                </div>
+                <div className="h-1 mx-4 mt-1 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full" />
            </GlassCard>
 
-           <GlassCard title="Active Incidents">
-              <div className="space-y-3">
-                 {[
-                    { id: 'INC-2091', type: 'Port Scan', sev: 'High', time: '2m ago' },
-                    { id: 'INC-2092', type: 'Auth Fail', sev: 'Low', time: '15m ago' },
-                 ].map((inc, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer" onClick={() => navigate('/incidents')}>
-                       <div>
-                          <p className="text-red-400 font-bold text-sm font-mono">{inc.type}</p>
-                          <p className="text-xs text-gray-500">{inc.id}</p>
-                       </div>
-                       <span className="text-xs font-mono px-2 py-1 rounded bg-red-500/10 text-red-400">{inc.time}</span>
-                    </div>
-                 ))}
-              </div>
-              <div className="mt-4 text-center">
-                 <NeonButton variant="danger" className="w-full justify-center text-sm cursor-pointer" onClick={() => navigate('/incidents')}>
-                    View All Incidents
-                 </NeonButton>
-              </div>
+           {/* Correlated Time-Series */}
+           <GlassCard title="Correlated: Net vs Threats" className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trafficData}>
+                        <defs>
+                            <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorThreat" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
+                        <XAxis dataKey="time" hide />
+                        <YAxis yAxisId="left" orientation="left" stroke="#3b82f6" fontSize={9} tickFormatter={(v) => `${v}M`} width={30} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#ef4444" fontSize={9} width={20} />
+                        <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#ffffff20', fontSize: '12px' }} />
+                        <Area yAxisId="left" type="monotone" dataKey="network" stroke="#3b82f6" fillOpacity={1} fill="url(#colorNet)" />
+                        <Area yAxisId="right" type="monotone" dataKey="threats" stroke="#ef4444" fillOpacity={1} fill="url(#colorThreat)" />
+                    </AreaChart>
+                </ResponsiveContainer>
            </GlassCard>
         </div>
 
