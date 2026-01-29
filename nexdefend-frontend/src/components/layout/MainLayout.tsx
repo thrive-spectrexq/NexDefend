@@ -5,7 +5,7 @@ import {
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
   LogOut, CheckCircle, Database, Server, Flame,
-  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Clock, Layers
+  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
