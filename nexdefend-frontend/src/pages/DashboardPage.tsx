@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Activity, Server, Shield, Globe, X, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Activity, Globe, X, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -27,7 +26,6 @@ const SystemPulseBar = () => (
 );
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // Mock Data for Area Chart

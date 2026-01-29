@@ -105,7 +105,7 @@ const DataExplorerPage: React.FC = () => {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {pivotData.distribution.map((entry, index) => (
+                                    {pivotData.distribution.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#ef4444'][index % 5]} />
                                     ))}
                                 </Pie>

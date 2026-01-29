@@ -4,7 +4,7 @@ import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
-  LogOut, Flame, CheckCircle, Database, Server,
+  LogOut, CheckCircle, Database, Server,
   Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Clock, Layers
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
