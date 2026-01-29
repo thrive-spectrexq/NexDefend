@@ -1,4 +1,4 @@
-import { Activity, Server, Shield, Globe, Lock } from 'lucide-react';
+import { Activity, Server, Shield, Globe } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
 import { SentinelChat } from '../components/dashboard/SentinelChat';
@@ -69,22 +69,37 @@ const DashboardPage = () => {
            </GlassCard>
         </div>
 
-        {/* Center Column: Threat Map (Placeholder Visual) */}
+        {/* Center Column: Live Security Events */}
         <div className="lg:col-span-2">
-           <GlassCard title="Global Threat Vector" icon={<Globe size={18} />} className="h-full min-h-[400px]">
-              <div className="relative h-full w-full rounded-xl overflow-hidden bg-black/40 border border-white/5 flex items-center justify-center group">
-                 {/* Decorative Map Background */}
-                 <div className="absolute inset-0 opacity-30 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover bg-center invert filter brightness-50" />
-
-                 {/* Animated Pings */}
-                 <div className="absolute top-1/3 left-1/4 w-3 h-3 bg-red-500 rounded-full animate-ping" />
-                 <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-cyan-500 rounded-full animate-ping delay-75" />
-                 <div className="absolute bottom-1/3 right-1/4 w-3 h-3 bg-yellow-500 rounded-full animate-ping delay-150" />
-
-                 <div className="z-10 text-center">
-                    <Lock className="h-12 w-12 text-cyan-500 mx-auto mb-4 opacity-80" />
-                    <p className="text-gray-400 font-mono text-sm">Real-time Visualization Active</p>
-                 </div>
+           <GlassCard title="Live Security Events" icon={<Activity size={18} />} className="h-full min-h-[400px]">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-gray-500 text-xs border-b border-white/10">
+                      <th className="p-3 font-medium uppercase tracking-wider">Time</th>
+                      <th className="p-3 font-medium uppercase tracking-wider">Event</th>
+                      <th className="p-3 font-medium uppercase tracking-wider">Source</th>
+                      <th className="p-3 font-medium uppercase tracking-wider text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm font-mono text-gray-300">
+                    {[
+                      { time: '10:42:05', event: 'SSH Login Attempt', source: '192.168.1.105', status: 'BLOCKED', color: 'text-red-400' },
+                      { time: '10:41:55', event: 'Outbound Connection', source: 'process: curl', status: 'ALLOWED', color: 'text-green-400' },
+                      { time: '10:40:12', event: 'File Integrity Check', source: '/etc/passwd', status: 'VERIFIED', color: 'text-cyan-400' },
+                      { time: '10:38:45', event: 'Port Scan Detected', source: '10.0.0.55', status: 'FLAGGED', color: 'text-yellow-400' },
+                      { time: '10:35:20', event: 'Agent Heartbeat', source: 'web-server-01', status: 'ACTIVE', color: 'text-blue-400' },
+                      { time: '10:30:00', event: 'System Update', source: 'apt-get', status: 'COMPLETED', color: 'text-purple-400' },
+                    ].map((row, idx) => (
+                      <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="p-3 text-gray-500">{row.time}</td>
+                        <td className="p-3 font-medium text-white">{row.event}</td>
+                        <td className="p-3 text-gray-400">{row.source}</td>
+                        <td className={`p-3 text-right font-bold ${row.color}`}>{row.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
            </GlassCard>
         </div>
