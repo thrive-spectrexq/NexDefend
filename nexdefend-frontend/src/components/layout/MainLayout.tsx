@@ -6,7 +6,7 @@ import {
   Network, FileText, Globe, Search, BarChart3,
   LogOut, CheckCircle, Database, Server, Flame,
   Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Users, MessageSquare,
-  HelpCircle, User
+  HelpCircle, User, HardDrive, Zap
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -29,6 +29,7 @@ const NAV_ITEMS = [
     items: [
       { label: 'Notable Events', path: '/alerts', icon: Bell },
       { label: 'Incident Workbench', path: '/incidents', icon: ShieldAlert },
+      { label: 'System Activity', path: '/activity-monitoring', icon: Activity },
       { label: 'Behavioral Analytics', path: '/ueba', icon: UserCheck },
       { label: 'Playbooks', path: '/playbooks', icon: FileText },
     ]
@@ -50,6 +51,8 @@ const NAV_ITEMS = [
   {
     group: 'Infrastructure',
     items: [
+      { label: 'System Health', path: '/system-health', icon: HardDrive },
+      { label: 'Service Health', path: '/service-health', icon: Zap },
       { label: 'Network', path: '/network', icon: Network },
       { label: 'Agents', path: '/agents', icon: Cpu },
       { label: 'Console', path: '/console', icon: Terminal },
