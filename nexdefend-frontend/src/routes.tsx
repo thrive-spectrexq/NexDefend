@@ -29,6 +29,7 @@ import UEBAPage from './pages/UEBAPage';
 import ThreatIntelPage from './pages/ThreatIntelPage';
 import CompliancePage from './pages/CompliancePage';
 import RiskPage from './pages/RiskPage';
+import UserActivityPage from './pages/UserActivityPage';
 
 export const router = createBrowserRouter([
   // 1. Landing & Authentication (Public)
@@ -63,6 +64,7 @@ export const router = createBrowserRouter([
       { path: 'threat-intel', element: <ThreatIntelPage /> },
       { path: 'compliance', element: <CompliancePage /> },
       { path: 'risk', element: <RiskPage /> },
+      { path: 'user-activity', element: <UserActivityPage /> },
 
       // System & Assets
       { path: 'agents', element: <AgentsPage /> },
