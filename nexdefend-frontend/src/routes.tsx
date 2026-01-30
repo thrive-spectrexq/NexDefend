@@ -30,6 +30,9 @@ import ThreatIntelPage from './pages/ThreatIntelPage';
 import CompliancePage from './pages/CompliancePage';
 import RiskPage from './pages/RiskPage';
 import UserActivityPage from './pages/UserActivityPage';
+import ActivityMonitoringPage from './pages/ActivityMonitoringPage';
+import SystemHealthPage from './pages/SystemHealthPage';
+import ServiceHealthPage from './pages/ServiceHealthPage';
 
 export const router = createBrowserRouter([
   // 1. Landing & Authentication (Public)
@@ -65,8 +68,11 @@ export const router = createBrowserRouter([
       { path: 'compliance', element: <CompliancePage /> },
       { path: 'risk', element: <RiskPage /> },
       { path: 'user-activity', element: <UserActivityPage /> },
+      { path: 'activity-monitoring', element: <ActivityMonitoringPage /> },
 
       // System & Assets
+      { path: 'system-health', element: <SystemHealthPage /> },
+      { path: 'service-health', element: <ServiceHealthPage /> },
       { path: 'agents', element: <AgentsPage /> },
       { path: 'topology', element: <TopologyPage /> },
 
