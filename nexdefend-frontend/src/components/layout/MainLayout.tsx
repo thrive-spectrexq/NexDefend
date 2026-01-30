@@ -5,7 +5,8 @@ import {
   Settings, Menu, Bell, Cpu, Cloud,
   Network, FileText, Globe, Search, BarChart3,
   LogOut, CheckCircle, Database, Server, Flame,
-  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp
+  Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Users, MessageSquare,
+  HelpCircle, User
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -58,6 +59,7 @@ const NAV_ITEMS = [
     group: 'Analysis',
     items: [
       { label: 'Data Explorer', path: '/data-explorer', icon: Search },
+      { label: 'User Activity', path: '/user-activity', icon: Users },
     ]
   },
 ];
@@ -93,6 +95,7 @@ export const MainLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isStatusOpen, setStatusOpen] = useState(false); // State for Status Popover
   const [isChatOpen, setChatOpen] = useState(false);
+  const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -230,13 +233,55 @@ export const MainLayout = () => {
 
             <div className="flex items-center gap-4">
               <button className="relative text-gray-400 hover:text-cyan-400 transition-colors cursor-pointer">
+                <MessageSquare className="h-5 w-5" />
+              </button>
+              <button className="relative text-gray-400 hover:text-cyan-400 transition-colors cursor-pointer">
                 <Bell className="h-5 w-5" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-background" />
               </button>
-              <Link to="/logout" className="text-gray-400 hover:text-red-400 transition-colors flex items-center gap-2 text-sm font-mono">
-                <LogOut className="h-4 w-4" />
-                <span className="hidden md:inline">LOGOUT</span>
-              </Link>
+
+              {/* User Dropdown */}
+              <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 text-sm font-mono text-gray-400 hover:text-white transition-colors focus:outline-none"
+                  >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-lg shadow-cyan-900/20">
+                        BA
+                      </div>
+                  </button>
+
+                  {isUserMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                        <div className="absolute top-full right-0 mt-2 w-56 bg-[#09090b] border border-white/10 rounded-xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-100">
+                            <div className="px-3 py-2 border-b border-white/5 mb-2">
+                                <p className="text-sm font-bold text-white">Nexdefend Admin</p>
+                                <p className="text-xs text-gray-500">admin@nexdefend.io</p>
+                            </div>
+
+                            <Link to="/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors" onClick={() => setUserMenuOpen(false)}>
+                                <User size={14} /> Profile
+                            </Link>
+                            <Link to="/user-activity" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors" onClick={() => setUserMenuOpen(false)}>
+                                <Activity size={14} /> Activity
+                            </Link>
+                            <Link to="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors" onClick={() => setUserMenuOpen(false)}>
+                                <Settings size={14} /> Settings
+                            </Link>
+                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-left">
+                                <HelpCircle size={14} /> Help & Support
+                            </button>
+
+                            <div className="h-px bg-white/10 my-2" />
+
+                            <Link to="/logout" className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" onClick={() => setUserMenuOpen(false)}>
+                                <LogOut size={14} /> Logout
+                            </Link>
+                        </div>
+                      </>
+                  )}
+              </div>
             </div>
           </div>
         </header>
