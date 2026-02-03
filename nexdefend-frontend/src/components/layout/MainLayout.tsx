@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import {
   ShieldAlert, LayoutDashboard, Terminal, Activity,
@@ -6,7 +6,7 @@ import {
   Network, FileText, Globe, Search, BarChart3,
   LogOut, CheckCircle, Database, Server, Flame,
   Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Users, MessageSquare,
-  HelpCircle, User, HardDrive, Zap
+  HelpCircle, User, HardDrive, Zap, X
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -72,20 +72,29 @@ interface SidebarItemProps {
   label: string;
   path: string;
   active: boolean;
+  collapsed: boolean;
+  onClick?: () => void;
 }
 
-const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => (
+const SidebarItem = ({ icon: Icon, label, path, active, collapsed, onClick }: SidebarItemProps) => (
   <Link
     to={path}
+    onClick={onClick}
+    title={collapsed ? label : undefined}
     className={clsx(
       "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden",
       active
         ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
-        : "text-gray-400 hover:text-white hover:bg-white/5"
+        : "text-gray-400 hover:text-white hover:bg-white/5",
+      collapsed && "justify-center px-2"
     )}
   >
-    <Icon className={clsx("h-4 w-4 z-10", active && "drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]")} />
-    <span className="font-mono text-sm tracking-wide z-10">{label}</span>
+    <Icon className={clsx("h-4 w-4 z-10 shrink-0", active && "drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]")} />
+    {!collapsed && (
+        <span className="font-mono text-sm tracking-wide z-10 whitespace-nowrap overflow-hidden transition-all duration-300">
+            {label}
+        </span>
+    )}
 
     {/* Active Glow Bar */}
     {active && (
@@ -95,43 +104,94 @@ const SidebarItem = ({ icon: Icon, label, path, active }: SidebarItemProps) => (
 );
 
 export const MainLayout = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isStatusOpen, setStatusOpen] = useState(false); // State for Status Popover
+  // Desktop state: true = expanded (w-72), false = collapsed (w-20)
+  // Mobile state: controlled by isMobileMenuOpen
+  const [isSidebarExpanded, setSidebarExpanded] = useState(true);
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isStatusOpen, setStatusOpen] = useState(false);
   const [isChatOpen, setChatOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
 
+  // Handle Resize for Responsive Behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarExpanded(true); // Always full width when open on mobile
+        // setMobileMenuOpen(false); // Close menu on resize to avoid layout shift issues? Optional.
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const toggleSidebar = () => {
+      if (window.innerWidth < 768) {
+          setMobileMenuOpen(!isMobileMenuOpen);
+      } else {
+          setSidebarExpanded(!isSidebarExpanded);
+      }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background text-white selection:bg-cyan-500/30">
+
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+      )}
+
       {/* 1. Sidebar */}
       <aside
         className={clsx(
-          "fixed md:relative z-50 h-full bg-[#050505]/95 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col",
-          isSidebarOpen ? "w-72" : "w-20"
+          "fixed md:static z-50 h-full bg-[#050505]/95 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col ease-in-out",
+          // Mobile: Slide in from left
+          "md:translate-x-0",
+          isMobileMenuOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0",
+          // Desktop: Width toggle
+          !isMobileMenuOpen && (isSidebarExpanded ? "md:w-72" : "md:w-20")
         )}
       >
         {/* Brand Header */}
-        <div className="p-6 flex items-center gap-3 border-b border-white/5">
-          <div className="relative group">
-            <ShieldAlert className="h-8 w-8 text-cyan-400 transition-transform group-hover:scale-110" />
-            <div className="absolute inset-0 bg-cyan-500 blur-xl opacity-20 animate-pulse" />
-          </div>
-          {isSidebarOpen && (
-            <div className="flex flex-col">
-              <h1 className="font-mono text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                NEXDEFEND
-              </h1>
-              <span className="text-[10px] text-gray-500 tracking-widest uppercase">Enterprise Security</span>
+        <div className="p-6 flex items-center justify-between md:justify-start gap-3 border-b border-white/5 h-16 shrink-0">
+            <div className="flex items-center gap-3">
+                <div className="relative group">
+                    <ShieldAlert className="h-8 w-8 text-cyan-400 transition-transform group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-cyan-500 blur-xl opacity-20 animate-pulse" />
+                </div>
+                {(isSidebarExpanded || isMobileMenuOpen) && (
+                    <div className="flex flex-col animate-in fade-in duration-300">
+                    <h1 className="font-mono text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                        NEXDEFEND
+                    </h1>
+                    <span className="text-[10px] text-gray-500 tracking-widest uppercase">Enterprise Security</span>
+                    </div>
+                )}
             </div>
-          )}
+
+            {/* Mobile Close Button */}
+            <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="md:hidden text-gray-400 hover:text-white"
+            >
+                <X size={20} />
+            </button>
         </div>
 
         {/* Navigation Links (Scrollable) */}
         <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6 custom-scrollbar">
           {NAV_ITEMS.map((group, idx) => (
             <div key={idx}>
-              {isSidebarOpen && (
-                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 pl-2">
+              {(isSidebarExpanded || isMobileMenuOpen) && (
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 pl-2 animate-in fade-in">
                   {group.group}
                 </h3>
               )}
@@ -141,6 +201,8 @@ export const MainLayout = () => {
                     key={item.path}
                     {...item}
                     active={location.pathname === item.path}
+                    collapsed={!isSidebarExpanded && !isMobileMenuOpen}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                 ))}
               </div>
@@ -150,12 +212,12 @@ export const MainLayout = () => {
 
         {/* User Footer */}
         <div className="p-4 border-t border-white/5 bg-black/20">
-           <div className={clsx("flex items-center gap-3", !isSidebarOpen && "justify-center")}>
-              <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center font-bold text-sm shadow-lg shadow-cyan-900/20">
+           <div className={clsx("flex items-center gap-3", (!isSidebarExpanded && !isMobileMenuOpen) && "justify-center")}>
+              <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center font-bold text-sm shadow-lg shadow-cyan-900/20 shrink-0">
                 BA
               </div>
-              {isSidebarOpen && (
-                <div className="flex-1 min-w-0">
+              {(isSidebarExpanded || isMobileMenuOpen) && (
+                <div className="flex-1 min-w-0 animate-in fade-in">
                    <p className="text-sm font-bold text-white truncate">Nexdefend Admin</p>
                    <div className="flex items-center gap-2">
                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -163,7 +225,7 @@ export const MainLayout = () => {
                    </div>
                 </div>
               )}
-              {isSidebarOpen && (
+              {(isSidebarExpanded || isMobileMenuOpen) && (
                  <Link to="/settings" className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
                     <Settings className="h-4 w-4 text-gray-400" />
                  </Link>
@@ -173,12 +235,12 @@ export const MainLayout = () => {
       </aside>
 
       {/* 2. Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300">
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md z-40">
+        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md z-30 shrink-0">
           <div className="flex items-center gap-4 flex-1">
             <button
-              onClick={() => setSidebarOpen(!isSidebarOpen)}
+              onClick={toggleSidebar}
               className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
             >
               <Menu className="h-5 w-5" />
