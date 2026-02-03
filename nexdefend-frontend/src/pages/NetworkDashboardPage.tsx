@@ -1,15 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, ScatterChart, Scatter, ZAxis
 } from 'recharts';
 import client from '@/api/client';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Network, Activity, Globe, Download, Upload } from 'lucide-react';
+import { Network, Activity, Globe, Download, Upload, Zap, Server } from 'lucide-react';
 
 const NetworkDashboardPage: React.FC = () => {
   const [trafficData, setTrafficData] = useState([]);
   const [protocolData, setProtocolData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Mock Data for Scatter Chart (Latency vs Size)
+  const connectionQuality = Array.from({ length: 50 }, (_, i) => ({
+      latency: Math.floor(Math.random() * 200) + 10,
+      size: Math.floor(Math.random() * 5000) + 100,
+      risk: Math.random() * 100,
+      ip: `10.0.0.${i + 10}`
+  }));
+
+  // Mock Data for Top Talkers
+  const topTalkers = [
+      { ip: '192.168.1.105', volume: 4500, label: 'Workstation-A' },
+      { ip: '10.0.0.5', volume: 3200, label: 'DB-Primary' },
+      { ip: '172.16.0.44', volume: 2800, label: 'Ext-Gateway' },
+      { ip: '192.168.1.112', volume: 1500, label: 'Dev-Laptop' },
+      { ip: '10.0.0.8', volume: 900, label: 'Auth-Svc' },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,11 +63,11 @@ const NetworkDashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Network Telemetry</h1>
-          <p className="text-gray-400">Real-time traffic analysis and protocol distribution.</p>
+          <p className="text-gray-400">Real-time traffic analysis, flow quality, and protocol distribution.</p>
         </div>
         <div className="flex gap-4">
             <GlassCard className="px-4 py-2 flex items-center gap-3">
@@ -70,10 +87,11 @@ const NetworkDashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Row 1: Traffic & Protocol */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Traffic Chart */}
         <div className="lg:col-span-2">
-            <GlassCard title="Global Traffic Volume (24h)" icon={<Activity size={18} className="text-cyan-400"/>} className="h-[400px]">
+            <GlassCard title="Global Traffic Volume (24h)" icon={<Activity size={18} className="text-cyan-400"/>} className="h-[350px]">
                 {loading ? (
                     <div className="flex justify-center items-center h-full text-gray-500">Initializing Probes...</div>
                 ) : (
@@ -104,7 +122,7 @@ const NetworkDashboardPage: React.FC = () => {
 
         {/* Protocol Distribution */}
         <div className="lg:col-span-1">
-            <GlassCard title="Protocol Distribution" icon={<Network size={18} className="text-green-400"/>} className="h-[400px]">
+            <GlassCard title="Protocol Distribution" icon={<Network size={18} className="text-green-400"/>} className="h-[350px]">
                  {loading ? (
                     <div className="flex justify-center items-center h-full text-gray-500">Analyzing Packets...</div>
                 ) : (
@@ -126,7 +144,50 @@ const NetworkDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Active Connections Table (Mock) */}
+      {/* Row 2: Deep Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Scatter Chart: Latency vs Size */}
+          <GlassCard title="Flow Quality Analysis" icon={<Zap size={18} className="text-yellow-400"/>} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <XAxis type="number" dataKey="latency" name="Latency" unit="ms" stroke="#525252" fontSize={10} />
+                      <YAxis type="number" dataKey="size" name="Payload" unit="KB" stroke="#525252" fontSize={10} />
+                      <ZAxis type="number" dataKey="risk" range={[20, 200]} name="Risk Score" />
+                      <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} />
+                      <Legend />
+                      <Scatter name="Network Flows" data={connectionQuality} fill="#8884d8">
+                          {connectionQuality.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.risk > 80 ? '#ef4444' : entry.latency > 150 ? '#f59e0b' : '#10b981'} />
+                          ))}
+                      </Scatter>
+                  </ScatterChart>
+              </ResponsiveContainer>
+          </GlassCard>
+
+          {/* Top Talkers Bar Chart */}
+          <GlassCard title="Top Talkers (Source Volume)" icon={<Server size={18} className="text-blue-400"/>} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topTalkers} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="ip" type="category" stroke="#9ca3af" fontSize={11} width={100} />
+                      <Tooltip
+                          cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                          contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }}
+                          formatter={(value: any) => [`${value} MB`, 'Volume']}
+                      />
+                      <Bar dataKey="volume" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={25}>
+                           {topTalkers.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#3b82f6'} />
+                          ))}
+                      </Bar>
+                  </BarChart>
+              </ResponsiveContainer>
+          </GlassCard>
+      </div>
+
+      {/* Active Connections Table */}
       <GlassCard title="Active Network Flows" icon={<Globe size={18} />}>
           <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -136,22 +197,34 @@ const NetworkDashboardPage: React.FC = () => {
                           <th className="p-3">Destination</th>
                           <th className="p-3">Proto</th>
                           <th className="p-3">Bytes</th>
+                          <th className="p-3">Duration</th>
+                          <th className="p-3">Flags</th>
                           <th className="p-3">Status</th>
                       </tr>
                   </thead>
                   <tbody className="text-sm font-mono text-gray-300">
                       {[
-                          { src: '10.0.0.5:49152', dst: '172.217.16.142:443', proto: 'TCP', bytes: '1.2 MB', status: 'ESTABLISHED' },
-                          { src: '10.0.0.5:53', dst: '8.8.8.8:53', proto: 'UDP', bytes: '128 B', status: 'WAIT' },
-                          { src: '192.168.1.100:22', dst: '10.0.0.8:58211', proto: 'SSH', bytes: '45 KB', status: 'ESTABLISHED' },
+                          { src: '10.0.0.5:49152', dst: '172.217.16.142:443', proto: 'TCP', bytes: '1.2 MB', dur: '4m 20s', flags: 'ACK, PSH', status: 'ESTABLISHED' },
+                          { src: '10.0.0.5:53', dst: '8.8.8.8:53', proto: 'UDP', bytes: '128 B', dur: '0.05s', flags: '-', status: 'WAIT' },
+                          { src: '192.168.1.100:22', dst: '10.0.0.8:58211', proto: 'SSH', bytes: '45 KB', dur: '12h 10m', flags: 'ACK', status: 'ESTABLISHED' },
+                          { src: '10.0.0.12:80', dst: '45.33.22.11:51220', proto: 'HTTP', bytes: '4.5 KB', dur: '1s', flags: 'FIN', status: 'CLOSING' },
+                          { src: '10.0.0.9:443', dst: '192.168.1.55:49110', proto: 'TLS', bytes: '890 KB', dur: '15m', flags: 'ACK, PSH', status: 'ESTABLISHED' },
                       ].map((flow, i) => (
                           <tr key={i} className="border-b border-white/5 hover:bg-white/5">
                               <td className="p-3 text-cyan-300">{flow.src}</td>
                               <td className="p-3">{flow.dst}</td>
                               <td className="p-3 text-purple-400">{flow.proto}</td>
                               <td className="p-3 text-gray-500">{flow.bytes}</td>
+                              <td className="p-3 text-gray-400">{flow.dur}</td>
+                              <td className="p-3 text-xs text-gray-500">{flow.flags}</td>
                               <td className="p-3">
-                                  <span className="px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] border border-green-500/20">{flow.status}</span>
+                                  <span className={`px-2 py-0.5 rounded text-[10px] border ${
+                                      flow.status === 'ESTABLISHED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                      flow.status === 'CLOSING' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                                      'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                  }`}>
+                                      {flow.status}
+                                  </span>
                               </td>
                           </tr>
                       ))}
