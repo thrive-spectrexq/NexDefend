@@ -1,6 +1,10 @@
 import { GlassCard } from '../components/ui/GlassCard';
-import { Radar, Globe, Hash, Shield, ExternalLink, MapPin } from 'lucide-react';
-import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Radar as RadarIcon, Globe, Hash, Shield, ExternalLink, MapPin, Target, Crosshair, AlertOctagon } from 'lucide-react';
+import {
+    ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer, Cell,
+    RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend,
+    ComposedChart, Bar, Line, CartesianGrid
+} from 'recharts';
 
 const iocs = [
   { id: 1, indicator: '192.168.1.105', type: 'IP Address', source: 'AlienVault OTX', confidence: 95, lastSeen: '2m ago', tags: ['Botnet', 'Scanner'] },
@@ -18,13 +22,34 @@ const mapData = Array.from({ length: 50 }, (_, i) => ({
     location: `Region-${i}`
 }));
 
+// Attack Surface Data (Radar)
+const attackVectorData = [
+  { subject: 'Email', A: 120, fullMark: 150 },
+  { subject: 'Web', A: 98, fullMark: 150 },
+  { subject: 'Endpoint', A: 86, fullMark: 150 },
+  { subject: 'Cloud', A: 99, fullMark: 150 },
+  { subject: 'Network', A: 85, fullMark: 150 },
+  { subject: 'Identity', A: 65, fullMark: 150 },
+];
+
+// Campaign Timeline Data
+const campaignData = [
+    { name: 'Day 1', attacks: 4000, severity: 2400 },
+    { name: 'Day 2', attacks: 3000, severity: 1398 },
+    { name: 'Day 3', attacks: 2000, severity: 9800 },
+    { name: 'Day 4', attacks: 2780, severity: 3908 },
+    { name: 'Day 5', attacks: 1890, severity: 4800 },
+    { name: 'Day 6', attacks: 2390, severity: 3800 },
+    { name: 'Day 7', attacks: 3490, severity: 4300 },
+];
+
 const ThreatIntelPage = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <div className="flex justify-between items-end">
         <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Threat Intelligence Platform</h1>
-            <p className="text-gray-400">Global Indicators of Compromise (IOCs) and threat feeds.</p>
+            <p className="text-gray-400">Global Indicators of Compromise (IOCs), campaigns, and attack vectors.</p>
         </div>
         <div className="flex gap-3">
              <button className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors text-sm border border-white/10">
@@ -39,7 +64,7 @@ const ThreatIntelPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Global Threat Map (Abstract Visualization) */}
           <div className="lg:col-span-2">
-              <GlassCard title="Global Threat Velocity" icon={<MapPin size={18} className="text-red-400"/>} className="h-64 relative overflow-hidden">
+              <GlassCard title="Global Threat Velocity" icon={<MapPin size={18} className="text-red-400"/>} className="h-[350px] relative overflow-hidden">
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-black to-black" />
                   <ResponsiveContainer width="100%" height="100%">
                       <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -85,12 +110,44 @@ const ThreatIntelPage = () => {
             <GlassCard className="bg-purple-500/5 border-purple-500/20">
                 <h3 className="text-gray-400 text-xs font-bold uppercase">Daily Ingest</h3>
                 <p className="text-3xl text-white font-mono font-bold mt-2">45K</p>
-                <p className="text-xs text-purple-400 mt-1 flex items-center gap-1"><Radar size={12}/> Indicators</p>
+                <p className="text-xs text-purple-400 mt-1 flex items-center gap-1"><RadarIcon size={12}/> Indicators</p>
             </GlassCard>
           </div>
       </div>
 
-      <GlassCard title="Global Threat Feed">
+      {/* Deep Analysis Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Attack Surface Radar */}
+          <GlassCard title="Attack Vector Analysis" icon={<Target size={18} className="text-orange-400"/>} className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={attackVectorData}>
+                      <PolarGrid stroke="#333" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+                      <Radar name="Threat Exposure" dataKey="A" stroke="#f97316" fill="#f97316" fillOpacity={0.4} />
+                      <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} />
+                  </RadarChart>
+              </ResponsiveContainer>
+          </GlassCard>
+
+          {/* Campaign Timeline */}
+          <GlassCard title="Threat Campaign Activity" icon={<Crosshair size={18} className="text-cyan-400"/>} className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={campaignData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                      <CartesianGrid stroke="#333" strokeDasharray="3 3" vertical={false} opacity={0.5} />
+                      <XAxis dataKey="name" scale="band" stroke="#525252" fontSize={10} />
+                      <YAxis stroke="#525252" fontSize={10} />
+                      <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} />
+                      <Legend />
+                      <Bar dataKey="attacks" barSize={20} fill="#3b82f6" name="Attack Volume" />
+                      <Line type="monotone" dataKey="severity" stroke="#ef4444" strokeWidth={2} dot={false} name="Severity Index" />
+                  </ComposedChart>
+              </ResponsiveContainer>
+          </GlassCard>
+      </div>
+
+      {/* IOC Table */}
+      <GlassCard title="Global Threat Feed" icon={<AlertOctagon size={18} className="text-red-500" />}>
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                 <thead>
@@ -101,7 +158,7 @@ const ThreatIntelPage = () => {
                         <th className="py-3 px-4">Confidence</th>
                         <th className="py-3 px-4">Tags</th>
                         <th className="py-3 px-4">Last Seen</th>
-                        <th className="py-3 px-4"></th>
+                        <th className="py-3 px-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="text-sm">
@@ -137,7 +194,10 @@ const ThreatIntelPage = () => {
                                 </div>
                             </td>
                             <td className="py-3 px-4 text-gray-400 font-mono text-xs">{ioc.lastSeen}</td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-4 text-right flex gap-2 justify-end">
+                                <button className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded border border-red-500/20 transition-colors">
+                                    Block
+                                </button>
                                 <button className="p-1.5 text-gray-500 hover:text-white transition-colors">
                                     <ExternalLink size={16} />
                                 </button>

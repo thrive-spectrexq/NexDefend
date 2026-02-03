@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import client from '@/api/client';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Cloud, Database, AlertTriangle, CheckCircle, RefreshCw, Box as BoxIcon } from 'lucide-react';
-import { RadialBarChart, RadialBar, Legend, ResponsiveContainer, Tooltip } from 'recharts';
+import { Cloud, Database, AlertTriangle, CheckCircle, RefreshCw, Box as BoxIcon, DollarSign, Map } from 'lucide-react';
+import {
+    RadialBarChart, RadialBar, Legend, ResponsiveContainer, Tooltip,
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar, Cell
+} from 'recharts';
 
 interface CloudAsset {
   instance_id: string;
@@ -28,6 +31,22 @@ const complianceData = [
   { name: 'IAM Policy', uv: 65, fill: '#f97316' },
 ];
 
+const costData = [
+    { month: 'Jan', cost: 1200, forecast: 1250 },
+    { month: 'Feb', cost: 1350, forecast: 1300 },
+    { month: 'Mar', cost: 1100, forecast: 1400 },
+    { month: 'Apr', cost: 1600, forecast: 1550 },
+    { month: 'May', cost: 1450, forecast: 1500 },
+    { month: 'Jun', cost: 1700, forecast: 1650 },
+];
+
+const regionData = [
+    { name: 'us-east-1', value: 45 },
+    { name: 'eu-west-1', value: 30 },
+    { name: 'ap-south-1', value: 15 },
+    { name: 'us-west-2', value: 10 },
+];
+
 const CloudDashboardPage: React.FC = () => {
   const [cloudAssets, setCloudAssets] = useState<CloudAsset[]>([]);
   const [k8sPods, setK8sPods] = useState<K8sPod[]>([]);
@@ -47,14 +66,14 @@ const CloudDashboardPage: React.FC = () => {
       setCloudAssets([
           { instance_id: 'i-0123456789abcdef0', name: 'prod-api-01', type: 't3.medium', state: 'running', public_ip: '54.12.34.56', region: 'us-east-1' },
           { instance_id: 'i-0987654321fedcba0', name: 'prod-worker-01', type: 'm5.large', state: 'running', public_ip: '54.12.34.57', region: 'us-east-1' },
+          { instance_id: 'i-04445556667778889', name: 'staging-db', type: 'r5.large', state: 'stopped', public_ip: '-', region: 'eu-west-1' },
       ]);
       setK8sPods([
           { name: 'nexdefend-api-7d8f9c6b54-x2z1', namespace: 'default', phase: 'Running', node_name: 'ip-10-0-1-50', pod_ip: '10.0.1.50' },
           { name: 'postgres-0', namespace: 'database', phase: 'Running', node_name: 'ip-10-0-1-51', pod_ip: '10.0.1.51' },
           { name: 'redis-master-0', namespace: 'cache', phase: 'Failed', node_name: 'ip-10-0-1-52', pod_ip: '10.0.1.52' },
+          { name: 'fluentd-daemon-x999', namespace: 'logging', phase: 'Pending', node_name: 'ip-10-0-1-53', pod_ip: '-' },
       ]);
-    } finally {
-      // Done
     }
   };
 
@@ -75,11 +94,11 @@ const CloudDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Cloud Security Posture</h1>
-          <p className="text-gray-400">Multi-cloud visibility (CSPM) and Kubernetes workload protection.</p>
+          <p className="text-gray-400">Multi-cloud visibility (CSPM), cost analysis, and Kubernetes protection.</p>
         </div>
         <button
             onClick={handleSync}
@@ -92,7 +111,7 @@ const CloudDashboardPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 1. Compliance Score (Radial Bar) */}
-          <GlassCard title="Compliance Score" className="h-64 relative">
+          <GlassCard title="Compliance Score" className="h-[300px] relative">
              <div className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="90%" barSize={15} data={complianceData}>
@@ -114,31 +133,95 @@ const CloudDashboardPage: React.FC = () => {
 
           {/* 2. Asset Summary Stats */}
           <div className="lg:col-span-2 grid grid-cols-3 gap-4">
-              <GlassCard className="flex flex-col justify-center">
+              <GlassCard className="flex flex-col justify-center h-[300px]">
                   <div className="flex items-center gap-3 mb-2">
                       <div className="p-2 bg-orange-500/20 rounded-lg text-orange-400"><Cloud size={24}/></div>
                       <span className="text-gray-400 font-bold text-sm">AWS EC2</span>
                   </div>
-                  <span className="text-4xl font-mono font-bold text-white">{cloudAssets.length}</span>
-                  <p className="text-xs text-green-400 mt-1 flex items-center gap-1"><CheckCircle size={10}/> All Compliant</p>
+                  <span className="text-5xl font-mono font-bold text-white mb-2">{cloudAssets.length}</span>
+                  <p className="text-xs text-green-400 flex items-center gap-1 mb-4"><CheckCircle size={10}/> All Compliant</p>
+
+                  {/* Mini Distribution by State */}
+                  <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden flex">
+                      <div className="h-full bg-green-500" style={{ width: '80%' }} />
+                      <div className="h-full bg-gray-500" style={{ width: '20%' }} />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                      <span>Running</span>
+                      <span>Stopped</span>
+                  </div>
               </GlassCard>
-              <GlassCard className="flex flex-col justify-center">
+
+              <GlassCard className="flex flex-col justify-center h-[300px]">
                   <div className="flex items-center gap-3 mb-2">
                       <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400"><BoxIcon size={24}/></div>
                       <span className="text-gray-400 font-bold text-sm">K8s Pods</span>
                   </div>
-                  <span className="text-4xl font-mono font-bold text-white">{k8sPods.length}</span>
-                  <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle size={10}/> 1 Failed State</p>
+                  <span className="text-5xl font-mono font-bold text-white mb-2">{k8sPods.length}</span>
+                  <p className="text-xs text-red-400 flex items-center gap-1 mb-4"><AlertTriangle size={10}/> 1 Failed State</p>
+
+                   {/* Mini Distribution by Phase */}
+                   <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden flex">
+                      <div className="h-full bg-green-500" style={{ width: '70%' }} />
+                      <div className="h-full bg-red-500" style={{ width: '20%' }} />
+                      <div className="h-full bg-yellow-500" style={{ width: '10%' }} />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                      <span>Run</span>
+                      <span>Fail</span>
+                      <span>Pend</span>
+                  </div>
               </GlassCard>
-              <GlassCard className="flex flex-col justify-center">
+
+              <GlassCard className="flex flex-col justify-center h-[300px]">
                   <div className="flex items-center gap-3 mb-2">
                       <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400"><Database size={24}/></div>
                       <span className="text-gray-400 font-bold text-sm">S3 Buckets</span>
                   </div>
-                  <span className="text-4xl font-mono font-bold text-white">14</span>
-                  <p className="text-xs text-yellow-400 mt-1 flex items-center gap-1"><AlertTriangle size={10}/> 2 Public Access</p>
+                  <span className="text-5xl font-mono font-bold text-white mb-2">14</span>
+                  <p className="text-xs text-yellow-400 flex items-center gap-1 mb-4"><AlertTriangle size={10}/> 2 Public Access</p>
+                  <button className="mt-auto w-full py-2 text-xs border border-white/10 rounded hover:bg-white/5 transition-colors">
+                      Scan Permissions
+                  </button>
               </GlassCard>
           </div>
+      </div>
+
+      {/* Row 2: Deep Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GlassCard title="Cloud Spend & Forecast" icon={<DollarSign size={18} className="text-green-400"/>} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={costData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                          <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                          </linearGradient>
+                      </defs>
+                      <XAxis dataKey="month" stroke="#525252" fontSize={10} />
+                      <YAxis stroke="#525252" fontSize={10} />
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} />
+                      <Area type="monotone" dataKey="cost" stroke="#22c55e" fillOpacity={1} fill="url(#colorCost)" />
+                      <Area type="monotone" dataKey="forecast" stroke="#9ca3af" strokeDasharray="5 5" fill="none" />
+                  </AreaChart>
+              </ResponsiveContainer>
+          </GlassCard>
+
+          <GlassCard title="Workload Distribution (Region)" icon={<Map size={18} className="text-blue-400"/>} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={regionData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" stroke="#9ca3af" fontSize={12} width={80} />
+                      <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
+                      <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20}>
+                          {regionData.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981'][index % 4]} />
+                          ))}
+                      </Bar>
+                  </BarChart>
+              </ResponsiveContainer>
+          </GlassCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -161,7 +244,9 @@ const CloudDashboardPage: React.FC = () => {
                                   <td className="p-3 text-gray-400">{asset.type}</td>
                                   <td className="p-3 text-gray-500">{asset.region}</td>
                                   <td className="p-3 text-right">
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-500/20 text-green-400">
+                                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                          asset.state === 'running' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                      }`}>
                                           {asset.state}
                                       </span>
                                   </td>
