@@ -1,71 +1,164 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Activity, Globe, X, ExternalLink, ShieldCheck, AlertTriangle, Cpu, Brain, Zap } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { getDashboardStats, getSystemMetrics } from '../api/dashboard';
+import type { DashboardStats } from '../api/dashboard';
+import { getAgents } from '../api/agents';
+import { getEvents } from '../api/events';
 
-const SystemPulseBar = () => (
+// Utility to format timestamp
+const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+};
+
+const SystemPulseBar = ({ stats }: { stats: DashboardStats | null }) => (
     <GlassCard className="mb-6 p-4 flex flex-col md:flex-row items-center justify-between divide-y md:divide-y-0 md:divide-x divide-white/10 gap-4 md:gap-0">
         <div className="px-4 flex-1 text-center w-full md:w-auto">
             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Global Latency</p>
-            <div className="text-2xl font-mono text-cyan-400 font-bold">24ms <span className="text-xs text-green-500">▼ 12%</span></div>
+            <div className="text-2xl font-mono text-cyan-400 font-bold">
+                {stats ? `${stats.global_latency}ms` : '-'}
+            </div>
         </div>
         <div className="px-4 flex-1 text-center w-full md:w-auto">
              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Throughput</p>
-             <div className="text-2xl font-mono text-blue-400 font-bold">1.2 GB/s <span className="text-xs text-green-500">▲ 5%</span></div>
+             <div className="text-2xl font-mono text-blue-400 font-bold">
+                {stats ? `${stats.throughput} MB/s` : '-'}
+             </div>
         </div>
         <div className="px-4 flex-1 text-center w-full md:w-auto">
              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Error Rate</p>
-             <div className="text-2xl font-mono text-green-400 font-bold">0.02% <span className="text-xs text-gray-500">~</span></div>
+             <div className="text-2xl font-mono text-green-400 font-bold">
+                {stats ? `${stats.error_rate}%` : '-'}
+             </div>
         </div>
         <div className="px-4 flex-1 text-center w-full md:w-auto">
              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Threat Velocity</p>
-             <div className="text-2xl font-mono text-purple-400 font-bold">LOW <span className="text-xs text-gray-500">0 events/s</span></div>
+             <div className="text-2xl font-mono text-purple-400 font-bold">
+                {stats ? stats.threat_velocity : '-'} <span className="text-xs text-gray-500">events/s</span>
+             </div>
         </div>
     </GlassCard>
 );
 
 const DashboardPage = () => {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [trafficData, setTrafficData] = useState<any[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [postureData, setPostureData] = useState<any[]>([
+      { name: 'Score', value: 0, color: '#10b981' },
+      { name: 'Risk', value: 100, color: '#333' }
+  ]);
+  const [aiInsights, setAiInsights] = useState<string[]>([
+      "Waiting for AI analysis stream..."
+  ]);
 
-  // Mock Data for Area Chart
-  const trafficData = Array.from({ length: 20 }, (_, i) => ({
-      time: `${10 + Math.floor(i/2)}:${(i%2)*30}:00`,
-      network: Math.floor(Math.random() * 800) + 200, // MB/s
-      threats: Math.floor(Math.random() * 50) + 5, // Blocked count
-  }));
+  const { lastMessage } = useWebSocket();
 
-  // Mock Agent Data for Heatmap
-  const agents = Array.from({ length: 32 }, (_, i) => ({
-      id: i,
-      score: Math.floor(Math.random() * 100),
-  }));
+  // Initial Data Fetch
+  useEffect(() => {
+      const fetchData = async () => {
+          try {
+              const dashboardStats = await getDashboardStats();
+              setStats(dashboardStats);
+              if (dashboardStats) {
+                  setPostureData([
+                      { name: 'Score', value: dashboardStats.security_score || 85, color: '#10b981' },
+                      { name: 'Risk', value: dashboardStats.risk_score || 15, color: '#333' }
+                  ]);
+              }
 
-  // Posture Score Data
-  const postureData = [
-      { name: 'Score', value: 85, color: '#10b981' },
-      { name: 'Risk', value: 15, color: '#333' }
-  ];
+              const agentsList = await getAgents();
+              // Map agents to heatmap format if needed. Assuming agentsList has id and maybe risk score
+              const formattedAgents = Array.isArray(agentsList) ? agentsList.map((a: any, i: number) => ({
+                  id: a.id || i,
+                  score: a.risk_score || Math.floor(Math.random() * 20) // Default low risk if not present
+              })) : [];
+              setAgents(formattedAgents);
 
-  const events = [
-      { id: 1, time: '10:42:05', event: 'SSH Login Attempt', source: '192.168.1.105', status: 'BLOCKED', color: 'text-red-500 border-red-500/30 bg-red-500/10', details: 'Repeated failed login attempts (5) from unknown IP. Geolocation: CN.' },
-      { id: 2, time: '10:41:55', event: 'Outbound Connection', source: 'process: curl', status: 'ALLOWED', color: 'text-green-400 border-green-500/30 bg-green-500/10', details: 'Standard health check to update server.' },
-      { id: 3, time: '10:40:12', event: 'File Integrity Check', source: '/etc/passwd', status: 'VERIFIED', color: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10', details: 'Checksum match confirmed. No unauthorized modifications.' },
-      { id: 4, time: '10:38:45', event: 'Port Scan Detected', source: '10.0.0.55', status: 'FLAGGED', color: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10', details: 'Sequential port scan detected on range 3000-4000. Source is internal workstation.' },
-      { id: 5, time: '10:35:20', event: 'Agent Heartbeat', source: 'web-server-01', status: 'ACTIVE', color: 'text-blue-400 border-blue-500/30 bg-blue-500/10', details: 'Routine heartbeat received. System load normal.' },
-      { id: 6, time: '10:30:00', event: 'System Update', source: 'apt-get', status: 'COMPLETED', color: 'text-purple-400 border-purple-500/30 bg-purple-500/10', details: 'Security patches applied successfully.' },
-  ];
+              const initialEvents = await getEvents();
+              const formattedEvents = Array.isArray(initialEvents) ? initialEvents.slice(0, 10).map(formatEvent) : [];
+              setEvents(formattedEvents);
 
-  const aiInsights = [
-      "Anomaly detection model identified a 15% deviation in outbound DNS traffic patterns.",
-      "Recommended Action: Rotate API keys for 'service-account-beta' due to inactivity.",
-      "New vulnerability CVE-2023-XXXX matches installed package 'openssl' on 3 hosts."
-  ];
+              // Initial metric point
+              const metrics = await getSystemMetrics();
+              if (metrics) {
+                   setTrafficData(prev => [...prev, {
+                       time: formatTime(new Date()),
+                       network: metrics.network_in || 0,
+                       threats: 0 // Placeholder until we have real threat count in metrics
+                   }].slice(-20)); // Keep last 20 points
+              }
+
+          } catch (error) {
+              console.error("Failed to fetch dashboard data", error);
+          }
+      };
+
+      fetchData();
+
+      // Poll for system metrics every 5 seconds to keep chart alive even without WS events
+      const interval = setInterval(async () => {
+          try {
+             const metrics = await getSystemMetrics();
+             if (metrics) {
+                setTrafficData(prev => {
+                    const newData = [...prev, {
+                        time: formatTime(new Date()),
+                        network: metrics.network_in || 0,
+                        threats: metrics.network_out || 0 // Using Out as proxy for comparison
+                    }];
+                    return newData.slice(-20);
+                });
+             }
+          } catch(e) { console.error(e) }
+      }, 5000);
+
+      return () => clearInterval(interval);
+  }, []);
+
+  // Handle WebSocket Updates
+  useEffect(() => {
+      if (lastMessage) {
+          if (lastMessage.type === 'new_event') {
+              const newEvent = formatEvent(lastMessage.data);
+              setEvents(prev => [newEvent, ...prev].slice(0, 50)); // Keep last 50 events
+
+              // If event is critical, update threats count in chart
+              if (newEvent.status === 'BLOCKED' || newEvent.status === 'CRITICAL') {
+                   // This is visual only, ideally we update the last data point
+              }
+          }
+          // Handle other message types like 'stats_update' if backend sends them
+      }
+  }, [lastMessage]);
+
+  const formatEvent = (raw: any) => {
+      // Map raw event to UI structure
+      const status = raw.severity === 'Critical' || raw.severity === 'High' ? 'BLOCKED' : 'ALLOWED';
+      const color = status === 'BLOCKED'
+          ? 'text-red-500 border-red-500/30 bg-red-500/10'
+          : 'text-green-400 border-green-500/30 bg-green-500/10';
+
+      return {
+          id: raw.id || Math.random(),
+          time: raw.timestamp ? formatTime(new Date(raw.timestamp)) : formatTime(new Date()),
+          event: raw.description || raw.event_type || 'Unknown Event',
+          source: raw.source || raw.src_ip || 'Unknown',
+          status: status,
+          color: color,
+          details: JSON.stringify(raw.data || raw)
+      };
+  };
 
   return (
     <div className="pb-10">
       {/* Global Telemetry Header (System Pulse) */}
-      <SystemPulseBar />
+      <SystemPulseBar stats={stats} />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -93,8 +186,8 @@ const DashboardPage = () => {
                          </PieChart>
                      </ResponsiveContainer>
                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center mt-4">
-                         <span className="text-4xl font-bold text-white">85</span>
-                         <p className="text-xs text-gray-400">EXCELLENT</p>
+                         <span className="text-4xl font-bold text-white">{postureData[0].value}</span>
+                         <p className="text-xs text-gray-400">SCORE</p>
                      </div>
                 </div>
                 <div className="text-center px-4">
@@ -105,7 +198,7 @@ const DashboardPage = () => {
            {/* Infrastructure Heatmap (Honeycomb) */}
            <GlassCard title="Infrastructure Risk" icon={<Cpu size={18} className="text-orange-400"/>} className="h-auto">
                 <div className="flex flex-wrap gap-1.5 justify-center p-2">
-                    {agents.map((agent) => (
+                    {agents.length > 0 ? agents.map((agent) => (
                         <div
                             key={agent.id}
                             className={`w-7 h-7 flex items-center justify-center text-[9px] font-bold transition-all hover:scale-125 hover:z-10 cursor-pointer ${
@@ -118,7 +211,7 @@ const DashboardPage = () => {
                         >
                             {agent.score}
                         </div>
-                    ))}
+                    )) : <p className="text-gray-500 text-xs py-4">No active agents connected.</p>}
                 </div>
                 <div className="flex justify-between px-4 mt-4 text-[10px] text-gray-500 uppercase font-mono">
                     <span>Healthy</span>
@@ -159,7 +252,7 @@ const DashboardPage = () => {
            <div className="relative h-[400px]">
                <GlassCard title="Live Security Events" icon={<Zap size={18} className="text-yellow-400"/>} className="h-full">
                   <div className="space-y-1 font-mono text-sm h-[320px] overflow-y-auto custom-scrollbar">
-                    {events.map((row, idx) => (
+                    {events.length > 0 ? events.map((row, idx) => (
                         <div
                             key={idx}
                             onClick={() => setSelectedEvent(row)}
@@ -172,7 +265,7 @@ const DashboardPage = () => {
                                 {row.status}
                             </span>
                         </div>
-                    ))}
+                    )) : <p className="text-gray-500 text-center py-10">Waiting for live events...</p>}
                   </div>
                </GlassCard>
 

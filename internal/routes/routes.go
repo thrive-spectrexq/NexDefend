@@ -23,6 +23,7 @@ func NewRouter(
 	adConnector enrichment.ActiveDirectoryConnector,
 	snowConnector enrichment.ServiceNowConnector,
 	osClient *search.Client,
+	wsHub *handlers.WebsocketHub,
 ) *mux.Router {
 
 	r := mux.NewRouter()
@@ -57,6 +58,11 @@ func NewRouter(
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	}).Methods("GET")
+
+	// WebSocket
+	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		wsHub.ServeWs(w, r)
+	})
 
 	// API V1 Subrouter
 	api := r.PathPrefix("/api/v1").Subrouter()

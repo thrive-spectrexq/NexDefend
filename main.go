@@ -56,9 +56,15 @@ func main() {
 
 	// 4. Start Core Engines
 	correlationEngine := correlation.NewCorrelationEngine()
-	
+
+	// Initialize WebSocket Hub
+	wsHub := handlers.NewWebsocketHub()
+	go wsHub.Run()
+
 	// Start Ingestor
-	go ingestor.StartIngestor(correlationEngine, internalEvents, database.GetDB())
+	go ingestor.StartIngestor(correlationEngine, internalEvents, database.GetDB(), func(e models.CommonEvent) {
+		wsHub.BroadcastEvent(e)
+	})
 	
 	// Start System Metrics Collection
 	go metrics.CollectMetrics(database)
@@ -102,7 +108,7 @@ func main() {
 
 	// 7. Setup Router
 	// FIX: Pass 'threatIntel' instead of '&threatIntel'
-	router := routes.NewRouter(cfg, database, c, threatIntel, adConnector, snowConnector, osClient)
+	router := routes.NewRouter(cfg, database, c, threatIntel, adConnector, snowConnector, osClient, wsHub)
 	router.Handle("/metrics", promhttp.Handler())
 
 	// FIX: Apply CORS Globally at the Server Level
