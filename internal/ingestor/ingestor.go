@@ -20,7 +20,7 @@ import (
 )
 
 // ProcessEvent handles a single normalized event: Correlation + Indexing
-func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correlation.CorrelationEngine, osClient *opensearch.Client, db *gorm.DB) {
+func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correlation.CorrelationEngine, osClient *opensearch.Client, db *gorm.DB, broadcast func(models.CommonEvent)) {
 	// Handle specific event types for DB persistence (Assets, K8s, Cloud)
 	if normalizedEvent.EventType == "cloud_asset" {
 		saveCloudAsset(normalizedEvent, db)
@@ -65,6 +65,11 @@ func ProcessEvent(normalizedEvent *models.CommonEvent, correlationEngine correla
 		// ZincSearch sometimes returns 200 OK even on partial failures, but if it returns an error code, log it
 		// log.Printf("Error indexing document: %s", res.String())
 	}
+
+	// Broadcast the event to WebSocket clients
+	if broadcast != nil {
+		broadcast(*normalizedEvent)
+	}
 }
 
 func saveCloudAsset(event *models.CommonEvent, db *gorm.DB) {
@@ -104,7 +109,7 @@ func saveKubernetesPod(event *models.CommonEvent, db *gorm.DB) {
 }
 
 // StartIngestor initializes and starts the ingestor service.
-func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEvents <-chan models.CommonEvent, db *gorm.DB) {
+func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEvents <-chan models.CommonEvent, db *gorm.DB, broadcast func(models.CommonEvent)) {
 	log.Println("Initializing ingestor service...")
 
 	// Migrate new tables (Ensures Asset tables exist)
@@ -137,7 +142,7 @@ func StartIngestor(correlationEngine correlation.CorrelationEngine, internalEven
 		go func(workerID int) {
 			defer wg.Done()
 			for event := range jobQueue {
-				ProcessEvent(event, correlationEngine, osClient, db)
+				ProcessEvent(event, correlationEngine, osClient, db, broadcast)
 			}
 		}(i)
 	}
