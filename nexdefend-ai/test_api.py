@@ -23,6 +23,26 @@ def test_scan_unauthorized(client):
     response = client.post('/scan', json={'target': '127.0.0.1'})
     assert response.status_code == 401
 
+def test_chat_unauthorized(client):
+    """Tests that the /chat endpoint is protected."""
+    response = client.post('/chat', json={'query': 'hello'})
+    assert response.status_code == 401
+
+def test_forecast_unauthorized(client):
+    """Tests that the /forecast endpoint is protected."""
+    response = client.get('/forecast')
+    assert response.status_code == 401
+
+def test_train_unauthorized(client):
+    """Tests that the /train endpoint is protected."""
+    response = client.post('/train')
+    assert response.status_code == 401
+
+def test_score_unauthorized(client):
+    """Tests that the /score endpoint is protected."""
+    response = client.post('/score', json={})
+    assert response.status_code == 401
+
 # --- Test /api-metrics Endpoint ---
 def test_get_api_metrics(client):
     """Tests the main metrics endpoint."""
@@ -142,7 +162,8 @@ def test_score_endpoint(mock_score_anomalies, mock_preprocess, client):
     mock_preprocess.return_value = MagicMock()
     mock_score_anomalies.return_value = [-0.123]
 
-    response = client.post('/score', json=mock_event_data)
+    headers = {'Authorization': 'Bearer test-service-token'}
+    response = client.post('/score', json=mock_event_data, headers=headers)
 
     assert response.status_code == 200
     data = response.get_json()

@@ -20,7 +20,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
 KAFKA_TOPIC = "nexdefend-events"
 GO_API_URL = os.getenv("GO_API_URL", "http://api:8080/api/v1")
-AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "default_secret_token")
+AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN")
+
+if not AI_SERVICE_TOKEN:
+    logging.error("AI_SERVICE_TOKEN environment variable is not set. Exiting.")
+    sys.exit(1)
+if AI_SERVICE_TOKEN == "default_secret_token":
+    logging.warning("Security Warning: Using default AI_SERVICE_TOKEN.")
 
 DATABASE_CONFIG = {
     "dbname": os.getenv("DB_NAME", "nexdefend_db"),
