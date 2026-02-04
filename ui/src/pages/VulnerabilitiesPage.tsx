@@ -15,48 +15,25 @@ interface Vulnerability {
     discovered_at: string;
 }
 
-const exploitabilityData = [
-    { name: 'Exploitable', value: 25, color: '#ef4444' },
-    { name: 'No Known Exploit', value: 75, color: '#3b82f6' },
-];
-
-const vulnAgeData = [
-    { range: '< 7 days', count: 45 },
-    { range: '7-30 days', count: 30 },
-    { range: '30-90 days', count: 15 },
-    { range: '> 90 days', count: 5 },
-];
-
-const patchVelocityData = [
-    { week: 'W1', new: 12, patched: 10 },
-    { week: 'W2', new: 15, patched: 14 },
-    { week: 'W3', new: 8, patched: 12 },
-    { week: 'W4', new: 20, patched: 18 },
-    { week: 'W5', new: 5, patched: 8 },
-];
-
 const VulnerabilitiesPage: React.FC = () => {
     const [vulns, setVulns] = useState<Vulnerability[]>([]);
+    const [exploitabilityData, setExploitabilityData] = useState<any[]>([]);
+    const [vulnAgeData, setVulnAgeData] = useState<any[]>([]);
+    const [patchVelocityData, setPatchVelocityData] = useState<any[]>([]);
     const [, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchVulns = async () => {
             try {
-                // Race condition trick for demo speed
-                const result = await Promise.race([
-                    client.get('/vulnerabilities'),
-                    new Promise((_, reject) => setTimeout(() => reject('timeout'), 1000))
-                ]);
-                setVulns((result as any).data);
+                const result = await client.get('/vulnerabilities');
+                setVulns((result as any).data || []);
+
+                // Future: fetch statistics
+                setExploitabilityData([]);
+                setVulnAgeData([]);
+                setPatchVelocityData([]);
             } catch {
-                // Mock
-                setVulns([
-                    { id: '1', cve: 'CVE-2023-44487', severity: 'High', status: 'Open', discovered_at: '2023-10-10' },
-                    { id: '2', cve: 'CVE-2023-38545', severity: 'Critical', status: 'Open', discovered_at: '2023-10-11' },
-                    { id: '3', cve: 'CVE-2023-29325', severity: 'Medium', status: 'Patched', discovered_at: '2023-09-15' },
-                    { id: '4', cve: 'CVE-2021-44228', severity: 'Critical', status: 'Open', discovered_at: '2021-12-10' },
-                    { id: '5', cve: 'CVE-2022-22965', severity: 'High', status: 'Mitigated', discovered_at: '2022-03-29' },
-                ]);
+                setVulns([]);
             } finally {
                 setLoading(false);
             }
@@ -89,34 +66,37 @@ const VulnerabilitiesPage: React.FC = () => {
                         <ShieldAlert className="text-red-500" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Critical Vulns</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">2</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-2">
                         <Bug className="text-orange-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Total Open</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">45</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                 </GlassCard>
                  <GlassCard className="flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-2">
                         <Zap className="text-yellow-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Exploitable</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">12</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-2">
                         <Activity className="text-green-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Patch Rate</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">88%</div>
+                    <div className="text-3xl font-mono font-bold text-white">0%</div>
                 </GlassCard>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Exploitability Donut */}
                 <GlassCard title="Exploitability Context" className="h-[300px]">
+                    {exploitabilityData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Exploit Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -135,11 +115,15 @@ const VulnerabilitiesPage: React.FC = () => {
                             <Legend verticalAlign="middle" align="right" layout="vertical"/>
                         </PieChart>
                     </ResponsiveContainer>
+                    )}
                 </GlassCard>
 
                 {/* Patch Velocity */}
                 <div className="lg:col-span-2">
                     <GlassCard title="Patch Velocity (New vs Fixed)" className="h-[300px]">
+                        {patchVelocityData.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Patch Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={patchVelocityData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
@@ -151,6 +135,7 @@ const VulnerabilitiesPage: React.FC = () => {
                                 <Line type="monotone" dataKey="patched" stroke="#10b981" strokeWidth={2} name="Patched" />
                             </LineChart>
                         </ResponsiveContainer>
+                        )}
                     </GlassCard>
                 </div>
             </div>
@@ -158,6 +143,9 @@ const VulnerabilitiesPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  {/* Vulnerability Age */}
                  <GlassCard title="Vulnerability Age Distribution" className="h-[350px]">
+                    {vulnAgeData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Age Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={vulnAgeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false}/>
@@ -171,6 +159,7 @@ const VulnerabilitiesPage: React.FC = () => {
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
+                    )}
                  </GlassCard>
 
                  {/* Vuln List */}
@@ -187,7 +176,9 @@ const VulnerabilitiesPage: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm font-mono text-gray-300">
-                                    {vulns.map((v) => (
+                                    {vulns.length === 0 ? (
+                                        <tr><td colSpan={4} className="p-4 text-center text-gray-500">No Vulnerabilities Found</td></tr>
+                                    ) : vulns.map((v) => (
                                         <tr key={v.id} className="border-b border-white/5 hover:bg-white/5">
                                             <td className="p-3 text-cyan-400 font-bold">{v.cve}</td>
                                             <td className="p-3">

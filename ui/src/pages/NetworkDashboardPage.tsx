@@ -9,24 +9,10 @@ import { Network, Activity, Globe, Download, Upload, Zap, Server } from 'lucide-
 const NetworkDashboardPage: React.FC = () => {
   const [trafficData, setTrafficData] = useState([]);
   const [protocolData, setProtocolData] = useState([]);
+  const [connectionQuality, setConnectionQuality] = useState<any[]>([]);
+  const [topTalkers, setTopTalkers] = useState<any[]>([]);
+  const [activeFlows, setActiveFlows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Mock Data for Scatter Chart (Latency vs Size)
-  const connectionQuality = Array.from({ length: 50 }, (_, i) => ({
-      latency: Math.floor(Math.random() * 200) + 10,
-      size: Math.floor(Math.random() * 5000) + 100,
-      risk: Math.random() * 100,
-      ip: `10.0.0.${i + 10}`
-  }));
-
-  // Mock Data for Top Talkers
-  const topTalkers = [
-      { ip: '192.168.1.105', volume: 4500, label: 'Workstation-A' },
-      { ip: '10.0.0.5', volume: 3200, label: 'DB-Primary' },
-      { ip: '172.16.0.44', volume: 2800, label: 'Ext-Gateway' },
-      { ip: '192.168.1.112', volume: 1500, label: 'Dev-Laptop' },
-      { ip: '10.0.0.8', volume: 900, label: 'Auth-Svc' },
-  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,26 +21,16 @@ const NetworkDashboardPage: React.FC = () => {
             client.get('/dashboard/network/traffic'),
             client.get('/dashboard/network/protocols')
         ]);
-        setTrafficData(trafficRes.data);
-        setProtocolData(protoRes.data);
+        setTrafficData(trafficRes.data || []);
+        setProtocolData(protoRes.data || []);
+        // In the future, fetch these from API
+        setConnectionQuality([]);
+        setTopTalkers([]);
+        setActiveFlows([]);
       } catch (err) {
         console.error("Network stats fetch failed", err);
-        // Robust Mock Data
-        const mockTraffic = Array.from({ length: 24 }, (_, i) => ({
-            time: `${i}:00`,
-            inbound: Math.floor(Math.random() * 5000) + 1000,
-            outbound: Math.floor(Math.random() * 3000) + 500,
-        }));
-        setTrafficData(mockTraffic as any);
-
-        const mockProto = [
-            { name: 'HTTPS', value: 65, color: '#3b82f6' },
-            { name: 'SSH', value: 15, color: '#10b981' },
-            { name: 'DNS', value: 12, color: '#f59e0b' },
-            { name: 'RDP', value: 5, color: '#ef4444' },
-            { name: 'FTP', value: 3, color: '#8b5cf6' },
-        ];
-        setProtocolData(mockProto as any);
+        setTrafficData([]);
+        setProtocolData([]);
       } finally {
         setLoading(false);
       }
@@ -74,14 +50,14 @@ const NetworkDashboardPage: React.FC = () => {
                 <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Download size={16}/></div>
                 <div>
                     <p className="text-[10px] text-gray-500 uppercase">Inbound</p>
-                    <p className="text-lg font-bold font-mono text-white">4.2 GB/s</p>
+                    <p className="text-lg font-bold font-mono text-white">0.0 GB/s</p>
                 </div>
             </GlassCard>
             <GlassCard className="px-4 py-2 flex items-center gap-3">
                 <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Upload size={16}/></div>
                 <div>
                     <p className="text-[10px] text-gray-500 uppercase">Outbound</p>
-                    <p className="text-lg font-bold font-mono text-white">1.8 GB/s</p>
+                    <p className="text-lg font-bold font-mono text-white">0.0 GB/s</p>
                 </div>
             </GlassCard>
         </div>
@@ -94,6 +70,8 @@ const NetworkDashboardPage: React.FC = () => {
             <GlassCard title="Global Traffic Volume (24h)" icon={<Activity size={18} className="text-cyan-400"/>} className="h-[350px]">
                 {loading ? (
                     <div className="flex justify-center items-center h-full text-gray-500">Initializing Probes...</div>
+                ) : trafficData.length === 0 ? (
+                    <div className="flex justify-center items-center h-full text-gray-500">No Traffic Data Available</div>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trafficData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -125,6 +103,8 @@ const NetworkDashboardPage: React.FC = () => {
             <GlassCard title="Protocol Distribution" icon={<Network size={18} className="text-green-400"/>} className="h-[350px]">
                  {loading ? (
                     <div className="flex justify-center items-center h-full text-gray-500">Analyzing Packets...</div>
+                ) : protocolData.length === 0 ? (
+                    <div className="flex justify-center items-center h-full text-gray-500">No Data</div>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={protocolData} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -148,6 +128,9 @@ const NetworkDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Scatter Chart: Latency vs Size */}
           <GlassCard title="Flow Quality Analysis" icon={<Zap size={18} className="text-yellow-400"/>} className="h-[300px]">
+              {connectionQuality.length === 0 ? (
+                  <div className="flex justify-center items-center h-full text-gray-500">No Flow Data</div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
@@ -163,10 +146,14 @@ const NetworkDashboardPage: React.FC = () => {
                       </Scatter>
                   </ScatterChart>
               </ResponsiveContainer>
+              )}
           </GlassCard>
 
           {/* Top Talkers Bar Chart */}
           <GlassCard title="Top Talkers (Source Volume)" icon={<Server size={18} className="text-blue-400"/>} className="h-[300px]">
+              {topTalkers.length === 0 ? (
+                  <div className="flex justify-center items-center h-full text-gray-500">No Data</div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topTalkers} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
@@ -184,6 +171,7 @@ const NetworkDashboardPage: React.FC = () => {
                       </Bar>
                   </BarChart>
               </ResponsiveContainer>
+              )}
           </GlassCard>
       </div>
 
@@ -203,13 +191,9 @@ const NetworkDashboardPage: React.FC = () => {
                       </tr>
                   </thead>
                   <tbody className="text-sm font-mono text-gray-300">
-                      {[
-                          { src: '10.0.0.5:49152', dst: '172.217.16.142:443', proto: 'TCP', bytes: '1.2 MB', dur: '4m 20s', flags: 'ACK, PSH', status: 'ESTABLISHED' },
-                          { src: '10.0.0.5:53', dst: '8.8.8.8:53', proto: 'UDP', bytes: '128 B', dur: '0.05s', flags: '-', status: 'WAIT' },
-                          { src: '192.168.1.100:22', dst: '10.0.0.8:58211', proto: 'SSH', bytes: '45 KB', dur: '12h 10m', flags: 'ACK', status: 'ESTABLISHED' },
-                          { src: '10.0.0.12:80', dst: '45.33.22.11:51220', proto: 'HTTP', bytes: '4.5 KB', dur: '1s', flags: 'FIN', status: 'CLOSING' },
-                          { src: '10.0.0.9:443', dst: '192.168.1.55:49110', proto: 'TLS', bytes: '890 KB', dur: '15m', flags: 'ACK, PSH', status: 'ESTABLISHED' },
-                      ].map((flow, i) => (
+                      {activeFlows.length === 0 ? (
+                          <tr><td colSpan={7} className="p-4 text-center text-gray-500">No active flows detected</td></tr>
+                      ) : activeFlows.map((flow, i) => (
                           <tr key={i} className="border-b border-white/5 hover:bg-white/5">
                               <td className="p-3 text-cyan-300">{flow.src}</td>
                               <td className="p-3">{flow.dst}</td>

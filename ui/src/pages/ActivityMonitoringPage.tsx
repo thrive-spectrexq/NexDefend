@@ -1,30 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Activity, FileText, Cpu, Network, Search, Filter, ShieldAlert } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 
-const events = [
-    { id: 1, time: '10:45:02', type: 'PROCESS_CREATE', process: 'powershell.exe', user: 'SYSTEM', status: 'Warning' },
-    { id: 2, time: '10:45:01', type: 'FILE_ACCESS', path: '/etc/passwd', user: 'www-data', status: 'Blocked' },
-    { id: 3, time: '10:44:55', type: 'NET_CONN', dest: '192.168.1.55:443', user: 'admin', status: 'Allowed' },
-    { id: 4, time: '10:44:42', type: 'REG_MOD', key: 'HKLM\\...\\Run', user: 'updater', status: 'Allowed' },
-    { id: 5, time: '10:44:30', type: 'PROCESS_TERM', process: 'chrome.exe', user: 'alice', status: 'Allowed' },
-    { id: 6, time: '10:44:15', type: 'FILE_DELETE', path: '/tmp/scan_res.tmp', user: 'root', status: 'Allowed' },
-    { id: 7, time: '10:44:05', type: 'NET_LISTEN', port: '8080', user: 'java', status: 'Allowed' },
-    { id: 8, time: '10:43:50', type: 'AUTH_LOGIN', user: 'bob', source: 'ssh', status: 'Success' },
-];
-
-const topProcesses = [
-    { name: 'chrome.exe', events: 450, color: '#3b82f6' },
-    { name: 'node', events: 320, color: '#10b981' },
-    { name: 'python3', events: 210, color: '#f59e0b' },
-    { name: 'powershell', events: 180, color: '#ef4444' },
-    { name: 'svchost', events: 150, color: '#8b5cf6' },
-];
-
 const ActivityMonitoringPage: React.FC = () => {
+    const [events, setEvents] = useState<any[]>([]);
+    const [topProcesses, setTopProcesses] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Future: fetch from API
+        setEvents([]);
+        setTopProcesses([]);
+    }, []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
@@ -45,28 +35,28 @@ const ActivityMonitoringPage: React.FC = () => {
                         <p className="text-gray-500 text-xs uppercase font-bold">Process Events</p>
                         <Cpu size={16} className="text-blue-400"/>
                     </div>
-                    <p className="text-2xl font-mono text-white">2,405<span className="text-xs text-gray-500 ml-1">/hr</span></p>
+                    <p className="text-2xl font-mono text-white">0<span className="text-xs text-gray-500 ml-1">/hr</span></p>
                 </GlassCard>
                 <GlassCard className="p-4 flex flex-col justify-between h-32">
                     <div className="flex justify-between items-start">
                         <p className="text-gray-500 text-xs uppercase font-bold">File Integrity</p>
                         <FileText size={16} className="text-yellow-400"/>
                     </div>
-                    <p className="text-2xl font-mono text-white">856<span className="text-xs text-gray-500 ml-1">/hr</span></p>
+                    <p className="text-2xl font-mono text-white">0<span className="text-xs text-gray-500 ml-1">/hr</span></p>
                 </GlassCard>
                 <GlassCard className="p-4 flex flex-col justify-between h-32">
                     <div className="flex justify-between items-start">
                         <p className="text-gray-500 text-xs uppercase font-bold">Network Socket</p>
                         <Network size={16} className="text-purple-400"/>
                     </div>
-                    <p className="text-2xl font-mono text-white">12.5K<span className="text-xs text-gray-500 ml-1">/hr</span></p>
+                    <p className="text-2xl font-mono text-white">0<span className="text-xs text-gray-500 ml-1">/hr</span></p>
                 </GlassCard>
                 <GlassCard className="p-4 flex flex-col justify-between h-32 bg-red-500/5 border-red-500/20">
                     <div className="flex justify-between items-start">
                         <p className="text-red-400 text-xs uppercase font-bold">Blocked Ops</p>
                         <ShieldAlert size={16} className="text-red-500"/>
                     </div>
-                    <p className="text-2xl font-mono text-red-400">42</p>
+                    <p className="text-2xl font-mono text-red-400">0</p>
                 </GlassCard>
             </div>
 
@@ -74,6 +64,9 @@ const ActivityMonitoringPage: React.FC = () => {
                 {/* Top Processes Chart */}
                 <div>
                     <GlassCard title="Top Noisiest Processes" icon={<Activity size={18} className="text-cyan-400"/>} className="h-[500px]">
+                        {topProcesses.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Process Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={topProcesses} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
@@ -87,6 +80,7 @@ const ActivityMonitoringPage: React.FC = () => {
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
+                        )}
                     </GlassCard>
                 </div>
 
@@ -113,7 +107,9 @@ const ActivityMonitoringPage: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="text-xs font-mono text-gray-300">
-                                    {events.map((evt) => (
+                                    {events.length === 0 ? (
+                                        <tr><td colSpan={5} className="p-4 text-center text-gray-500">No Events</td></tr>
+                                    ) : events.map((evt) => (
                                         <tr key={evt.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
                                             <td className="py-2.5 text-gray-500">{evt.time}</td>
                                             <td className="py-2.5">

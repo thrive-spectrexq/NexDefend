@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ShieldCheck, FileText, CheckCircle, AlertOctagon, RefreshCw, Download } from 'lucide-react';
 import {
@@ -7,32 +7,20 @@ import {
     LineChart, Line
 } from 'recharts';
 
-const frameworkData = [
-  { name: 'SOC2', uv: 95, fill: '#10b981' },
-  { name: 'HIPAA', uv: 88, fill: '#3b82f6' },
-  { name: 'GDPR', uv: 75, fill: '#8b5cf6' },
-  { name: 'PCI-DSS', uv: 60, fill: '#f59e0b' },
-  { name: 'ISO 27001', uv: 45, fill: '#ef4444' },
-];
-
-const gapAnalysisData = [
-    { control: 'Access Control', passed: 45, failed: 5 },
-    { control: 'Data Encryption', passed: 30, failed: 12 },
-    { control: 'Incident Response', passed: 20, failed: 8 },
-    { control: 'Audit Logging', passed: 50, failed: 2 },
-    { control: 'Vuln Mgmt', passed: 35, failed: 15 },
-];
-
-const auditHistory = [
-    { month: 'Jan', score: 65 },
-    { month: 'Feb', score: 68 },
-    { month: 'Mar', score: 72 },
-    { month: 'Apr', score: 70 },
-    { month: 'May', score: 85 },
-    { month: 'Jun', score: 88 },
-];
-
 const CompliancePage: React.FC = () => {
+    const [frameworkData, setFrameworkData] = useState<any[]>([]);
+    const [gapAnalysisData, setGapAnalysisData] = useState<any[]>([]);
+    const [auditHistory, setAuditHistory] = useState<any[]>([]);
+    const [criticalFailures, setCriticalFailures] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Future: fetch from API
+        setFrameworkData([]);
+        setGapAnalysisData([]);
+        setAuditHistory([]);
+        setCriticalFailures([]);
+    }, []);
+
     return (
         <div className="space-y-6 pb-10">
             <div className="flex justify-between items-end">
@@ -54,6 +42,9 @@ const CompliancePage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Radial Chart: Overall Adherence */}
                 <GlassCard title="Framework Adherence" className="h-[300px] relative">
+                    {frameworkData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Framework Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <RadialBarChart cx="50%" cy="50%" innerRadius="10%" outerRadius="90%" barSize={15} data={frameworkData}>
                             <RadialBar
@@ -65,10 +56,14 @@ const CompliancePage: React.FC = () => {
                             <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} cursor={false} />
                         </RadialBarChart>
                     </ResponsiveContainer>
+                    )}
                 </GlassCard>
 
                 {/* Audit Timeline */}
                 <GlassCard title="Audit Score Trend (6 Mo)" icon={<FileText className="text-cyan-400"/>} className="h-[300px]">
+                     {auditHistory.length === 0 ? (
+                         <div className="flex justify-center items-center h-full text-gray-500">No Audit History</div>
+                     ) : (
                      <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={auditHistory} margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
@@ -78,6 +73,7 @@ const CompliancePage: React.FC = () => {
                             <Line type="stepAfter" dataKey="score" stroke="#10b981" strokeWidth={2} dot={{r:4, fill:'#10b981'}} />
                         </LineChart>
                     </ResponsiveContainer>
+                     )}
                 </GlassCard>
 
                  {/* Quick Stats */}
@@ -86,7 +82,7 @@ const CompliancePage: React.FC = () => {
                         <div className="flex justify-between items-start">
                              <div>
                                 <h3 className="text-gray-400 text-xs font-bold uppercase">Passed Controls</h3>
-                                <p className="text-4xl text-white font-mono font-bold mt-2">180</p>
+                                <p className="text-4xl text-white font-mono font-bold mt-2">0</p>
                              </div>
                              <div className="p-2 bg-green-500/20 rounded-full text-green-400"><CheckCircle size={24}/></div>
                         </div>
@@ -95,7 +91,7 @@ const CompliancePage: React.FC = () => {
                         <div className="flex justify-between items-start">
                              <div>
                                 <h3 className="text-gray-400 text-xs font-bold uppercase">Failed Controls</h3>
-                                <p className="text-4xl text-white font-mono font-bold mt-2">42</p>
+                                <p className="text-4xl text-white font-mono font-bold mt-2">0</p>
                              </div>
                              <div className="p-2 bg-red-500/20 rounded-full text-red-400"><AlertOctagon size={24}/></div>
                         </div>
@@ -107,6 +103,9 @@ const CompliancePage: React.FC = () => {
             {/* Gap Analysis */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <GlassCard title="Control Gap Analysis" icon={<ShieldCheck className="text-blue-400"/>} className="h-[350px]">
+                    {gapAnalysisData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Gap Analysis Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={gapAnalysisData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false}/>
@@ -118,6 +117,7 @@ const CompliancePage: React.FC = () => {
                             <Bar dataKey="failed" stackId="a" fill="#ef4444" barSize={20} name="Failed" />
                         </BarChart>
                     </ResponsiveContainer>
+                    )}
                 </GlassCard>
 
                 {/* Failing Controls List */}
@@ -132,12 +132,9 @@ const CompliancePage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="text-sm font-mono text-gray-300">
-                                {[
-                                    { id: 'AC-2', desc: 'Account Management', issue: 'MFA not enabled for 3 admins' },
-                                    { id: 'SC-8', desc: 'Transmission Confidentiality', issue: 'TLS 1.0 detected on port 443' },
-                                    { id: 'SI-3', desc: 'Malicious Code Protection', issue: 'AV definition out of date on 12 hosts' },
-                                    { id: 'AU-6', desc: 'Audit Review', issue: 'Logs not retained for 90 days' },
-                                ].map((c, i) => (
+                                {criticalFailures.length === 0 ? (
+                                    <tr><td colSpan={3} className="p-4 text-center text-gray-500">No Critical Failures Found</td></tr>
+                                ) : criticalFailures.map((c, i) => (
                                     <tr key={i} className="border-b border-white/5 hover:bg-white/5">
                                         <td className="p-3 text-red-400 font-bold">{c.id}</td>
                                         <td className="p-3">

@@ -136,25 +136,25 @@ const AgentsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Health Metrics (Mocked for drill-down) */}
+            {/* Health Metrics */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                 <div className="flex items-center gap-2 text-gray-400 text-xs mb-1"><Cpu size={14} /> CPU Usage</div>
-                <div className="text-xl font-mono text-white font-bold">12%</div>
-                <div className="h-1 bg-gray-700 rounded-full mt-2"><div className="w-[12%] bg-cyan-500 h-full rounded-full" /></div>
+                <div className="text-xl font-mono text-white font-bold">--</div>
+                <div className="h-1 bg-gray-700 rounded-full mt-2"><div className="w-[0%] bg-cyan-500 h-full rounded-full" /></div>
               </div>
               <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                 <div className="flex items-center gap-2 text-gray-400 text-xs mb-1"><Activity size={14} /> Memory</div>
-                <div className="text-xl font-mono text-white font-bold">4.2 GB</div>
-                <div className="h-1 bg-gray-700 rounded-full mt-2"><div className="w-[45%] bg-blue-500 h-full rounded-full" /></div>
+                <div className="text-xl font-mono text-white font-bold">--</div>
+                <div className="h-1 bg-gray-700 rounded-full mt-2"><div className="w-[0%] bg-blue-500 h-full rounded-full" /></div>
               </div>
               <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                 <div className="flex items-center gap-2 text-gray-400 text-xs mb-1"><HardDrive size={14} /> Disk</div>
-                <div className="text-xl font-mono text-white font-bold">128 GB</div>
+                <div className="text-xl font-mono text-white font-bold">--</div>
               </div>
               <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                 <div className="flex items-center gap-2 text-gray-400 text-xs mb-1"><Network size={14} /> Network</div>
-                <div className="text-xl font-mono text-white font-bold">1.2 Mb/s</div>
+                <div className="text-xl font-mono text-white font-bold">--</div>
               </div>
             </div>
 

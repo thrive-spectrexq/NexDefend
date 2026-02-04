@@ -39,7 +39,7 @@ const AlertsPage: React.FC = () => {
                     // Mock Risk Score Calculation: (Severity * Asset Criticality)
                     // Criticality is random for now (0.5 - 1.5)
                     const baseScore = sev.toLowerCase().includes('critical') ? 90 : sev.toLowerCase().includes('high') ? 70 : 40;
-                    const riskScore = Math.min(100, Math.floor(baseScore * (0.8 + Math.random() * 0.4)));
+                    const riskScore = r.risk_score || baseScore;
 
                     return {
                         ...r,
