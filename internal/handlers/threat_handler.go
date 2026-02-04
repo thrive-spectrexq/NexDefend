@@ -93,3 +93,16 @@ func (h *ThreatHandler) ScanPayload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+
+func (h *ThreatHandler) HandleProcessScan(w http.ResponseWriter, r *http.Request) {
+	count, log := h.service.AnalyzeAndBlockProcesses()
+
+	resp := map[string]interface{}{
+		"blocked_count": count,
+		"log":           log,
+		"status":        "success",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}

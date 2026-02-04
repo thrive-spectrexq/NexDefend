@@ -7,6 +7,8 @@
 #include <cstring>
 #include <cmath>
 #include <map>
+#include <windows.h>
+#include <tlhelp32.h>
 
 class ThreatScanner {
 public:
@@ -140,6 +142,67 @@ float ScanPayload(ScannerHandle handle, const char* payload, int length, char* o
     }
     
     return score;
+}
+
+int ScanAndBlockProcesses(ScannerHandle handle, char* out_log, int max_len) {
+    if (!handle) return 0;
+    
+    // For this version, we'll hardcode a blacklist. 
+    // In production, this should be configurable.
+    std::vector<std::string> blacklist = {
+        "test-threat.exe",
+        "malware_simulator.exe",
+        "crypto_miner.exe"
+    };
+
+    int blockedCount = 0;
+    std::string logBuffer;
+
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE) {
+        if (out_log && max_len > 0) {
+            strncpy(out_log, "Failed to create snapshot", max_len - 1);
+        }
+        return 0;
+    }
+
+    PROCESSENTRY32 pe32;
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hSnapshot, &pe32)) {
+        do {
+            std::string processName = pe32.szExeFile;
+            
+            // Case-insensitive check against blacklist
+            for (const auto& threat : blacklist) {
+                if (_stricmp(processName.c_str(), threat.c_str()) == 0) {
+                    // It's a match! Terminate it.
+                    HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
+                    if (hProcess != NULL) {
+                        if (TerminateProcess(hProcess, 1)) {
+                            blockedCount++;
+                            logBuffer += "Terminated: " + processName + " (PID: " + std::to_string(pe32.th32ProcessID) + "); ";
+                        } else {
+                            logBuffer += "Failed to terminate: " + processName + "; ";
+                        }
+                        CloseHandle(hProcess);
+                    } else {
+                         logBuffer += "Access denied: " + processName + "; ";
+                    }
+                }
+            }
+
+        } while (Process32Next(hSnapshot, &pe32));
+    }
+
+    CloseHandle(hSnapshot);
+
+    if (out_log && max_len > 0) {
+        strncpy(out_log, logBuffer.c_str(), max_len - 1);
+        out_log[max_len - 1] = '\0';
+    }
+
+    return blockedCount;
 }
 
 }

@@ -62,3 +62,21 @@ func (s *Scanner) Scan(payload string) (float32, string, float32) {
 
 	return float32(score), matches, float32(entropy)
 }
+
+// ScanAndBlock scans running processes and terminates any that match the blacklist.
+// Returns the count of terminated processes and a log string.
+func (s *Scanner) ScanAndBlock() (int, string) {
+	if s.ptr == nil {
+		return 0, "Scanner not initialized"
+	}
+
+	const maxLogLen = 4096
+	cLog := (*C.char)(C.malloc(maxLogLen))
+	defer C.free(unsafe.Pointer(cLog))
+	C.memset(unsafe.Pointer(cLog), 0, maxLogLen)
+
+	count := C.ScanAndBlockProcesses(s.ptr, cLog, C.int(maxLogLen))
+
+	logMsg := C.GoString(cLog)
+	return int(count), logMsg
+}

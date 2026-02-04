@@ -145,6 +145,7 @@ func NewRouter(
 	protected.HandleFunc("/ai/chat", chatHandler.ProxyChat).Methods("POST")
 	protected.HandleFunc("/scans", scanHandler.StartScan).Methods("POST")
 	protected.HandleFunc("/threat/scan", threatHandler.ScanPayload).Methods("POST") // ADDED
+	protected.HandleFunc("/threat/scan-processes", threatHandler.HandleProcessScan).Methods("POST")
 
 	// Settings
 	protected.HandleFunc("/settings", settingsHandler.GetSettings).Methods("GET")

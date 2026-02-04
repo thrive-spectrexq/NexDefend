@@ -34,3 +34,12 @@ func (s *Service) AnalyzePayload(payload string) (float32, string, float32) {
 	}
 	return s.scanner.Scan(payload)
 }
+
+func (s *Service) AnalyzeAndBlockProcesses() (int, string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.scanner == nil {
+		return 0, "Scanner service not active"
+	}
+	return s.scanner.ScanAndBlock()
+}
