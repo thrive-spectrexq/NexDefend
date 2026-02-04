@@ -11,7 +11,7 @@ export const useWebSocket = (path: string = '/ws') => {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [status, setStatus] = useState<WebSocketStatus>('CLOSED');
   const socketRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<number>();
+  const reconnectTimeoutRef = useRef<number | undefined>(undefined);
 
   const connect = useCallback(() => {
     // Determine protocol

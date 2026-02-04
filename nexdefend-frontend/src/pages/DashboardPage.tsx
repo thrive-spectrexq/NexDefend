@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Activity, Globe, X, ExternalLink, ShieldCheck, AlertTriangle, Cpu, Brain, Zap } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { NeonButton } from '../components/ui/NeonButton';
@@ -53,7 +53,7 @@ const DashboardPage = () => {
       { name: 'Score', value: 0, color: '#10b981' },
       { name: 'Risk', value: 100, color: '#333' }
   ]);
-  const [aiInsights, setAiInsights] = useState<string[]>([
+  const [aiInsights] = useState<string[]>([
       "Waiting for AI analysis stream..."
   ]);
 
