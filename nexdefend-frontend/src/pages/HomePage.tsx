@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Shield, ArrowRight, Cpu, Activity, Cloud, Zap, 
+import {
+  Shield, ArrowRight, Cpu, Activity, Cloud, Zap,
   ChevronRight
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { getDashboardStats, getSystemMetrics, DashboardStats, SystemMetrics } from '../api/dashboard';
 
 // --- ANIMATION VARIANTS ---
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
     transition: { staggerChildren: 0.1 }
   }
@@ -22,9 +24,38 @@ const itemVariants = {
 };
 
 const HomePage = () => {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+
+  useEffect(() => {
+    // Initial Fetch
+    const fetchData = async () => {
+      try {
+        const s = await getDashboardStats();
+        setStats(s);
+      } catch (e) {
+        console.error("Failed to fetch dashboard stats", e);
+      }
+    };
+
+    fetchData();
+
+    // Poll Metrics
+    const interval = setInterval(async () => {
+      try {
+        const m = await getSystemMetrics();
+        setMetrics(m);
+      } catch (e) {
+        console.error("Failed to fetch system metrics", e);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-white overflow-x-hidden font-sans selection:bg-cyan-500/30">
-      
+
       {/* --- BACKGROUND FX --- */}
       <div className="fixed inset-0 pointer-events-none">
         {/* Grid lines removed here */}
@@ -37,9 +68,9 @@ const HomePage = () => {
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6">
         <div className="container mx-auto text-center max-w-5xl relative z-10">
-          
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }} 
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-sm font-medium mb-8"
@@ -51,7 +82,7 @@ const HomePage = () => {
             NexDefend v2.0 is now live
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -63,7 +94,7 @@ const HomePage = () => {
             </span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -72,20 +103,20 @@ const HomePage = () => {
             Secure your digital frontier with deep visibility, automated defense, and predictive intelligence. The next generation of SOC is here.
           </motion.p>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               className="w-full sm:w-auto px-8 py-4 bg-white text-[#0f172a] hover:bg-slate-200 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-transform hover:-translate-y-1 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
             >
               Get Started <ArrowRight className="h-5 w-5" />
             </Link>
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="w-full sm:w-auto px-8 py-4 bg-slate-800/50 border border-slate-700 hover:border-cyan-500/50 text-white rounded-xl font-bold text-lg backdrop-blur-sm transition-all hover:bg-slate-800"
             >
               Live Demo
@@ -99,10 +130,10 @@ const HomePage = () => {
         <div className="container mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { label: 'Endpoints Secured', value: '10k+' },
-              { label: 'Threats Blocked', value: '1.2M' },
-              { label: 'Uptime', value: '99.9%' },
-              { label: 'AI Models', value: '12' },
+              { label: 'System Load', value: metrics ? `${metrics.cpu_usage.toFixed(1)}%` : '...' },
+              { label: 'Threats Blocked', value: stats ? stats.threat_velocity : '1.2M' },
+              { label: 'Security Score', value: stats ? `${stats.security_score}/100` : '99.9%' },
+              { label: 'Active Agents', value: stats ? stats.throughput : '12' },
             ].map((stat, i) => (
               <div key={i}>
                 <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.value}</div>
@@ -123,7 +154,7 @@ const HomePage = () => {
             </p>
           </div>
 
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -131,7 +162,7 @@ const HomePage = () => {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {/* System Monitoring */}
-            <FeatureCard 
+            <FeatureCard
               icon={<Activity size={32} className="text-blue-400" />}
               title="System Monitoring"
               description="Real-time resource tracking and deep process inspection across all endpoints."
@@ -140,7 +171,7 @@ const HomePage = () => {
             />
 
             {/* Threat Intelligence */}
-            <FeatureCard 
+            <FeatureCard
               icon={<Shield size={32} className="text-red-400" />}
               title="Threat Intelligence"
               description="AI-driven security analysis to detect and neutralize threats before they escalate."
@@ -149,7 +180,7 @@ const HomePage = () => {
             />
 
             {/* Auto Remediation */}
-            <FeatureCard 
+            <FeatureCard
               icon={<Zap size={32} className="text-yellow-400" />}
               title="Auto Remediation"
               description="Self-healing infrastructure with automated incident response workflows."
@@ -158,7 +189,7 @@ const HomePage = () => {
             />
 
             {/* Cloud Monitoring */}
-            <FeatureCard 
+            <FeatureCard
               icon={<Cloud size={32} className="text-purple-400" />}
               title="Cloud Native"
               description="Seamless integration with modern cloud stacks including Docker and Kubernetes."
@@ -167,7 +198,7 @@ const HomePage = () => {
             />
 
             {/* Cognitive AI */}
-            <FeatureCard 
+            <FeatureCard
               icon={<Cpu size={32} className="text-cyan-400" />}
               title="Cognitive AI"
               description="GenAI Copilot and predictive modeling for next-level operations."
@@ -182,7 +213,7 @@ const HomePage = () => {
       {/* --- AI HIGHLIGHT SECTION --- */}
       <section className="py-24 bg-gradient-to-b from-slate-900 to-[#0f172a] border-t border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-cyan-500/5 blur-[100px] pointer-events-none" />
-        
+
         <div className="container mx-auto px-6">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2">
@@ -196,7 +227,7 @@ const HomePage = () => {
               <p className="text-slate-400 text-lg mb-8 leading-relaxed">
                 Stop sifting through logs. NexDefend AI uses GenAI to understand your infrastructure in plain English. Ask questions, get insights, and predict failures before they happen.
               </p>
-              
+
               <ul className="space-y-4 mb-10">
                 {[
                   "Natural Language Threat Queries",
@@ -224,7 +255,7 @@ const HomePage = () => {
                   <div className="w-3 h-3 rounded-full bg-green-500" />
                   <span className="ml-2 text-xs text-slate-500 font-mono">nexdefend_core.exe</span>
                 </div>
-                
+
                 <div className="space-y-4 font-mono text-sm">
                   <div className="flex gap-4">
                     <div className="w-8 h-8 rounded bg-cyan-900/50 flex items-center justify-center text-cyan-400 shrink-0">AI</div>
@@ -237,8 +268,8 @@ const HomePage = () => {
                   <div className="flex gap-4">
                     <div className="w-8 h-8 rounded bg-cyan-900/50 flex items-center justify-center text-cyan-400 shrink-0">AI</div>
                     <div className="text-cyan-100">
-                      <span className="text-green-400">✓ Host 192.168.1.45 quarantined.</span><br/>
-                      Generating incident report #INC-2024-889...<br/>
+                      <span className="text-green-400">✓ Host 192.168.1.45 quarantined.</span><br />
+                      Generating incident report #INC-2024-889...<br />
                       <span className="animate-pulse">_</span>
                     </div>
                   </div>
@@ -254,21 +285,21 @@ const HomePage = () => {
         <div className="container mx-auto">
           <div className="rounded-3xl bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-500/20 p-12 md:p-24 text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.1),transparent_70%)]" />
-            
+
             <h2 className="text-4xl md:text-5xl font-bold mb-8 relative z-10">Ready to secure your infrastructure?</h2>
             <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto relative z-10">
               Join thousands of developers and security engineers using NexDefend to stay ahead of threats.
             </p>
-            
+
             <div className="relative z-10 flex flex-col sm:flex-row justify-center gap-4">
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-[#0f172a] font-bold rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105"
               >
                 Start Free Trial
               </Link>
-              <Link 
-                to="/contact" 
+              <Link
+                to="/contact"
                 className="px-8 py-4 bg-[#0f172a] border border-slate-700 hover:border-cyan-500 text-white font-bold rounded-xl transition-all"
               >
                 Contact Sales
@@ -304,20 +335,20 @@ const FeatureCard = ({ icon, title, description, color, features, colSpan = "" }
   };
 
   return (
-    <motion.div 
+    <motion.div
       variants={itemVariants}
       className={`group relative p-8 rounded-2xl bg-slate-900/40 border border-white/5 backdrop-blur-sm transition-all duration-300 ${colSpan} ${colorClasses[color]}`}
     >
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      
+
       <div className="relative z-10">
         <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 bg-${color}-500/10 border border-${color}-500/20`}>
           {icon}
         </div>
-        
+
         <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-cyan-200 transition-colors">{title}</h3>
         <p className="text-slate-400 mb-6 leading-relaxed">{description}</p>
-        
+
         <ul className="space-y-3">
           {features.map((feature: string, i: number) => (
             <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
