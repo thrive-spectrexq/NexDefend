@@ -130,7 +130,7 @@ const HomePage = () => {
         <div className="container mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { label: 'System Load', value: metrics ? `${metrics.cpu_usage.toFixed(1)}%` : '...' },
+              { label: 'System Load', value: metrics ? `${(metrics.cpu_usage ?? 0).toFixed(1)}%` : '...' },
               { label: 'Threats Blocked', value: stats ? stats.threat_velocity : '1.2M' },
               { label: 'Security Score', value: stats ? `${stats.security_score}/100` : '99.9%' },
               { label: 'Active Agents', value: stats ? stats.throughput : '12' },
