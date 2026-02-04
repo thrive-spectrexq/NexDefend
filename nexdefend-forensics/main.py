@@ -14,23 +14,33 @@ ALLOWED_UPLOAD_DIR = os.getenv("ALLOWED_UPLOAD_DIR", "/data/uploads")
 def validate_path(filepath):
     """
     Ensures the filepath is within the allowed directory and has no traversal attempts.
+    Uses os.path.realpath to resolve symlinks.
     """
     if not filepath:
         return False
 
-    # Resolve absolute path
-    # Note: In a real container, we'd ensure /data/uploads exists.
-    # Here we mock it or expect the environment to be correct.
-    abs_path = os.path.abspath(filepath)
-    abs_allowed = os.path.abspath(ALLOWED_UPLOAD_DIR)
+    # Resolve real path (follow symlinks)
+    try:
+        real_path = os.path.realpath(filepath)
+        real_allowed = os.path.realpath(ALLOWED_UPLOAD_DIR)
+    except OSError:
+        return False
 
     # Check prefix
-    if not abs_path.startswith(abs_allowed):
-        logging.warning(f"Path traversal attempt or restricted dir: {filepath} (Allowed: {ALLOWED_UPLOAD_DIR})")
+    # os.path.commonpath returns the longest common sub-path
+    # We check if the common path is the allowed dir
+    try:
+        common = os.path.commonpath([real_path, real_allowed])
+    except ValueError:
+        # Paths are on different drives or mix relative/absolute
+        return False
+
+    if common != real_allowed:
+        logging.warning(f"Path traversal attempt or restricted dir: {filepath} -> {real_path} (Allowed: {real_allowed})")
         return False
 
     # Check existence
-    if not os.path.exists(abs_path):
+    if not os.path.exists(real_path):
         logging.warning(f"File not found: {filepath}")
         return False
 

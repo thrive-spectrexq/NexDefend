@@ -127,6 +127,15 @@ void DestroyScanner(ScannerHandle handle) {
 
 float ScanPayload(ScannerHandle handle, const char* payload, int length, char* out_matches, int max_len, float* out_entropy) {
     if (!handle || !payload) return 0.0f;
+
+    // Safety cap: 1MB limit
+    if (length > 1024 * 1024) {
+        if (out_matches && max_len > 0) {
+            strncpy(out_matches, "PAYLOAD_TOO_LARGE", max_len - 1);
+        }
+        return 100.0f; // Treat as high risk/block
+    }
+
     ThreatScanner* scanner = static_cast<ThreatScanner*>(handle);
     std::string input(payload, length);
     std::string matches;

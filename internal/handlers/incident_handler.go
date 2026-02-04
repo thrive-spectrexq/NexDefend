@@ -220,13 +220,27 @@ func (h *IncidentHandler) AnalyzeIncident(w http.ResponseWriter, r *http.Request
 	// Construct Prompt for AI
 	prompt := "Analyze this incident: " + incident.Description + ". Severity: " + incident.Severity + ". Suggest remediation."
 
+	// Create a safe context (allowlist) to prevent PII/secret leakage
+	safeContext := map[string]interface{}{
+		"id":          incident.ID,
+		"severity":    incident.Severity,
+		"status":      incident.Status,
+		"description": incident.Description,
+		"created_at":  incident.CreatedAt,
+		// Explicitly excluding Notes, EntityName, SourceIP unless sanitized
+	}
+
 	// Prepare Request to Python AI
 	payload := map[string]interface{}{
 		"query":   prompt,
-		"context": incident,
+		"context": safeContext,
 	}
 
-	jsonData, _ := json.Marshal(payload)
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		http.Error(w, "Failed to serialize payload", http.StatusInternalServerError)
+		return
+	}
 
 	// Make Request
 	client := &http.Client{Timeout: 30 * time.Second} // Long timeout for LLM
@@ -247,6 +261,11 @@ func (h *IncidentHandler) AnalyzeIncident(w http.ResponseWriter, r *http.Request
 		return
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, "AI service returned error", resp.StatusCode)
+		return
+	}
 
 	// Just proxy the response body back
 	w.Header().Set("Content-Type", "application/json")
