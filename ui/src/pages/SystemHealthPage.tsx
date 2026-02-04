@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Server, HardDrive, Activity, Clock } from 'lucide-react';
 import {
@@ -6,29 +6,18 @@ import {
 } from 'recharts';
 import { ResourceGauge } from '../components/dashboard/ResourceGauge';
 
-const loadHistory = Array.from({ length: 24 }, (_, i) => ({
-    time: `${i}:00`,
-    load1: Math.random() * 2 + 0.5,
-    load5: Math.random() * 2 + 0.4,
-    load15: Math.random() * 2 + 0.3,
-}));
-
-const memoryHistory = Array.from({ length: 24 }, (_, i) => ({
-    time: `${i}:00`,
-    used: Math.floor(Math.random() * 4000) + 2000,
-    total: 8192
-}));
-
-const services = [
-    { name: 'nexdefend-api.service', status: 'active', uptime: '12d 4h', pid: 1042 },
-    { name: 'nexdefend-soar.service', status: 'active', uptime: '12d 4h', pid: 1045 },
-    { name: 'postgresql.service', status: 'active', uptime: '45d 2h', pid: 890 },
-    { name: 'kafka.service', status: 'active', uptime: '5d 1h', pid: 2021 },
-    { name: 'nginx.service', status: 'active', uptime: '2d 8h', pid: 3044 },
-    { name: 'fluent-bit.service', status: 'failed', uptime: '-', pid: '-' },
-];
-
 const SystemHealthPage: React.FC = () => {
+    const [loadHistory, setLoadHistory] = useState<any[]>([]);
+    const [memoryHistory, setMemoryHistory] = useState<any[]>([]);
+    const [services, setServices] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Future: fetch from API
+        setLoadHistory([]);
+        setMemoryHistory([]);
+        setServices([]);
+    }, []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
@@ -37,33 +26,36 @@ const SystemHealthPage: React.FC = () => {
                     <p className="text-gray-400">Infrastructure performance and resource utilization.</p>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 text-xs font-mono">
-                    <Clock size={14} className="text-cyan-400"/> Uptime: 45 days, 12:04:32
+                    <Clock size={14} className="text-cyan-400"/> Uptime: --
                 </div>
             </div>
 
             {/* Gauges Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <GlassCard className="flex flex-col items-center justify-center p-4 h-48">
-                    <ResourceGauge value={42} label="CPU Usage" />
-                    <div className="mt-2 text-xs text-gray-500">8 Cores Active</div>
+                    <ResourceGauge value={0} label="CPU Usage" />
+                    <div className="mt-2 text-xs text-gray-500">0 Cores Active</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center p-4 h-48">
-                    <ResourceGauge value={68} label="Memory" color="#8b5cf6" />
-                    <div className="mt-2 text-xs text-gray-500">12GB / 16GB</div>
+                    <ResourceGauge value={0} label="Memory" color="#8b5cf6" />
+                    <div className="mt-2 text-xs text-gray-500">0GB / 0GB</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center p-4 h-48">
-                    <ResourceGauge value={25} label="Disk I/O" color="#f59e0b" />
-                    <div className="mt-2 text-xs text-gray-500">Read: 45MB/s</div>
+                    <ResourceGauge value={0} label="Disk I/O" color="#f59e0b" />
+                    <div className="mt-2 text-xs text-gray-500">Read: 0MB/s</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center p-4 h-48">
-                    <ResourceGauge value={12} label="Network" color="#10b981" />
-                    <div className="mt-2 text-xs text-gray-500">Eth0: 1Gbps</div>
+                    <ResourceGauge value={0} label="Network" color="#10b981" />
+                    <div className="mt-2 text-xs text-gray-500">Eth0: 0Gbps</div>
                 </GlassCard>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* System Load History */}
                 <GlassCard title="System Load Average (24h)" icon={<Activity size={18} className="text-cyan-400"/>} className="h-[300px]">
+                    {loadHistory.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Load Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={loadHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
@@ -75,10 +67,14 @@ const SystemHealthPage: React.FC = () => {
                             <Line type="monotone" dataKey="load15" stroke="#10b981" dot={false} strokeWidth={2} name="15 min" />
                         </LineChart>
                     </ResponsiveContainer>
+                    )}
                 </GlassCard>
 
                 {/* Memory Usage Area */}
                 <GlassCard title="Memory Utilization" icon={<HardDrive size={18} className="text-purple-400"/>} className="h-[300px]">
+                    {memoryHistory.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Memory Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={memoryHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
@@ -94,6 +90,7 @@ const SystemHealthPage: React.FC = () => {
                             <Area type="monotone" dataKey="used" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorMem)" />
                         </AreaChart>
                     </ResponsiveContainer>
+                    )}
                 </GlassCard>
             </div>
 
@@ -110,7 +107,9 @@ const SystemHealthPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="text-sm font-mono text-gray-300">
-                            {services.map((svc, i) => (
+                            {services.length === 0 ? (
+                                <tr><td colSpan={4} className="p-4 text-center text-gray-500">No Services Monitored</td></tr>
+                            ) : services.map((svc, i) => (
                                 <tr key={i} className="border-b border-white/5 hover:bg-white/5">
                                     <td className="p-3 text-white font-medium">{svc.name}</td>
                                     <td className="p-3 text-gray-500">{svc.pid}</td>

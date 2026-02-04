@@ -104,7 +104,7 @@ const DashboardPage = () => {
                 // Map agents to heatmap format if needed. Assuming agentsList has id and maybe risk score
                 const formattedAgents = Array.isArray(agentsList) ? agentsList.map((a: any, i: number) => ({
                     id: a.id || i,
-                    score: a.risk_score || Math.floor(Math.random() * 20) // Default low risk if not present
+                    score: a.risk_score || 0 // Default low risk if not present
                 })) : [];
                 setAgents(formattedAgents);
 
@@ -173,7 +173,7 @@ const DashboardPage = () => {
             : 'text-green-400 border-green-500/30 bg-green-500/10';
 
         return {
-            id: raw.id || Math.random(),
+            id: raw.id || 0,
             time: raw.timestamp ? formatTime(new Date(raw.timestamp)) : formatTime(new Date()),
             event: raw.description || raw.event_type || 'Unknown Event',
             source: raw.source || raw.src_ip || 'Unknown',

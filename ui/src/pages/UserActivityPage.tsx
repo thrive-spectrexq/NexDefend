@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import {
     Users, Clock, Globe, Shield, Activity, UserCheck,
@@ -9,35 +9,20 @@ import {
     PieChart, Pie, Cell, Legend, BarChart, Bar
 } from 'recharts';
 
-// Mock Data
-const loginTrend = Array.from({ length: 24 }, (_, i) => ({
-    time: `${i}:00`,
-    users: Math.floor(Math.random() * 150) + 50,
-    admins: Math.floor(Math.random() * 20) + 5
-}));
-
-const actionTypeData = [
-    { name: 'Data Access', value: 450, color: '#3b82f6' },
-    { name: 'Config Change', value: 120, color: '#f59e0b' },
-    { name: 'Authentication', value: 300, color: '#10b981' },
-    { name: 'Report Gen', value: 80, color: '#8b5cf6' },
-];
-
-const deviceData = [
-    { name: 'Desktop', value: 75, color: '#06b6d4' },
-    { name: 'Mobile', value: 20, color: '#ec4899' },
-    { name: 'Tablet', value: 5, color: '#64748b' },
-];
-
-const activityLog = [
-    { id: 1, user: 'alice.admin', action: 'Policy Update', target: 'Firewall-01', time: '2 mins ago', status: 'Success' },
-    { id: 2, user: 'bob.dev', action: 'SSH Login', target: 'Dev-Server-04', time: '15 mins ago', status: 'Success' },
-    { id: 3, user: 'charlie.audit', action: 'Export Logs', target: 'Audit-DB', time: '32 mins ago', status: 'Pending' },
-    { id: 4, user: 'dave.ops', action: 'Service Restart', target: 'Nginx-Proxy', time: '1 hour ago', status: 'Failed' },
-    { id: 5, user: 'alice.admin', action: 'User Invite', target: 'eve.guest', time: '2 hours ago', status: 'Success' },
-];
-
 const UserActivityPage: React.FC = () => {
+    const [loginTrend, setLoginTrend] = useState<any[]>([]);
+    const [actionTypeData, setActionTypeData] = useState<any[]>([]);
+    const [deviceData, setDeviceData] = useState<any[]>([]);
+    const [activityLog, setActivityLog] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Future: fetch from API
+        setLoginTrend([]);
+        setActionTypeData([]);
+        setDeviceData([]);
+        setActivityLog([]);
+    }, []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
@@ -52,28 +37,28 @@ const UserActivityPage: React.FC = () => {
                 <GlassCard className="flex items-center justify-between p-4">
                     <div>
                         <p className="text-gray-500 text-xs uppercase tracking-wider">Active Sessions</p>
-                        <h3 className="text-2xl font-bold text-white font-mono">248</h3>
+                        <h3 className="text-2xl font-bold text-white font-mono">0</h3>
                     </div>
                     <div className="p-2 bg-green-500/10 rounded-lg text-green-400"><Users size={20}/></div>
                 </GlassCard>
                 <GlassCard className="flex items-center justify-between p-4">
                     <div>
                         <p className="text-gray-500 text-xs uppercase tracking-wider">Avg Session Time</p>
-                        <h3 className="text-2xl font-bold text-white font-mono">42m</h3>
+                        <h3 className="text-2xl font-bold text-white font-mono">0m</h3>
                     </div>
                     <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Clock size={20}/></div>
                 </GlassCard>
                 <GlassCard className="flex items-center justify-between p-4">
                     <div>
                         <p className="text-gray-500 text-xs uppercase tracking-wider">Global Locations</p>
-                        <h3 className="text-2xl font-bold text-white font-mono">14</h3>
+                        <h3 className="text-2xl font-bold text-white font-mono">0</h3>
                     </div>
                     <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><Globe size={20}/></div>
                 </GlassCard>
                 <GlassCard className="flex items-center justify-between p-4">
                     <div>
                         <p className="text-gray-500 text-xs uppercase tracking-wider">Security Alerts</p>
-                        <h3 className="text-2xl font-bold text-red-400 font-mono">3</h3>
+                        <h3 className="text-2xl font-bold text-red-400 font-mono">0</h3>
                     </div>
                     <div className="p-2 bg-red-500/10 rounded-lg text-red-400"><Shield size={20}/></div>
                 </GlassCard>
@@ -83,6 +68,9 @@ const UserActivityPage: React.FC = () => {
                 {/* Main Trend Chart */}
                 <div className="lg:col-span-2">
                     <GlassCard title="User Login Trends (24h)" icon={<Activity size={18} className="text-cyan-400"/>} className="h-[350px]">
+                        {loginTrend.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Login Trend Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={loginTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
@@ -104,12 +92,16 @@ const UserActivityPage: React.FC = () => {
                                 <Legend />
                             </AreaChart>
                         </ResponsiveContainer>
+                        )}
                     </GlassCard>
                 </div>
 
                 {/* Device Breakdown */}
                 <div>
                     <GlassCard title="Device Distribution" icon={<Laptop size={18} className="text-purple-400"/>} className="h-[350px]">
+                        {deviceData.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Device Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -129,7 +121,8 @@ const UserActivityPage: React.FC = () => {
                                 <Legend layout="vertical" verticalAlign="bottom" align="center" />
                             </PieChart>
                         </ResponsiveContainer>
-                        <div className="text-center text-xs text-gray-500 mt-[-20px]">Total Devices: 342</div>
+                        )}
+                        <div className="text-center text-xs text-gray-500 mt-[-20px]">Total Devices: 0</div>
                     </GlassCard>
                 </div>
             </div>
@@ -138,6 +131,9 @@ const UserActivityPage: React.FC = () => {
                  {/* Action Breakdown */}
                  <div>
                     <GlassCard title="Action Types" icon={<UserCheck size={18} className="text-green-400"/>} className="h-[300px]">
+                        {actionTypeData.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Action Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={actionTypeData} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={false} />
@@ -151,6 +147,7 @@ const UserActivityPage: React.FC = () => {
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
+                        )}
                     </GlassCard>
                  </div>
 
@@ -170,7 +167,9 @@ const UserActivityPage: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm font-mono text-gray-300">
-                                    {activityLog.map((log) => (
+                                    {activityLog.length === 0 ? (
+                                        <tr><td colSpan={6} className="p-4 text-center text-gray-500">No Recent Activity</td></tr>
+                                    ) : activityLog.map((log) => (
                                         <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                             <td className="p-3 flex items-center gap-2">
                                                 <div className="w-6 h-6 rounded-full bg-cyan-900 flex items-center justify-center text-[10px] text-cyan-200 font-bold">

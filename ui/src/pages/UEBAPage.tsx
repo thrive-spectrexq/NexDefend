@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { User, ShieldAlert, Fingerprint, Lock, Eye, MapPin } from 'lucide-react';
 import {
@@ -6,33 +6,20 @@ import {
     RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ScatterChart, Scatter, ZAxis, Cell
 } from 'recharts';
 
-const riskTimelineData = [
-    { time: '08:00', riskScore: 12, events: 45 },
-    { time: '10:00', riskScore: 45, events: 120 },
-    { time: '12:00', riskScore: 20, events: 60 },
-    { time: '14:00', riskScore: 88, events: 340 },
-    { time: '16:00', riskScore: 95, events: 450 },
-    { time: '18:00', riskScore: 60, events: 200 },
-];
-
-const behaviorRadarData = [
-    { subject: 'Data Exfil', A: 120, fullMark: 150 },
-    { subject: 'Priv Escalation', A: 98, fullMark: 150 },
-    { subject: 'Abnormal Login', A: 86, fullMark: 150 },
-    { subject: 'Lateral Mov', A: 99, fullMark: 150 },
-    { subject: 'File Access', A: 85, fullMark: 150 },
-    { subject: 'Process Inj', A: 65, fullMark: 150 },
-];
-
-// Login Map Data (Scatter) - X: Time of Day, Y: Location Variance
-const loginMapData = Array.from({ length: 30 }, (_, i) => ({
-    x: Math.random() * 24, // Hour
-    y: Math.random() * 100, // Distance from usual location (km)
-    z: Math.random() * 100, // Risk
-    user: `user-${i}`
-}));
-
 const UEBAPage: React.FC = () => {
+    const [riskTimelineData, setRiskTimelineData] = useState<any[]>([]);
+    const [behaviorRadarData, setBehaviorRadarData] = useState<any[]>([]);
+    const [loginMapData, setLoginMapData] = useState<any[]>([]);
+    const [riskyEntities, setRiskyEntities] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Future: Fetch from API
+        setRiskTimelineData([]);
+        setBehaviorRadarData([]);
+        setLoginMapData([]);
+        setRiskyEntities([]);
+    }, []);
+
     return (
         <div className="space-y-6 pb-10">
             <div className="flex justify-between items-end">
@@ -52,14 +39,14 @@ const UEBAPage: React.FC = () => {
                         <User className="text-cyan-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Monitored Users</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">4,281</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-2">
                         <ShieldAlert className="text-red-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">High Risk Users</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">12</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                     <div className="text-xs text-red-400 mt-1">Requires Investigation</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col justify-center">
@@ -67,14 +54,14 @@ const UEBAPage: React.FC = () => {
                         <Lock className="text-yellow-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Privileged Accts</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">45</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                 </GlassCard>
                 <GlassCard className="flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-2">
                         <Fingerprint className="text-purple-400" size={20} />
                         <span className="text-gray-400 text-xs font-bold uppercase">Anomalies (24h)</span>
                     </div>
-                    <div className="text-3xl font-mono font-bold text-white">156</div>
+                    <div className="text-3xl font-mono font-bold text-white">0</div>
                 </GlassCard>
             </div>
 
@@ -83,6 +70,9 @@ const UEBAPage: React.FC = () => {
                 {/* Risk Timeline */}
                 <div className="lg:col-span-2">
                     <GlassCard title="User Risk Timeline (Aggregate)" icon={<ActivityIcon className="text-red-400"/>} className="h-[350px]">
+                        {riskTimelineData.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Risk Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={riskTimelineData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false}/>
@@ -95,12 +85,16 @@ const UEBAPage: React.FC = () => {
                                 <Line yAxisId="left" type="monotone" dataKey="riskScore" stroke="#ef4444" strokeWidth={3} dot={{r: 4}} name="Avg Risk Score" />
                             </ComposedChart>
                         </ResponsiveContainer>
+                        )}
                     </GlassCard>
                 </div>
 
                 {/* Insider Threat Radar */}
                 <div className="lg:col-span-1">
                     <GlassCard title="Insider Threat Vectors" icon={<Fingerprint className="text-purple-400"/>} className="h-[350px]">
+                        {behaviorRadarData.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-gray-500">No Behavior Data</div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <RadarChart cx="50%" cy="50%" outerRadius="70%" data={behaviorRadarData}>
                                 <PolarGrid stroke="#333" />
@@ -110,6 +104,7 @@ const UEBAPage: React.FC = () => {
                                 <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#333' }} />
                             </RadarChart>
                         </ResponsiveContainer>
+                        )}
                     </GlassCard>
                 </div>
             </div>
@@ -118,6 +113,9 @@ const UEBAPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Anomalous Login Map (Scatter) */}
                 <GlassCard title="Anomalous Access (Time vs Location)" icon={<MapPin className="text-cyan-400"/>} className="h-[350px]">
+                    {loginMapData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Anomaly Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
@@ -133,6 +131,7 @@ const UEBAPage: React.FC = () => {
                             </Scatter>
                         </ScatterChart>
                     </ResponsiveContainer>
+                    )}
                 </GlassCard>
 
                 {/* High Risk Entities List */}
@@ -147,13 +146,9 @@ const UEBAPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="text-sm font-mono text-gray-300">
-                                {[
-                                    { user: 'jdoe@corp.com', dept: 'Engineering', score: 98 },
-                                    { user: 'finance-admin', dept: 'Finance', score: 92 },
-                                    { user: 'svc-backup', dept: 'IT Ops', score: 85 },
-                                    { user: 'asmith', dept: 'HR', score: 78 },
-                                    { user: 'dev-workstation-44', dept: 'R&D', score: 75 },
-                                ].map((u, i) => (
+                                {riskyEntities.length === 0 ? (
+                                    <tr><td colSpan={3} className="p-4 text-center text-gray-500">No Risky Entities Detected</td></tr>
+                                ) : riskyEntities.map((u, i) => (
                                     <tr key={i} className="border-b border-white/5 hover:bg-white/5">
                                         <td className="p-3 text-white font-bold">{u.user}</td>
                                         <td className="p-3 text-gray-400">{u.dept}</td>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { AlertTriangle, TrendingUp, Layers, Activity } from 'lucide-react';
 import {
@@ -6,57 +6,20 @@ import {
     PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-const riskTrendData = [
-    { day: 'Mon', score: 45 },
-    { day: 'Tue', score: 48 },
-    { day: 'Wed', score: 52 },
-    { day: 'Thu', score: 49 },
-    { day: 'Fri', score: 60 },
-    { day: 'Sat', score: 55 },
-    { day: 'Sun', score: 58 },
-];
-
-const assetCriticalityData = [
-    { name: 'Mission Critical', value: 15, color: '#ef4444' }, // Red
-    { name: 'Business Critical', value: 35, color: '#f97316' }, // Orange
-    { name: 'Operational', value: 40, color: '#eab308' }, // Yellow
-    { name: 'Low Impact', value: 10, color: '#22c55e' }, // Green
-];
-
-// Mock Heatmap Data (Matrix 5x5)
-const riskHeatmap = [
-    { likelihood: 'Rare', impact: 'Negligible', value: 2, color: 'bg-green-900' },
-    { likelihood: 'Rare', impact: 'Minor', value: 5, color: 'bg-green-800' },
-    { likelihood: 'Rare', impact: 'Moderate', value: 10, color: 'bg-yellow-900' },
-    { likelihood: 'Rare', impact: 'Major', value: 20, color: 'bg-orange-900' },
-    { likelihood: 'Rare', impact: 'Catastrophic', value: 40, color: 'bg-red-900' },
-
-    { likelihood: 'Unlikely', impact: 'Negligible', value: 4, color: 'bg-green-800' },
-    { likelihood: 'Unlikely', impact: 'Minor', value: 8, color: 'bg-green-700' },
-    { likelihood: 'Unlikely', impact: 'Moderate', value: 16, color: 'bg-yellow-800' },
-    { likelihood: 'Unlikely', impact: 'Major', value: 32, color: 'bg-orange-800' },
-    { likelihood: 'Unlikely', impact: 'Catastrophic', value: 64, color: 'bg-red-800' },
-
-    { likelihood: 'Possible', impact: 'Negligible', value: 6, color: 'bg-green-700' },
-    { likelihood: 'Possible', impact: 'Minor', value: 12, color: 'bg-yellow-800' },
-    { likelihood: 'Possible', impact: 'Moderate', value: 24, color: 'bg-yellow-700' },
-    { likelihood: 'Possible', impact: 'Major', value: 48, color: 'bg-orange-700' },
-    { likelihood: 'Possible', impact: 'Catastrophic', value: 96, color: 'bg-red-700' },
-
-    { likelihood: 'Likely', impact: 'Negligible', value: 8, color: 'bg-yellow-900' },
-    { likelihood: 'Likely', impact: 'Minor', value: 16, color: 'bg-yellow-700' },
-    { likelihood: 'Likely', impact: 'Moderate', value: 32, color: 'bg-orange-800' },
-    { likelihood: 'Likely', impact: 'Major', value: 64, color: 'bg-red-800' },
-    { likelihood: 'Likely', impact: 'Catastrophic', value: 128, color: 'bg-red-600' },
-
-    { likelihood: 'Certain', impact: 'Negligible', value: 10, color: 'bg-orange-900' },
-    { likelihood: 'Certain', impact: 'Minor', value: 20, color: 'bg-orange-800' },
-    { likelihood: 'Certain', impact: 'Moderate', value: 40, color: 'bg-red-800' },
-    { likelihood: 'Certain', impact: 'Major', value: 80, color: 'bg-red-600' },
-    { likelihood: 'Certain', impact: 'Catastrophic', value: 160, color: 'bg-red-500' },
-];
-
 const RiskPage: React.FC = () => {
+    const [riskTrendData, setRiskTrendData] = useState<any[]>([]);
+    const [assetCriticalityData, setAssetCriticalityData] = useState<any[]>([]);
+    const [riskHeatmap, setRiskHeatmap] = useState<any[]>([]);
+    const [topRisks, setTopRisks] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Future: fetch from API
+        setRiskTrendData([]);
+        setAssetCriticalityData([]);
+        setRiskHeatmap([]);
+        setTopRisks([]);
+    }, []);
+
     return (
         <div className="space-y-6 pb-10">
             <div className="flex justify-between items-end">
@@ -70,24 +33,27 @@ const RiskPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <GlassCard className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-red-500/10 to-transparent border-red-500/30">
                      <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Overall Risk Score</h3>
-                     <div className="text-5xl font-mono font-bold text-white mb-1">58<span className="text-2xl text-gray-500">/100</span></div>
-                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Moderate</span>
+                     <div className="text-5xl font-mono font-bold text-white mb-1">0<span className="text-2xl text-gray-500">/100</span></div>
+                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Calculating</span>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center p-6">
                      <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Annualized Loss Expectancy</h3>
-                     <div className="text-4xl font-mono font-bold text-white mb-1">$1.2M</div>
-                     <span className="text-xs text-red-400">▲ 15% from last quarter</span>
+                     <div className="text-4xl font-mono font-bold text-white mb-1">$0</div>
+                     <span className="text-xs text-red-400">--</span>
                 </GlassCard>
                 <GlassCard className="flex flex-col items-center justify-center p-6">
                      <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Open Risk Items</h3>
-                     <div className="text-4xl font-mono font-bold text-white mb-1">24</div>
-                     <span className="text-xs text-green-400">▼ 4 items closed this week</span>
+                     <div className="text-4xl font-mono font-bold text-white mb-1">0</div>
+                     <span className="text-xs text-green-400">--</span>
                 </GlassCard>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                  {/* Risk Trend */}
                  <GlassCard title="Risk Trend (7 Days)" icon={<TrendingUp className="text-red-400"/>} className="h-[350px]">
+                    {riskTrendData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Trend Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={riskTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
@@ -103,10 +69,14 @@ const RiskPage: React.FC = () => {
                             <Area type="monotone" dataKey="score" stroke="#ef4444" fillOpacity={1} fill="url(#colorRisk)" />
                         </AreaChart>
                     </ResponsiveContainer>
+                    )}
                  </GlassCard>
 
                  {/* Asset Criticality */}
                  <GlassCard title="Asset Criticality Distribution" icon={<Layers className="text-orange-400"/>} className="h-[350px]">
+                    {assetCriticalityData.length === 0 ? (
+                        <div className="flex justify-center items-center h-full text-gray-500">No Asset Data</div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -125,6 +95,7 @@ const RiskPage: React.FC = () => {
                             <Legend layout="vertical" verticalAlign="middle" align="right" />
                         </PieChart>
                     </ResponsiveContainer>
+                    )}
                  </GlassCard>
             </div>
 
@@ -132,6 +103,9 @@ const RiskPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <GlassCard title="Risk Heatmap (Likelihood vs Impact)" icon={<Activity className="text-purple-400"/>} className="h-auto">
+                        {riskHeatmap.length === 0 ? (
+                            <div className="flex justify-center items-center h-[300px] text-gray-500">No Heatmap Data</div>
+                        ) : (
                         <div className="grid grid-cols-[auto_1fr] gap-4">
                             {/* Y Axis Labels */}
                             <div className="flex flex-col justify-between py-6 text-xs text-gray-400 font-bold uppercase h-[300px] w-16 text-right">
@@ -145,16 +119,7 @@ const RiskPage: React.FC = () => {
                             <div className="flex flex-col">
                                 {/* The Grid */}
                                 <div className="grid grid-cols-5 grid-rows-5 gap-1 h-[300px]">
-                                    {/* Row 5 (Certain) - Indices 20-24 */}
-                                    {riskHeatmap.slice(20, 25).map((cell, i) => <div key={`r5-${i}`} className={`${cell.color} rounded hover:brightness-125 transition-all cursor-pointer border border-black/20`} title={`Risk: ${cell.value}`} />)}
-                                    {/* Row 4 (Likely) - Indices 15-19 */}
-                                    {riskHeatmap.slice(15, 20).map((cell, i) => <div key={`r4-${i}`} className={`${cell.color} rounded hover:brightness-125 transition-all cursor-pointer border border-black/20`} title={`Risk: ${cell.value}`} />)}
-                                    {/* Row 3 (Possible) - Indices 10-14 */}
-                                    {riskHeatmap.slice(10, 15).map((cell, i) => <div key={`r3-${i}`} className={`${cell.color} rounded hover:brightness-125 transition-all cursor-pointer border border-black/20`} title={`Risk: ${cell.value}`} />)}
-                                    {/* Row 2 (Unlikely) - Indices 5-9 */}
-                                    {riskHeatmap.slice(5, 10).map((cell, i) => <div key={`r2-${i}`} className={`${cell.color} rounded hover:brightness-125 transition-all cursor-pointer border border-black/20`} title={`Risk: ${cell.value}`} />)}
-                                    {/* Row 1 (Rare) - Indices 0-4 */}
-                                    {riskHeatmap.slice(0, 5).map((cell, i) => <div key={`r1-${i}`} className={`${cell.color} rounded hover:brightness-125 transition-all cursor-pointer border border-black/20`} title={`Risk: ${cell.value}`} />)}
+                                    {/* Map logic would go here */}
                                 </div>
                                 {/* X Axis Labels */}
                                 <div className="grid grid-cols-5 mt-2 text-xs text-gray-400 font-bold uppercase text-center">
@@ -166,6 +131,7 @@ const RiskPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                        )}
                     </GlassCard>
                 </div>
 
@@ -173,13 +139,9 @@ const RiskPage: React.FC = () => {
                 <div className="lg:col-span-1">
                     <GlassCard title="Top Identified Risks" icon={<AlertTriangle className="text-yellow-400"/>} className="h-full">
                          <div className="space-y-3">
-                             {[
-                                 { title: 'Data Center Outage', score: 80, impact: 'High' },
-                                 { title: 'Phishing Campaign', score: 64, impact: 'Med' },
-                                 { title: 'Vendor Breach', score: 48, impact: 'Med' },
-                                 { title: 'Unpatched Server', score: 40, impact: 'Low' },
-                                 { title: 'Insider Leak', score: 32, impact: 'Low' },
-                             ].map((risk, i) => (
+                             {topRisks.length === 0 ? (
+                                 <div className="text-center text-gray-500 py-4">No Risks Identified</div>
+                             ) : topRisks.map((risk, i) => (
                                  <div key={i} className="p-3 bg-white/5 rounded border border-white/5 hover:bg-white/10 transition-colors flex justify-between items-center">
                                      <div>
                                          <div className="text-sm font-bold text-white">{risk.title}</div>

@@ -165,7 +165,7 @@ export const MainLayout = () => {
           "fixed md:static z-50 h-full bg-black/60 backdrop-blur-2xl border-r border-white/5 transition-all duration-300 flex flex-col ease-in-out",
           "md:translate-x-0",
           isMobileMenuOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0",
-          !isMobileMenuOpen && (isSidebarExpanded ? "md:w-72" : "md:w-0")
+          !isMobileMenuOpen && (isSidebarExpanded ? "md:w-72" : "md:w-20")
         )}
       >
         {/* Brand Header */}
