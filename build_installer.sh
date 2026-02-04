@@ -8,9 +8,11 @@ echo "--- NexDefend Enterprise Builder ($VERSION) ---"
 echo "[1/3] Building Core Image..."
 docker build -t nexdefend/core:$VERSION .
 
-# 2. Build the Frontend Image
-echo "[2/3] Building Frontend Image..."
-cd nexdefend-frontend
+# 2. Build Frontend
+echo "Building Frontend..."
+cd ui
+npm install
+npm run build
 docker build -t nexdefend/frontend:$VERSION -f Dockerfile.prod .
 cd ..
 

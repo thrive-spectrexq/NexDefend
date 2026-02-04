@@ -110,10 +110,11 @@ services:
       - nexdefend-net
 
   # --- 7. Frontend ---
-  frontend:
-    image: nexdefend/frontend:v1.0.0
-    container_name: nexdefend-frontend
-    restart: always
+  ui:
+    container_name: ui
+    build:
+      context: ui
+      dockerfile: Dockerfile.prod
     ports:
       - "80:80"
     depends_on:

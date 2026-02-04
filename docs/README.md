@@ -17,4 +17,4 @@ This documentation provides a comprehensive overview of the NexDefend platform, 
 - [NexDefend AI](nexdefend-ai/README.md)
 - [NexDefend SOAR](nexdefend-soar/README.md)
 - [NexDefend Cloud Connector](nexdefend-cloud-connector/README.md)
-- [NexDefend Frontend](nexdefend-frontend/README.md)
+- [NexDefend UI](ui/README.md)

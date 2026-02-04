@@ -35,13 +35,13 @@ services:
         
       # CORS Config
       - key: CORS_ALLOWED_ORIGINS
-        value: https://nexdefend-frontend.onrender.com,https://nexdefend.vercel.app
+        value: https://ui.onrender.com,https://nexdefend.vercel.app
 
   # --- 2. The Frontend (Static Site) ---
   - type: web
-    name: nexdefend-frontend
+    name: ui
     env: static
-    rootDir: nexdefend-frontend
+    rootDir: ui
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     plan: starter

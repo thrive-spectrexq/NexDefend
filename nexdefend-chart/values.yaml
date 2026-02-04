@@ -97,9 +97,10 @@ cloudConnector:
       memory: 256Mi
 
 frontend:
-  name: nexdefend-frontend
+  name: ui
+  replicaCount: 2
   image:
-    repository: your-registry/nexdefend-frontend
+    repository: your-registry/ui
   service:
     type: ClusterIP
     port: 80 # Production builds usually serve on 80

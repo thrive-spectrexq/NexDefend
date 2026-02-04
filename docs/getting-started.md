@@ -71,12 +71,12 @@ docker-compose up -d --build
 
 For offline or standalone usage:
 
-1.  **Configure Wails**: Ensure `nexdefend-desktop/wails.json` points to `../nexdefend-frontend`.
-2.  **Install Frontend Deps**:
+1.  **Configure Wails**: Ensure `nexdefend-desktop/wails.json` points to `../ui`.
+2.  **Start Frontend Dev Server**:
     ```bash
-    cd nexdefend-frontend
+    cd ui
     npm install
-    cd ../nexdefend-desktop
+    npm run dev
     ```
 3.  **Run Dev Mode**:
     ```bash
