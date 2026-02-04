@@ -7,18 +7,18 @@ interface NeonButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const NeonButton = ({ children, className, variant = 'primary', glow = false, ...props }: NeonButtonProps) => {
-  const baseStyles = "relative px-6 py-2 rounded-lg font-mono font-bold transition-all duration-300 flex items-center gap-2 overflow-hidden cursor-pointer";
+  const baseStyles = "relative px-6 py-2 rounded-md font-mono font-black transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden cursor-pointer uppercase tracking-widest text-xs";
 
   const variants = {
     primary: clsx(
-      "bg-cyan-500/10 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/20",
-      glow && "hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+      "bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan/20",
+      glow && "hover:shadow-[0_0_20px_rgba(0,243,255,0.4)]"
     ),
     danger: clsx(
-      "bg-red-500/10 text-red-400 border border-red-500/50 hover:bg-red-500/20",
+      "bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20",
       glow && "hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]"
     ),
-    ghost: "text-gray-400 hover:text-white hover:bg-white/5",
+    ghost: "text-gray-500 hover:text-white hover:bg-white/5",
   };
 
   return (

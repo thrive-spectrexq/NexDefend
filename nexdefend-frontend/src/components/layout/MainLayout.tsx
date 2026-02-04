@@ -96,25 +96,19 @@ const SidebarItem = ({ icon: Icon, label, path, active, collapsed, onClick }: Si
   <Link
     to={path}
     onClick={onClick}
-    title={collapsed ? label : undefined}
     className={clsx(
-      "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden",
+      "flex items-center gap-3 px-4 py-3 transition-all duration-200 group relative border-l-2 border-transparent",
       active
-        ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
-        : "text-gray-400 hover:text-white hover:bg-white/5",
+        ? "sidebar-active-glow text-neon-cyan"
+        : "text-gray-500 hover:text-white hover:bg-white/5",
       collapsed && "justify-center px-2"
     )}
   >
-    <Icon className={clsx("h-4 w-4 z-10 shrink-0", active && "drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]")} />
+    <Icon className={clsx("h-4 w-4 shrink-0 transition-transform", active && "scale-110")} />
     {!collapsed && (
-      <span className="font-mono text-sm tracking-wide z-10 whitespace-nowrap overflow-hidden transition-all duration-300">
+      <span className="font-mono text-xs font-bold uppercase tracking-wider whitespace-nowrap overflow-hidden">
         {label}
       </span>
-    )}
-
-    {/* Active Glow Bar */}
-    {active && (
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_10px_cyan]" />
     )}
   </Link>
 );
@@ -168,27 +162,24 @@ export const MainLayout = () => {
       {/* 1. Sidebar */}
       <aside
         className={clsx(
-          "fixed md:static z-50 h-full bg-[#050505]/95 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col ease-in-out",
-          // Mobile: Slide in from left
+          "fixed md:static z-50 h-full bg-black/60 backdrop-blur-2xl border-r border-white/5 transition-all duration-300 flex flex-col ease-in-out",
           "md:translate-x-0",
           isMobileMenuOpen ? "translate-x-0 w-72" : "-translate-x-full md:translate-x-0",
-          // Desktop: Width toggle
-          !isMobileMenuOpen && (isSidebarExpanded ? "md:w-72" : "md:w-20")
+          !isMobileMenuOpen && (isSidebarExpanded ? "md:w-72" : "md:w-0")
         )}
       >
         {/* Brand Header */}
-        <div className="p-6 flex items-center justify-between md:justify-start gap-3 border-b border-white/5 h-16 shrink-0">
+        <div className="p-6 flex items-center justify-between md:justify-start gap-4 h-16 shrink-0 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="relative group">
-              <ShieldAlert className="h-8 w-8 text-cyan-400 transition-transform group-hover:scale-110" />
-              <div className="absolute inset-0 bg-cyan-500 blur-xl opacity-20 animate-pulse" />
+            <div className="relative group shrink-0">
+              <ShieldAlert className="h-8 w-8 text-neon-cyan drop-shadow-[0_0_8px_rgba(0,243,255,0.4)] transition-transform group-hover:scale-110" />
             </div>
             {(isSidebarExpanded || isMobileMenuOpen) && (
-              <div className="flex flex-col animate-in fade-in duration-300">
-                <h1 className="font-mono text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+              <div className="flex flex-col animate-in fade-in duration-300 truncate">
+                <h1 className="font-mono text-lg font-black tracking-[0.2em] text-white">
                   NEXDEFEND
                 </h1>
-                <span className="text-[10px] text-gray-500 tracking-widest uppercase">Enterprise Security</span>
+                <span className="text-[9px] text-gray-600 tracking-[0.3em] font-bold uppercase">Enterprise Security</span>
               </div>
             )}
           </div>
@@ -203,15 +194,15 @@ export const MainLayout = () => {
         </div>
 
         {/* Navigation Links (Scrollable) */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto px-0 py-6 space-y-8 custom-scrollbar scroll-smooth">
           {NAV_ITEMS.map((group, idx) => (
             <div key={idx}>
               {(isSidebarExpanded || isMobileMenuOpen) && (
-                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 pl-2 animate-in fade-in">
+                <h3 className="text-[9px] font-black text-gray-700 uppercase tracking-[0.25em] mb-4 px-6">
                   {group.group}
                 </h3>
               )}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {group.items.map((item) => (
                   <SidebarItem
                     key={item.path}
@@ -253,39 +244,37 @@ export const MainLayout = () => {
       {/* 2. Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300">
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md z-30 shrink-0">
+        <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-black/40 backdrop-blur-md z-30 shrink-0">
           <div className="flex items-center gap-4 flex-1">
             <button
               onClick={toggleSidebar}
-              className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+              className="p-2 -ml-2 text-gray-400 hover:text-neon-cyan transition-colors"
             >
               <Menu className="h-5 w-5" />
             </button>
 
             {/* Omni-Search Bar */}
-            <div className="relative max-w-lg w-full ml-4 hidden md:block group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-cyan-500 transition-colors" />
+            <div className="relative max-w-xl w-full ml-4 hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type="text"
                 placeholder="Omni-Search: Query OpenSearch, Prometheus, or Assets..."
-                className="w-full bg-black/50 border border-white/10 rounded-lg pl-10 pr-24 py-2 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 focus:bg-white/5 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all placeholder:text-gray-600 font-mono"
+                className="w-full bg-black/40 border border-white/10 rounded-md pl-10 pr-24 py-1.5 text-xs text-gray-400 focus:outline-none focus:border-neon-cyan/50 focus:bg-white/5 transition-all font-mono"
               />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] text-gray-500 font-mono">⌘K</kbd>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-gray-600 font-mono">⌘K</kbd>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-6">
-
-            {/* System Status with Popover */}
             <div className="relative">
               <button
                 onClick={() => setStatusOpen(!isStatusOpen)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors cursor-pointer"
+                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 transition-colors"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs font-mono font-medium text-green-400 tracking-wide">SYSTEM OPTIMAL</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                <span className="text-[10px] font-mono font-bold text-green-500/80 tracking-widest uppercase">SYSTEM OPTIMAL</span>
               </button>
 
               {isStatusOpen && (
