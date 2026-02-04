@@ -12,6 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
+	"github.com/thrive-spectrexq/NexDefend/internal/autoscaling"
 	"github.com/thrive-spectrexq/NexDefend/internal/cache"
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/correlation"
@@ -61,13 +62,16 @@ func main() {
 	wsHub := handlers.NewWebsocketHub()
 	go wsHub.Run()
 
+	// Initialize AutoScaler
+	autoScaler := autoscaling.NewAutoScaler(internalEvents)
+
 	// Start Ingestor
 	go ingestor.StartIngestor(correlationEngine, internalEvents, database.GetDB(), func(e models.CommonEvent) {
 		wsHub.BroadcastEvent(e)
 	})
 	
 	// Start System Metrics Collection
-	go metrics.CollectMetrics(database)
+	go metrics.CollectMetrics(database, autoScaler)
 	
 	// Start Agent Collector
 	go handlers.StartActiveAgentCollector(database.GetDB())
@@ -92,9 +96,6 @@ func main() {
 	// 6. External Integrations
 	c := cache.NewCache()
 	
-	// FIX 1: Pass the initialized TIP pointer directly
-	// Note: NewTIP likely returns *TIP. If NewRouter expects *TIP, pass threatIntel.
-	// If it expects an interface, ensure *TIP implements it.
 	threatIntel := tip.NewTIP(cfg.VirusTotalKey)
 	
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
@@ -107,11 +108,10 @@ func main() {
 	}
 
 	// 7. Setup Router
-	// FIX: Pass 'threatIntel' instead of '&threatIntel'
 	router := routes.NewRouter(cfg, database, c, threatIntel, adConnector, snowConnector, osClient, wsHub)
 	router.Handle("/metrics", promhttp.Handler())
 
-	// FIX: Apply CORS Globally at the Server Level
+	// Apply CORS Globally at the Server Level
 	cWrapper := cors.New(cors.Options{
 		AllowedOrigins:   cfg.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

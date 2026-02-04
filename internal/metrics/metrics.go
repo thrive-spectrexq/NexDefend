@@ -10,6 +10,7 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/thrive-spectrexq/NexDefend/internal/autoscaling"
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
@@ -37,7 +38,7 @@ type SystemMetrics struct {
 }
 
 // CollectMetrics collects system metrics and sends them to a channel
-func CollectMetrics(store MetricStore) {
+func CollectMetrics(store MetricStore, autoScaler *autoscaling.AutoScaler) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
@@ -58,6 +59,11 @@ func CollectMetrics(store MetricStore) {
 		if err != nil {
 			log.Printf("Error collecting disk metrics: %v", err)
 			continue
+		}
+
+		// Auto-Scaling Trigger Check
+		if autoScaler != nil && len(cpuLoad) > 0 {
+			autoScaler.Check(cpuLoad[0], memInfo.UsedPercent)
 		}
 
 		// Update Prometheus Metrics

@@ -39,7 +39,7 @@ func NewRouter(
 	eventHandler := handlers.NewEventHandler(osClient)
 	assetHandler := handlers.NewAssetHandler(database.GetDB())
 	vulnHandler := handlers.NewVulnerabilityHandler(database.GetDB())
-	incidentHandler := handlers.NewIncidentHandler(database.GetDB())
+	incidentHandler := handlers.NewIncidentHandler(database.GetDB(), cfg.PythonAPI, cfg.AIServiceToken)
 	caseHandler := handlers.NewCaseManagementHandler(database.GetDB())
 	settingsHandler := handlers.NewSettingsHandler(database.GetDB())
 	metricsHandler := handlers.NewMetricsHandler(database)
@@ -111,6 +111,7 @@ func NewRouter(
 	protected.HandleFunc("/incidents", incidentHandler.CreateIncident).Methods("POST")
 	protected.HandleFunc("/incidents/{id}", incidentHandler.GetIncident).Methods("GET")
 	protected.HandleFunc("/incidents/{id}", incidentHandler.UpdateIncident).Methods("PUT")
+	protected.HandleFunc("/incidents/{id}/analyze", incidentHandler.AnalyzeIncident).Methods("POST")
 
 	// Alerts
 	protected.HandleFunc("/alerts", func(w http.ResponseWriter, r *http.Request) {
