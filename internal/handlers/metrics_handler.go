@@ -1,4 +1,3 @@
-
 package handlers
 
 import (
@@ -7,7 +6,6 @@ import (
 	"time"
 
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
-	"github.com/thrive-spectrexq/NexDefend/internal/models"
 )
 
 type MetricsHandler struct {
@@ -18,24 +16,40 @@ func NewMetricsHandler(db *db.Database) *MetricsHandler {
 	return &MetricsHandler{db: db}
 }
 
+// SystemMetricsResponse matches the frontend interface
+type SystemMetricsResponse struct {
+	CPUUsage    float64 `json:"cpu_usage"`
+	MemoryUsage float64 `json:"memory_usage"`
+	DiskUsage   float64 `json:"disk_usage"`
+	NetworkIn   float64 `json:"network_in"`
+	NetworkOut  float64 `json:"network_out"`
+}
+
 // GetSystemMetrics returns system metrics for the dashboard
 func (h *MetricsHandler) GetSystemMetrics(w http.ResponseWriter, r *http.Request) {
-	// Parse query params for time range (defaults to last 1 hour)
-	from := time.Now().Add(-1 * time.Hour)
+	// Fetch metrics for the last 5 minutes to ensure we get the latest
+	from := time.Now().Add(-5 * time.Minute)
 	to := time.Now()
-
-	// Use Organization ID from context or default to 1
 	orgID := 1
 
-	cpuMetrics, _ := h.db.GetSystemMetrics("cpu_load", from, to, orgID)
-	memMetrics, _ := h.db.GetSystemMetrics("memory_usage", from, to, orgID)
-	diskMetrics, _ := h.db.GetSystemMetrics("disk_usage", from, to, orgID)
-
-	response := map[string][]models.SystemMetric{
-		"cpu":    cpuMetrics,
-		"memory": memMetrics,
-		"disk":   diskMetrics,
+	// Helper to get latest value
+	getLatest := func(metricType string) float64 {
+		metrics, err := h.db.GetSystemMetrics(metricType, from, to, orgID)
+		if err == nil && len(metrics) > 0 {
+			// Return the last one (assuming implicit time order or ID order)
+			return metrics[len(metrics)-1].Value
+		}
+		return 0.0
 	}
 
+	response := SystemMetricsResponse{
+		CPUUsage:    getLatest("cpu_load"),
+		MemoryUsage: getLatest("memory_usage"),
+		DiskUsage:   getLatest("disk_usage"),
+		NetworkIn:   0.0, // Not yet collected
+		NetworkOut:  0.0, // Not yet collected
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
