@@ -1,0 +1,4 @@
+volatility3
+pytsk3
+kafka-python
+requests

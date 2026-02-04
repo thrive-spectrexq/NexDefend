@@ -6,7 +6,7 @@ import {
   Network, FileText, Globe, Search, BarChart3,
   LogOut, CheckCircle, Database, Server, Flame,
   Sparkles, Radar, UserCheck, ClipboardCheck, TrendingUp, Users, MessageSquare,
-  HelpCircle, User, HardDrive, Zap, X
+  HelpCircle, User, HardDrive, Zap, X, Lock, FileSearch
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
@@ -29,6 +29,7 @@ const NAV_ITEMS = [
     items: [
       { label: 'Notable Events', path: '/alerts', icon: Bell },
       { label: 'Incident Workbench', path: '/incidents', icon: ShieldAlert },
+      { label: 'Secure Comms', path: '/secure-chat', icon: Lock },
       { label: 'System Activity', path: '/activity-monitoring', icon: Activity },
       { label: 'Behavioral Analytics', path: '/ueba', icon: UserCheck },
       { label: 'Playbooks', path: '/playbooks', icon: FileText },
@@ -61,6 +62,7 @@ const NAV_ITEMS = [
   {
     group: 'Analysis',
     items: [
+      { label: 'Forensics Lab', path: '/forensics', icon: FileSearch },
       { label: 'Data Explorer', path: '/data-explorer', icon: Search },
       { label: 'User Activity', path: '/user-activity', icon: Users },
     ]
