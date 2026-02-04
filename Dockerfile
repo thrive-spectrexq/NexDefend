@@ -16,32 +16,29 @@ COPY . .
 # 1. Build Core API
 RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend main.go
 
-# 2. Build SOAR Binary (FIXED)
+# 2. Build SOAR Binary
 WORKDIR /app/nexdefend-soar
-# FIX: Run go mod tidy to ensure dependencies are synced before building
 RUN go mod tidy
 RUN CGO_ENABLED=1 GOOS=linux go build -tags musl -o /nexdefend-soar-bin main.go
 
 # --- Stage 2: Final Monolith Image ---
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
 # Install Runtime Dependencies
-# We include 'g++' and 'openblas-dev' for scikit-learn
-RUN apk add --no-cache \
-    librdkafka \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    librdkafka1 \
     librdkafka-dev \
-    sqlite \
+    sqlite3 \
     ca-certificates \
-    bash \
     curl \
     gcc \
     g++ \
-    musl-dev \
+    libpq-dev \
+    nmap \
     python3-dev \
     libffi-dev \
-    nmap \
-    openblas-dev \
-    iptables
+    iptables \
+    && rm -rf /var/lib/apt/lists/*
 
 # 1. Setup ZincSearch
 WORKDIR /zinc
@@ -52,11 +49,8 @@ RUN mv zincsearch /usr/local/bin/zincsearch
 WORKDIR /app/nexdefend-ai
 COPY nexdefend-ai/requirements.txt .
 
-# FIX: Remove 'confluent-kafka' for Render Demo Build
-# This prevents the build error. For Enterprise mode, we would use a Debian-based image.
-RUN sed -i '/psycopg2-binary/d' requirements.txt && \
-    sed -i '/confluent-kafka/d' requirements.txt && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt
+# Install dependencies including psycopg2 and confluent-kafka
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY nexdefend-ai/ .
 
@@ -83,5 +77,10 @@ EXPOSE 8080 5000 4080 8081
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
+
+# Create non-root user
+RUN useradd -m nexdefend
+RUN chown -R nexdefend:nexdefend /app /data /zinc
+USER nexdefend
 
 CMD ["/start.sh"]
