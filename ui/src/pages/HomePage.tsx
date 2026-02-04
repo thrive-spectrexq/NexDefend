@@ -131,9 +131,19 @@ const HomePage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { label: 'System Load', value: metrics ? `${(metrics.cpu_usage ?? 0).toFixed(1)}%` : '...' },
-              { label: 'Threats Blocked', value: stats ? stats.threat_velocity : '1.2M' },
-              { label: 'Security Score', value: stats ? `${stats.security_score}/100` : '99.9%' },
-              { label: 'Active Agents', value: stats ? stats.throughput : '12' },
+              { label: 'Threats Blocked', value: stats ? stats.total_events_24h : '1.2M' },
+              {
+                label: 'Security Score',
+                value: stats && stats.compliance?.length
+                  ? `${Math.round(stats.compliance.reduce((acc, curr) => acc + curr.score, 0) / stats.compliance.length)}/100`
+                  : '-'
+              },
+              {
+                label: 'Active Agents',
+                value: stats && stats.modules
+                  ? (stats.modules.find(m => m.name === 'Active Agents')?.count ?? '12')
+                  : '12'
+              },
             ].map((stat, i) => (
               <div key={i}>
                 <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.value}</div>

@@ -1,12 +1,22 @@
 import client from './client';
 
+export interface ModuleStat {
+  name: string;
+  count: number;
+  status: string;
+  trend: string;
+}
+
+export interface ComplianceScore {
+  standard: string;
+  score: number;
+  status: string;
+}
+
 export interface DashboardStats {
-  global_latency: number;
-  throughput: number;
-  error_rate: number;
-  threat_velocity: number;
-  security_score: number;
-  risk_score: number;
+  modules: ModuleStat[];
+  compliance: ComplianceScore[];
+  total_events_24h: number;
 }
 
 export interface SystemMetrics {
