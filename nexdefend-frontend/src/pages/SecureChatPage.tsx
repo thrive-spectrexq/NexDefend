@@ -1,31 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
-import { createClient, MatrixClient } from 'matrix-js-sdk';
+import { useState, useEffect } from 'react';
+import { createClient } from 'matrix-js-sdk';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Send, Lock, Shield, Hash, User } from 'lucide-react';
+import { Send, Lock, Shield, Hash } from 'lucide-react';
 
 export default function SecureChatPage() {
-  const [client, setClient] = useState<MatrixClient | null>(null);
   const [rooms, setRooms] = useState<any[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
-  const [status, setStatus] = useState('disconnected');
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // In a real app, use user's credentials or a guest account
     const initMatrix = async () => {
-        setStatus('connecting');
-        const c = createClient({
+        createClient({
             baseUrl: "http://localhost:8008", // Synapse
             // For demo, we might need a way to login.
             // I'll assume we can use a hardcoded guest or prompts.
             // Simplified: Just show UI if no auth
         });
-
-        // Setup listeners...
-        setClient(c);
-        setStatus('connected (demo)');
 
         // Mock rooms
         setRooms([
