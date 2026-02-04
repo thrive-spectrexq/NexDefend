@@ -205,7 +205,7 @@ const DashboardPage = () => {
                                         dataKey="value"
                                         stroke="none"
                                     >
-                                        {postureData.map((entry, index) => (
+                                        {postureData.map((_, index) => (
                                             <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#1a1a1a'} />
                                         ))}
                                     </Pie>
