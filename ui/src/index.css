@@ -16,43 +16,41 @@
 }
 
 /* Custom Utilities for Premium Cyber UI */
-@layer utilities {
-  .glass-card {
-    background: linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(5, 5, 5, 0.8) 100%);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
-  }
+@utility glass-card {
+  background: linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(5, 5, 5, 0.8) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+}
 
-  .cyber-border-cyan {
-    border: 1px solid rgba(0, 243, 255, 0.2);
-    box-shadow: 0 0 20px rgba(0, 243, 255, 0.05), inset 0 0 10px rgba(0, 243, 255, 0.02);
-  }
+@utility cyber-border-cyan {
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.05), inset 0 0 10px rgba(0, 243, 255, 0.02);
+}
 
-  .cyber-border-purple {
-    border: 1px solid rgba(168, 85, 247, 0.2);
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.05), inset 0 0 10px rgba(168, 85, 247, 0.02);
-  }
+@utility cyber-border-purple {
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.05), inset 0 0 10px rgba(168, 85, 247, 0.02);
+}
 
-  .text-glow-cyan {
-    text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
-  }
+@utility text-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+}
 
-  .text-glow-purple {
-    text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
-  }
+@utility text-glow-purple {
+  text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+}
 
-  .bg-grid {
-    background-image: 
-      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 32px 32px;
-  }
+@utility bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
 
-  .sidebar-active-glow {
-    background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
-    @apply border-l-2 border-neon-cyan text-glow-cyan;
-  }
+@utility sidebar-active-glow {
+  background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
+  @apply border-l-2 border-neon-cyan text-glow-cyan;
 }
 
 body {
