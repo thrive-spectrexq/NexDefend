@@ -16,6 +16,11 @@ export const fetchPlaybooks = async (): Promise<Playbook[]> => {
     return response.data;
 };
 
+export const savePolicyPlaybook = async (playbook: any): Promise<Playbook> => {
+    const response = await axios.post<Playbook>(`${API_BASE_URL}/playbooks`, playbook);
+    return response.data;
+};
+
 export const evaluatePolicy = async (data: { score: number;[key: string]: any }) => {
     const response = await axios.post(`${API_BASE_URL}/evaluate`, data);
     return response.data;

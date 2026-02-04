@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Activity, Globe, X, ExternalLink, ShieldCheck, AlertTriangle, Cpu, Brain, Zap, Sparkles } from 'lucide-react';
+import { Activity, X, ShieldCheck, AlertTriangle, Cpu, Brain, Zap, Sparkles } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
-import { NeonButton } from '../components/ui/NeonButton';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { getDashboardStats, getSystemMetrics } from '../api/dashboard';
@@ -78,9 +77,6 @@ const DashboardPage = () => {
     const [postureData, setPostureData] = useState<any[]>([
         { name: 'Score', value: 0, color: '#10b981' },
         { name: 'Risk', value: 100, color: '#333' }
-    ]);
-    const [aiInsights] = useState<string[]>([
-        "Waiting for AI analysis stream..."
     ]);
 
     const { lastMessage } = useWebSocket();

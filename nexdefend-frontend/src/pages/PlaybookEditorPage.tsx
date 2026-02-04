@@ -15,21 +15,33 @@ import {
 } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon, Radar } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchPlaybooks, savePlaybooks } from '@/api/soar'; // Deprecated
-import { fetchPlaybooks as fetchPolicies, type Playbook } from '@/api/policy';
+import { fetchPlaybooks as fetchPolicies, savePolicyPlaybook, type Playbook } from '@/api/policy';
+
+interface PlaybookAction {
+  type: string;
+  params: Record<string, string>;
+}
+
+// Extension of the API Playbook for the editor's needs
+interface EditorPlaybook extends Omit<Playbook, 'actions' | 'id'> {
+  id: string | number;
+  trigger: string;
+  actions: PlaybookAction[];
+}
 
 const PlaybookEditorPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isNew = !id || id === 'new';
 
-  const [playbook, setPlaybook] = useState<Playbook>({
+  const [playbook, setPlaybook] = useState<EditorPlaybook>({
     id: '',
     name: '',
     trigger: '',
     actions: [],
+    threatContext: '',
+    score: 0
   });
-  const [allPlaybooks, setAllPlaybooks] = useState<Playbook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,23 +49,27 @@ const PlaybookEditorPage: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const data = await fetchPolicies();
-        setAllPlaybooks(data as any);
-
         if (!isNew && id) {
+          const data = await fetchPolicies();
           const found = data.find((p) => p.id.toString() === id);
           if (found) {
-            setPlaybook(found as any);
+            // Convert API Playbook to EditorPlaybook
+            setPlaybook({
+              ...found,
+              trigger: '', // Default if missing
+              actions: found.actions ? JSON.parse(found.actions) : []
+            });
           } else {
             setError('Playbook not found');
           }
         } else {
-          // Generate a random ID for new playbooks for now
           setPlaybook({
             id: `pb-${Math.floor(Math.random() * 1000)}`,
             name: 'New Playbook',
             trigger: '',
-            actions: []
+            actions: [],
+            threatContext: 'General',
+            score: 0
           });
         }
       } catch (err) {
@@ -68,14 +84,14 @@ const PlaybookEditorPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      let updatedList = [...allPlaybooks];
-      if (isNew) {
-        updatedList.push(playbook);
-      } else {
-        updatedList = updatedList.map((p) => (p.id === playbook.id ? playbook : p));
-      }
+      // Convert EditorPlaybook back to API format
+      const apiPlaybook = {
+        ...playbook,
+        id: isNew ? undefined : Number(playbook.id),
+        actions: JSON.stringify(playbook.actions)
+      };
 
-      await savePlaybooks(updatedList);
+      await savePolicyPlaybook(apiPlaybook);
       navigate('/playbooks');
     } catch (err) {
       console.error("Failed to save", err);
@@ -98,8 +114,9 @@ const PlaybookEditorPage: React.FC = () => {
 
   const updateAction = (index: number, field: keyof PlaybookAction, value: string) => {
     const newActions = [...playbook.actions];
-    // @ts-expect-error - indexing works but TS complains about union types
-    newActions[index][field] = value;
+    if (field === 'type') {
+      newActions[index].type = value;
+    }
     setPlaybook({ ...playbook, actions: newActions });
   };
 
