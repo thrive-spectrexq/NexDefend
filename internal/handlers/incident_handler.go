@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -202,15 +204,15 @@ func (h *IncidentHandler) AnalyzeIncident(w http.ResponseWriter, r *http.Request
 
 	// Construct Prompt for AI
 	prompt := "Analyze this incident: " + incident.Description + ". Severity: " + incident.Severity + ". Suggest remediation."
-	
+
 	// Prepare Request to Python AI
 	payload := map[string]interface{}{
-		"query": prompt,
-		"context": incident, 
+		"query":   prompt,
+		"context": incident,
 	}
-	
+
 	jsonData, _ := json.Marshal(payload)
-	
+
 	// Make Request
 	client := &http.Client{Timeout: 30 * time.Second} // Long timeout for LLM
 	req, err := http.NewRequest("POST", h.PythonAPI+"/chat", bytes.NewBuffer(jsonData))
@@ -218,19 +220,19 @@ func (h *IncidentHandler) AnalyzeIncident(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Failed to create request", http.StatusInternalServerError)
 		return
 	}
-	
+
 	req.Header.Set("Content-Type", "application/json")
 	if h.AIServiceToken != "" {
 		req.Header.Set("Authorization", "Bearer "+h.AIServiceToken)
 	}
-	
+
 	resp, err := client.Do(req)
 	if err != nil {
 		http.Error(w, "Failed to contact AI service", http.StatusBadGateway)
 		return
 	}
 	defer resp.Body.Close()
-	
+
 	// Just proxy the response body back
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, resp.Body)

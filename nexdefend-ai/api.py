@@ -100,6 +100,32 @@ def chat():
         logging.error(f"Chat error: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/verify-threat', methods=['POST'])
+@require_auth
+def verify_threat():
+    try:
+        data = request.get_json()
+        payload = data.get("payload")
+        patterns = data.get("patterns")
+        score = data.get("score")
+
+        if not payload:
+            return jsonify({"error": "Payload required"}), 400
+
+        # Construct a specific prompt for threat verification
+        prompt = (
+            f"I have detected a potential threat (Score: {score}) matching these patterns: {patterns}. "
+            f"The payload is: '{payload}'. "
+            "Analyze this specific payload. Explain why it is dangerous or if it is a false positive. "
+            "Be extremely concise."
+        )
+
+        response_text = llm_agent.generate_response(prompt)
+        return jsonify({"analysis": response_text})
+    except Exception as e:
+        logging.error(f"Verify threat error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 # 2. Forecasting Endpoint
 @app.route('/forecast', methods=['GET'])
 @require_auth

@@ -19,6 +19,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"github.com/thrive-spectrexq/NexDefend/internal/enrichment"
 	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
+	"github.com/thrive-spectrexq/NexDefend/internal/hyperseek"
 	"github.com/thrive-spectrexq/NexDefend/internal/ingestor"
 	"github.com/thrive-spectrexq/NexDefend/internal/logging"
 	"github.com/thrive-spectrexq/NexDefend/internal/metrics"
@@ -69,10 +70,10 @@ func main() {
 	go ingestor.StartIngestor(correlationEngine, internalEvents, database.GetDB(), func(e models.CommonEvent) {
 		wsHub.BroadcastEvent(e)
 	})
-	
+
 	// Start System Metrics Collection
 	go metrics.CollectMetrics(database, autoScaler)
-	
+
 	// Start Agent Collector
 	go handlers.StartActiveAgentCollector(database.GetDB())
 
@@ -95,9 +96,9 @@ func main() {
 
 	// 6. External Integrations
 	c := cache.NewCache()
-	
+
 	threatIntel := tip.NewTIP(cfg.VirusTotalKey)
-	
+
 	adConnector := &enrichment.MockActiveDirectoryConnector{}
 	snowConnector := &enrichment.MockServiceNowConnector{}
 
@@ -107,8 +108,12 @@ func main() {
 		log.Printf("Warning: Search Engine client not ready: %v", err)
 	}
 
+	// HyperSeek Engine
+	hyperSeekService := hyperseek.NewService()
+	defer hyperSeekService.Close()
+
 	// 7. Setup Router
-	router := routes.NewRouter(cfg, database, c, threatIntel, adConnector, snowConnector, osClient, wsHub)
+	router := routes.NewRouter(cfg, database, c, threatIntel, adConnector, snowConnector, osClient, wsHub, hyperSeekService)
 	router.Handle("/metrics", promhttp.Handler())
 
 	// Apply CORS Globally at the Server Level
@@ -151,7 +156,7 @@ func startDemoTrafficGenerator(events chan<- models.CommonEvent) {
 			// Since we don't have the struct definition in front of us, I'll assume standard JSON fields.
 			// If src_ip is mapped to Data["src_ip"], we put it there.
 			// Assuming CommonEvent is a generic holder.
-			
+
 			evt := models.CommonEvent{
 				Timestamp: time.Now(),
 				EventType: "alert",
@@ -159,12 +164,12 @@ func startDemoTrafficGenerator(events chan<- models.CommonEvent) {
 				// If your CommonEvent struct is strictly defined, update these fields:
 				// For now, I'll put them in Data to be safe, as that's usually where flexible fields go
 				Data: map[string]interface{}{
-					"src_ip":    ips[rand.Intn(len(ips))],
-					"dest_ip":   "192.168.1.100",
-					"severity":  "medium",
-					"alert":     alertTypes[rand.Intn(len(alertTypes))],
-					"proto":     "TCP",
-					"app":       "http",
+					"src_ip":   ips[rand.Intn(len(ips))],
+					"dest_ip":  "192.168.1.100",
+					"severity": "medium",
+					"alert":    alertTypes[rand.Intn(len(alertTypes))],
+					"proto":    "TCP",
+					"app":      "http",
 				},
 			}
 			events <- evt

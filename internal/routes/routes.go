@@ -10,11 +10,12 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/enrichment"
 	"github.com/thrive-spectrexq/NexDefend/internal/forensics"
 	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
+	"github.com/thrive-spectrexq/NexDefend/internal/hyperseek"
 	"github.com/thrive-spectrexq/NexDefend/internal/integrations/matrix"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/search"
 	"github.com/thrive-spectrexq/NexDefend/internal/tip"
-    // "github.com/rs/cors"  <-- REMOVED THIS LINE
+	// "github.com/rs/cors"  <-- REMOVED THIS LINE
 )
 
 func NewRouter(
@@ -26,6 +27,7 @@ func NewRouter(
 	snowConnector enrichment.ServiceNowConnector,
 	osClient *search.Client,
 	wsHub *handlers.WebsocketHub,
+	hyperScan *hyperseek.Service,
 ) *mux.Router {
 
 	r := mux.NewRouter()
@@ -45,6 +47,7 @@ func NewRouter(
 	metricsHandler := handlers.NewMetricsHandler(database)
 	scanHandler := handlers.NewScanHandler(database.GetDB())
 	hostHandler := handlers.NewHostHandler(database.GetDB())
+	threatHandler := handlers.NewThreatHandler(hyperScan)
 
 	// Proxies
 	chatHandler := handlers.NewProxyChatHandler(cfg.PythonAPI, cfg.AIServiceToken)
@@ -141,6 +144,7 @@ func NewRouter(
 	// AI & Chat
 	protected.HandleFunc("/ai/chat", chatHandler.ProxyChat).Methods("POST")
 	protected.HandleFunc("/scans", scanHandler.StartScan).Methods("POST")
+	protected.HandleFunc("/threat/scan", threatHandler.ScanPayload).Methods("POST") // ADDED
 
 	// Settings
 	protected.HandleFunc("/settings", settingsHandler.GetSettings).Methods("GET")

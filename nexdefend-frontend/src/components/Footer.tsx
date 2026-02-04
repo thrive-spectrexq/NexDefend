@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="bg-[#050505] border-t border-white/5 pt-20 pb-10">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          
+
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-6">
@@ -59,7 +59,7 @@ const Footer = () => {
             © {new Date().getFullYear()} NexDefend Inc. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-slate-500 hover:text-white transition-colors"><Github size={20} /></a>
+            <a href="https://github.com/thrive-spectrexq/NexDefend" className="text-slate-500 hover:text-white transition-colors"><Github size={20} /></a>
             <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors"><Twitter size={20} /></a>
             <a href="#" className="text-slate-500 hover:text-blue-600 transition-colors"><Linkedin size={20} /></a>
           </div>
