@@ -7,8 +7,11 @@
 #include <cstring>
 #include <cmath>
 #include <map>
+
+#ifdef _WIN32
 #include <windows.h>
 #include <tlhelp32.h>
+#endif
 
 class ThreatScanner {
 public:
@@ -145,6 +148,7 @@ float ScanPayload(ScannerHandle handle, const char* payload, int length, char* o
 }
 
 int ScanAndBlockProcesses(ScannerHandle handle, char* out_log, int max_len) {
+#ifdef _WIN32
     if (!handle) return 0;
     
     // For this version, we'll hardcode a blacklist. 
@@ -203,6 +207,13 @@ int ScanAndBlockProcesses(ScannerHandle handle, char* out_log, int max_len) {
     }
 
     return blockedCount;
+#else
+    if (out_log && max_len > 0) {
+        strncpy(out_log, "Process scanning not supported on Linux", max_len - 1);
+        out_log[max_len - 1] = '\0';
+    }
+    return 0;
+#endif
 }
 
 }

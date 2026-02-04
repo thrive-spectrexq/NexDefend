@@ -33,6 +33,7 @@ func NewRouter(
 	r := mux.NewRouter()
 
 	r.Use(middleware.LoggingMiddleware)
+	r.Use(middleware.SecurityHeadersMiddleware)
 
 	// Initialize Handlers
 	homeHandler := handlers.NewHomeHandler()

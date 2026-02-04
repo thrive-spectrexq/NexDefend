@@ -4,11 +4,16 @@ import time
 import requests
 import nmap
 import functools
+import secrets
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 from prometheus_client import Counter, make_wsgi_app, Histogram
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from pydantic import BaseModel, ValidationError, Field, validator
+from typing import Optional, List, Dict, Any
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from telemetry import init_tracer_provider
 from data_ingestion import (
@@ -34,11 +39,25 @@ init_tracer_provider()
 app = Flask(__name__)
 FlaskInstrumentor().instrument_app(app)
 
+# Rate Limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
 def require_auth(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
-        if not auth_header or auth_header != f"Bearer {app.config['AI_SERVICE_TOKEN']}":
+        if not auth_header:
+             return make_response(jsonify({"error": "Unauthorized"}), 401)
+
+        token = auth_header.replace("Bearer ", "")
+        expected_token = app.config['AI_SERVICE_TOKEN']
+
+        if not secrets.compare_digest(token, expected_token):
             return make_response(jsonify({"error": "Unauthorized"}), 401)
         return f(*args, **kwargs)
     return decorated_function
@@ -75,6 +94,26 @@ EVENTS_PROCESSED = Counter('events_processed_total', 'Total events processed')
 ANOMALIES_DETECTED = Counter('anomalies_detected_total', 'Total anomalies detected')
 INCIDENTS_CREATED = Counter('incidents_created_total', 'Total incidents created')
 
+# --- Pydantic Models ---
+
+class ChatRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=500)
+    context: Optional[Dict[str, Any]] = None
+
+class VerifyThreatRequest(BaseModel):
+    payload: str = Field(..., min_length=1)
+    patterns: List[str]
+    score: float
+
+class ScanRequest(BaseModel):
+    target: str
+
+    @validator('target')
+    def validate_target(cls, v):
+        if not v or ';' in v or ' ' in v or '&' in v:
+            raise ValueError('Invalid target format')
+        return v
+
 # --- Routes ---
 
 @app.route('/health', methods=['GET'])
@@ -84,17 +123,32 @@ def health():
 # 1. GenAI Chat Endpoint
 @app.route('/chat', methods=['POST'])
 @require_auth
+@limiter.limit("10 per minute")
 def chat():
     try:
-        data = request.get_json()
-        query = data.get("query")
-        context = data.get("context") # Optional: JSON alert data passed from frontend
-        
-        if not query:
-            return jsonify({"error": "Query is required"}), 400
+        # Validate input
+        try:
+            req_data = ChatRequest(**request.get_json())
+        except ValidationError as e:
+            return jsonify({"error": e.errors()}), 400
+
+        query = req_data.query
+        context = req_data.context
+
+        # Allowlist filtering for context
+        safe_context = {}
+        if context:
+            allowed_keys = {
+                "description", "severity", "status", "created_at",
+                "source_ip", "destination_ip", "protocol", "alert_signature",
+                "id", "category"
+            }
+            for k, v in context.items():
+                if k in allowed_keys:
+                    safe_context[k] = v
 
         # Use the dedicated handler
-        response_text = llm_agent.generate_response(query, context)
+        response_text = llm_agent.generate_response(query, safe_context)
         return jsonify({"response": response_text})
     except Exception as e:
         logging.error(f"Chat error: {e}")
@@ -102,15 +156,17 @@ def chat():
 
 @app.route('/verify-threat', methods=['POST'])
 @require_auth
+@limiter.limit("20 per minute")
 def verify_threat():
     try:
-        data = request.get_json()
-        payload = data.get("payload")
-        patterns = data.get("patterns")
-        score = data.get("score")
+        try:
+            req_data = VerifyThreatRequest(**request.get_json())
+        except ValidationError as e:
+             return jsonify({"error": e.errors()}), 400
 
-        if not payload:
-            return jsonify({"error": "Payload required"}), 400
+        payload = req_data.payload
+        patterns = req_data.patterns
+        score = req_data.score
 
         # Construct a specific prompt for threat verification
         prompt = (
@@ -221,7 +277,7 @@ def analyze_single_event(event_id):
                     "description": f"AI Anomaly Detected: {signature}",
                     "severity": "Critical",
                     "related_event_id": event_id
-                })
+                }, timeout=10)
                 INCIDENTS_CREATED.inc()
             except Exception as req_err:
                 logging.error(f"Failed to create incident: {req_err}")
@@ -248,13 +304,14 @@ def train():
 # 5. Scan Endpoint (Restored)
 @app.route('/scan', methods=['POST'])
 @require_auth
+@limiter.limit("5 per minute")
 def scan_host():
-    data = request.get_json()
-    target = data.get('target')
+    try:
+        req_data = ScanRequest(**request.get_json())
+    except ValidationError as e:
+        return jsonify({"error": e.errors()}), 400
 
-    # Basic validation to prevent command injection
-    if not target or ';' in target or ' ' in target:
-         return jsonify({"error": "Invalid target format"}), 400
+    target = req_data.target
 
     try:
         nm = nmap.PortScanner()
@@ -276,7 +333,7 @@ def scan_host():
                                  "description": f"Open port discovered: {port}/{service}",
                                  "severity": "High",
                                  "host": target
-                             })
+                             }, timeout=10)
                          except Exception as req_err:
                              logging.error(f"Failed to report vulnerability: {req_err}")
 

@@ -30,3 +30,5 @@ confluent-kafka
 pytest
 cachetools
 psycopg2-binary
+pydantic
+flask-limiter
