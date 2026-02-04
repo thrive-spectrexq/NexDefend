@@ -15,8 +15,8 @@ import {
 } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Add as AddIcon, Radar } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchPlaybooks, savePlaybooks } from '@/api/soar';
-import type { Playbook, PlaybookAction } from '@/api/soar';
+import { fetchPlaybooks, savePlaybooks } from '@/api/soar'; // Deprecated
+import { fetchPlaybooks as fetchPolicies, type Playbook } from '@/api/policy';
 
 const PlaybookEditorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,24 +37,24 @@ const PlaybookEditorPage: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const data = await fetchPlaybooks();
-        setAllPlaybooks(data);
+        const data = await fetchPolicies();
+        setAllPlaybooks(data as any);
 
         if (!isNew && id) {
-          const found = data.find((p) => p.id === id);
+          const found = data.find((p) => p.id.toString() === id);
           if (found) {
-            setPlaybook(found);
+            setPlaybook(found as any);
           } else {
             setError('Playbook not found');
           }
         } else {
-             // Generate a random ID for new playbooks for now
-             setPlaybook({
-                 id: `pb-${Math.floor(Math.random() * 1000)}`,
-                 name: 'New Playbook',
-                 trigger: '',
-                 actions: []
-             });
+          // Generate a random ID for new playbooks for now
+          setPlaybook({
+            id: `pb-${Math.floor(Math.random() * 1000)}`,
+            name: 'New Playbook',
+            trigger: '',
+            actions: []
+          });
         }
       } catch (err) {
         console.error("Failed to load", err);
@@ -104,9 +104,9 @@ const PlaybookEditorPage: React.FC = () => {
   };
 
   const updateActionParam = (index: number, paramKey: string, paramValue: string) => {
-      const newActions = [...playbook.actions];
-      newActions[index].params = { ...newActions[index].params, [paramKey]: paramValue };
-      setPlaybook({ ...playbook, actions: newActions });
+    const newActions = [...playbook.actions];
+    newActions[index].params = { ...newActions[index].params, [paramKey]: paramValue };
+    setPlaybook({ ...playbook, actions: newActions });
   }
 
   if (loading) return <Box p={3}>Loading...</Box>;
@@ -134,33 +134,33 @@ const PlaybookEditorPage: React.FC = () => {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Card sx={{ mb: 3, p: 2, bgcolor: '#0f172a', border: '1px dashed rgba(0, 209, 255, 0.3)' }}>
-          <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2, textAlign: 'center' }}>
-              Automation Pipeline Visualization
-          </Typography>
-          <Stepper alternativeLabel>
-              {/* Start Node */}
-              <Step active={true} completed={true}>
-                  <StepLabel icon={<Radar color="primary" />}>Trigger: {playbook.trigger || 'Manual'}</StepLabel>
-              </Step>
+        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2, textAlign: 'center' }}>
+          Automation Pipeline Visualization
+        </Typography>
+        <Stepper alternativeLabel>
+          {/* Start Node */}
+          <Step active={true} completed={true}>
+            <StepLabel icon={<Radar color="primary" />}>Trigger: {playbook.trigger || 'Manual'}</StepLabel>
+          </Step>
 
-              {/* Dynamic Actions */}
-              {playbook.actions.map((action, index) => (
-                  <Step key={index} active={true}>
-                      <StepLabel>
-                          <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 'bold' }}>
-                              {action.type.replace('_', ' ')}
-                          </Typography>
-                      </StepLabel>
-                  </Step>
-              ))}
+          {/* Dynamic Actions */}
+          {playbook.actions.map((action, index) => (
+            <Step key={index} active={true}>
+              <StepLabel>
+                <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 'bold' }}>
+                  {action.type.replace('_', ' ')}
+                </Typography>
+              </StepLabel>
+            </Step>
+          ))}
 
-              {/* End Node */}
-              <Step active={false}>
-                  <StepLabel icon={<div style={{ width: 10, height: 10, borderRadius: '50%', background: '#666' }} />}>
-                      End
-                  </StepLabel>
-              </Step>
-          </Stepper>
+          {/* End Node */}
+          <Step active={false}>
+            <StepLabel icon={<div style={{ width: 10, height: 10, borderRadius: '50%', background: '#666' }} />}>
+              End
+            </StepLabel>
+          </Step>
+        </Stepper>
       </Card>
 
       <Grid container spacing={3}>
@@ -208,10 +208,10 @@ const PlaybookEditorPage: React.FC = () => {
               {playbook.actions.map((action, index) => (
                 <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                     <Typography variant="subtitle2" color="text.secondary">Step {index + 1}</Typography>
-                     <IconButton size="small" color="error" onClick={() => removeAction(index)}>
-                       <DeleteIcon fontSize="small" />
-                     </IconButton>
+                    <Typography variant="subtitle2" color="text.secondary">Step {index + 1}</Typography>
+                    <IconButton size="small" color="error" onClick={() => removeAction(index)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
                   </Box>
 
                   <Grid container spacing={2}>
@@ -233,30 +233,30 @@ const PlaybookEditorPage: React.FC = () => {
                       </TextField>
                     </Grid>
                     <Grid size={{ xs: 12, sm: 8 }}>
-                        {/* Dynamic Params Editing - Simplified for now */}
-                        {Object.entries(action.params).map(([key, value]) => (
-                             <TextField
-                                key={key}
-                                label={`Param: ${key}`}
-                                fullWidth
-                                size="small"
-                                value={value}
-                                onChange={(e) => updateActionParam(index, key, e.target.value)}
-                                sx={{ mb: 1 }}
-                              />
-                        ))}
-                         {Object.keys(action.params).length === 0 && (
-                             <Typography variant="caption" color="text.secondary">No parameters needed for this action.</Typography>
-                         )}
+                      {/* Dynamic Params Editing - Simplified for now */}
+                      {Object.entries(action.params).map(([key, value]) => (
+                        <TextField
+                          key={key}
+                          label={`Param: ${key}`}
+                          fullWidth
+                          size="small"
+                          value={value}
+                          onChange={(e) => updateActionParam(index, key, e.target.value)}
+                          sx={{ mb: 1 }}
+                        />
+                      ))}
+                      {Object.keys(action.params).length === 0 && (
+                        <Typography variant="caption" color="text.secondary">No parameters needed for this action.</Typography>
+                      )}
                     </Grid>
                   </Grid>
                 </Box>
               ))}
 
               {playbook.actions.length === 0 && (
-                  <Typography color="text.secondary" align="center" py={4}>
-                      No actions defined. Click "Add Action" to start.
-                  </Typography>
+                <Typography color="text.secondary" align="center" py={4}>
+                  No actions defined. Click "Add Action" to start.
+                </Typography>
               )}
 
             </CardContent>

@@ -26,7 +26,7 @@ COPY --from=builder /nexdefend-soar /nexdefend-soar
 
 USER appuser
 
-# Matches the port defined in main.go (8080)
-EXPOSE 8080 
+# Matches the port defined in main.go (8081)
+EXPOSE 8081 
 
 CMD ["/nexdefend-soar"]

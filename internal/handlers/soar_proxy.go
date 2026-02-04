@@ -14,7 +14,7 @@ type SoarProxyHandler struct {
 func NewSoarProxyHandler(targetURL string) *SoarProxyHandler {
 	// Default to local docker service name if not provided
 	if targetURL == "" {
-		targetURL = "http://nexdefend-soar:8080"
+		targetURL = "http://nexdefend-soar:8081"
 	}
 	return &SoarProxyHandler{TargetURL: targetURL}
 }

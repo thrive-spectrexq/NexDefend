@@ -24,6 +24,10 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       host: true, // Needed for Docker to expose port
       proxy: {
+        '/api/v1/policies': {
+          target: env.POLICY_ENGINE_TARGET || 'http://localhost:8082',
+          changeOrigin: true,
+        },
         '/api': {
           target: env.API_PROXY_TARGET || 'http://localhost:8080',
           changeOrigin: true,

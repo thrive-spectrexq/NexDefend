@@ -28,7 +28,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081" // Default SOAR port
+		port = "8081" // Standard SOAR port
 	}
 
 	log.Printf("🔥 NexDefend SOAR Engine starting on port %s...", port)

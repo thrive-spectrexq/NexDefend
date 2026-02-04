@@ -35,6 +35,8 @@ import SystemHealthPage from './pages/SystemHealthPage';
 import ServiceHealthPage from './pages/ServiceHealthPage';
 import ForensicsPage from './pages/ForensicsPage';
 import SecureChatPage from './pages/SecureChatPage';
+import PlaybookEditorPage from './pages/PlaybookEditorPage';
+import HostDetailsPage from './pages/HostDetailsPage';
 
 export const router = createBrowserRouter([
   // 1. Landing & Authentication (Public)
@@ -76,6 +78,7 @@ export const router = createBrowserRouter([
       { path: 'system-health', element: <SystemHealthPage /> },
       { path: 'service-health', element: <ServiceHealthPage /> },
       { path: 'agents', element: <AgentsPage /> },
+      { path: 'agents/:id', element: <HostDetailsPage /> },
       { path: 'topology', element: <TopologyPage /> },
 
       // Analytics & Tools
@@ -83,6 +86,8 @@ export const router = createBrowserRouter([
       { path: 'grafana', element: <GrafanaPage /> },
       { path: 'prometheus', element: <PrometheusPage /> },
       { path: 'playbooks', element: <PlaybooksPage /> },
+      { path: 'playbooks/new', element: <PlaybookEditorPage /> },
+      { path: 'playbooks/edit/:id', element: <PlaybookEditorPage /> },
 
       // Advanced Capabilities
       { path: 'forensics', element: <ForensicsPage /> },
