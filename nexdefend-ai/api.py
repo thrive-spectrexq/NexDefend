@@ -127,6 +127,9 @@ def health():
 def chat():
     try:
         # Validate input
+        if not request.is_json:
+             return jsonify({"error": "Request body must be JSON"}), 400
+
         try:
             req_data = ChatRequest(**request.get_json())
         except ValidationError as e:
@@ -159,6 +162,9 @@ def chat():
 @limiter.limit("20 per minute")
 def verify_threat():
     try:
+        if not request.is_json:
+             return jsonify({"error": "Request body must be JSON"}), 400
+
         try:
             req_data = VerifyThreatRequest(**request.get_json())
         except ValidationError as e:
@@ -307,35 +313,39 @@ def train():
 @limiter.limit("5 per minute")
 def scan_host():
     try:
-        req_data = ScanRequest(**request.get_json())
-    except ValidationError as e:
-        return jsonify({"error": e.errors()}), 400
+        if not request.is_json:
+             return jsonify({"error": "Request body must be JSON"}), 400
 
-    target = req_data.target
+        try:
+            req_data = ScanRequest(**request.get_json())
+        except ValidationError as e:
+            return jsonify({"error": e.errors()}), 400
 
-    try:
-        nm = nmap.PortScanner()
-        nm.scan(target, arguments='-sV')
+        target = req_data.target
 
-        open_ports = []
-        for host in nm.all_hosts():
-            for proto in nm[host].all_protocols():
-                lport = nm[host][proto].keys()
-                for port in lport:
-                    state = nm[host][proto][port]['state']
-                    if state == 'open':
-                         service = nm[host][proto][port]['name']
-                         open_ports.append(f"{port}/{service}")
+        try:
+            nm = nmap.PortScanner()
+            nm.scan(target, arguments='-sV')
 
-                         # Report Vulnerability to Core API
-                         try:
-                             requests.post(f'{CORE_API_URL}/vulnerabilities', json={
-                                 "description": f"Open port discovered: {port}/{service}",
-                                 "severity": "High",
-                                 "host": target
-                             }, timeout=10)
-                         except Exception as req_err:
-                             logging.error(f"Failed to report vulnerability: {req_err}")
+            open_ports = []
+            for host in nm.all_hosts():
+                for proto in nm[host].all_protocols():
+                    lport = nm[host][proto].keys()
+                    for port in lport:
+                        state = nm[host][proto][port]['state']
+                        if state == 'open':
+                             service = nm[host][proto][port]['name']
+                             open_ports.append(f"{port}/{service}")
+
+                             # Report Vulnerability to Core API
+                             try:
+                                 requests.post(f'{CORE_API_URL}/vulnerabilities', json={
+                                     "description": f"Open port discovered: {port}/{service}",
+                                     "severity": "High",
+                                     "host": target
+                                 }, timeout=10)
+                             except Exception as req_err:
+                                 logging.error(f"Failed to report vulnerability: {req_err}")
 
         return jsonify({"status": "Scan complete", "open_ports": open_ports})
     except Exception as e:
