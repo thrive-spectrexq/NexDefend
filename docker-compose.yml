@@ -21,6 +21,12 @@ services:
       AI_SERVICE_TOKEN: "${AI_SERVICE_TOKEN:-default_token}"
       FIM_PATH: /etc
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      # SOAR Integration
+      THEHIVE_URL: "http://thehive:9000"
+      # Matrix Integration
+      MATRIX_URL: "http://synapse:8008"
+      MATRIX_USER: "@bot:nexdefend.local"
+      MATRIX_PASSWORD: "botpassword"
     volumes:
       - ./sample_eve.json:/var/log/suricata/eve.json
       - suricata_logs:/var/log/suricata
@@ -290,12 +296,62 @@ services:
     networks:
       - nexdefend-net
 
+  # --- New Services ---
+
+  forensics-worker:
+    build:
+      context: nexdefend-forensics
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - nexdefend-net
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    restart: unless-stopped
+    ports:
+      - "8008:8008"
+    environment:
+      - SYNAPSE_SERVER_NAME=nexdefend.local
+      - SYNAPSE_REPORT_STATS=no
+    volumes:
+      - synapse_data:/data
+    networks:
+      - nexdefend-net
+
+  # TheHive & Dependencies
+  thehive:
+    image: thehiveproject/thehive:4
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    depends_on:
+      - cassandra
+      - opensearch
+    environment:
+      - TH_APPLICATION_BASEURL=http://localhost:9000
+    networks:
+      - nexdefend-net
+
+  cassandra:
+    image: cassandra:3.11
+    restart: unless-stopped
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TheHive
+    networks:
+      - nexdefend-net
+
 volumes:
   db_data:
   prometheus_data:
   grafana_data:
   suricata_logs:
   opensearch_data:
+  synapse_data:
 
 networks:
   nexdefend-net:

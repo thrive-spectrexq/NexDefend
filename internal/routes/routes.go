@@ -8,7 +8,9 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/config"
 	"github.com/thrive-spectrexq/NexDefend/internal/db"
 	"github.com/thrive-spectrexq/NexDefend/internal/enrichment"
+	"github.com/thrive-spectrexq/NexDefend/internal/forensics"
 	"github.com/thrive-spectrexq/NexDefend/internal/handlers"
+	"github.com/thrive-spectrexq/NexDefend/internal/integrations/matrix"
 	"github.com/thrive-spectrexq/NexDefend/internal/middleware"
 	"github.com/thrive-spectrexq/NexDefend/internal/search"
 	"github.com/thrive-spectrexq/NexDefend/internal/tip"
@@ -52,6 +54,11 @@ func NewRouter(
 	networkHandler := handlers.NewNetworkStatsHandler(osClient)
 	soarHandler := handlers.NewSoarProxyHandler(cfg.SoarURL)
 	tipHandler := handlers.NewTIPHandler(tip) // This requires tip_handler.go to be correct
+
+	// Forensics & Matrix
+	forensicsHandler, _ := forensics.NewForensicsHandler("kafka:9092")
+	matrixBot := matrix.NewBot()
+	matrixBot.Start()
 
 	// Health Check
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +155,12 @@ func NewRouter(
 	// User Profile
 	protected.HandleFunc("/auth/profile", authHandler.GetProfile).Methods("GET")
 	protected.HandleFunc("/auth/profile", authHandler.UpdateProfile).Methods("PUT")
+
+	// Forensics
+	if forensicsHandler != nil {
+		protected.HandleFunc("/forensics/upload", forensicsHandler.UploadEvidence).Methods("POST")
+		protected.HandleFunc("/forensics/tasks", forensicsHandler.ListTasks).Methods("GET")
+	}
 
 	return r
 }
