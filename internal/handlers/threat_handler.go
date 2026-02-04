@@ -97,6 +97,18 @@ func (h *ThreatHandler) ScanPayload(w http.ResponseWriter, r *http.Request) {
 func (h *ThreatHandler) HandleProcessScan(w http.ResponseWriter, r *http.Request) {
 	count, log := h.service.AnalyzeAndBlockProcesses()
 
+	// If threats were blocked, trigger AI playbook generation via Java Policy Engine
+	if count > 0 {
+		playbookReq := map[string]interface{}{
+			"process_id": "MULTIPLE",
+			"score":      100, // Critical block
+			"context":    log,
+		}
+		jsonData, _ := json.Marshal(playbookReq)
+		// Internal call to Java Policy Engine
+		http.Post("http://localhost:8082/api/v1/policies/generate-playbook", "application/json", bytes.NewBuffer(jsonData))
+	}
+
 	resp := map[string]interface{}{
 		"blocked_count": count,
 		"log":           log,

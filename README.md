@@ -35,6 +35,7 @@ NexDefend follows a modular microservices architecture designed for scalability 
 * **NexDefend Agent**: A lightweight Go binary running on endpoints (Linux/Windows/macOS), collecting telemetry via eBPF/Netlink/WMI and shipping to Kafka.
 * **NexDefend API (Go)**: The core backend handling ingestion, correlation, and REST API requests.
 * **NexDefend AI (Python)**: A specialized service for Machine Learning (Isolation Forest) and GenAI (Ollama) processing.
+* **NexDefend Policy Engine (Java)**: A Spring Boot service for complex security policy evaluation and advanced analytics.
 * **NexDefend SOAR**: Orchestrates automated responses and playbook execution.
 * **Data Layer**:
     * **Kafka**: High-throughput message bus for raw telemetry.
@@ -55,6 +56,7 @@ graph TD
     subgraph "Core Services"
         API["NexDefend API (Go)"]
         AI["NexDefend AI (Python)"]
+        Policy["Policy Engine (Java)"]
         SOAR["NexDefend SOAR"]
     end
 
@@ -74,8 +76,10 @@ graph TD
 
     API --> DB
     API --> Search
+    API -->|Policies| Policy
     AI -->|Anomalies| API
     SOAR -->|Actions| API
+    Policy --> DB
 
     Web --> API
 ```

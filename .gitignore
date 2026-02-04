@@ -23,3 +23,22 @@ go.work
 nexdefend-ai/.env
 nexdefend-cloud-connector/.env
 nexdefend-desktop/frontend/node_modules/
+
+# Local databases and test files
+*.db
+cmd/test-threat/
+verify_*.py
+verification_*.png
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

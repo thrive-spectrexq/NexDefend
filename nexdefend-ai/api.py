@@ -141,6 +141,33 @@ def get_forecast():
         logging.error(f"Forecast error: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/generate-playbook', methods=['POST'])
+@require_auth
+def generate_playbook():
+    try:
+        data = request.get_json()
+        threat_context = data.get("context", "Suspicious activity detected")
+        score = data.get("score", 0)
+
+        # In a real scenario, this would use the LLM to generate a complex plan
+        # For now, we'll provide a structured AI-driven remediation template
+        playbook = [
+            {"step": 1, "action": "BLOCK_PROCESS", "description": "Terminate the identified malicious process"},
+            {"step": 2, "action": "ISOLATE_NETWORK", "description": "Restrict network access for the affected host"},
+            {"step": 3, "action": "NOTIFY_SEC_OPS", "description": "Alert the security operations team via Matrix/Email"}
+        ]
+
+        if score > 80:
+            playbook.append({"step": 4, "action": "FULL_SNAPSHOT", "description": "Trigger a full forensic memory snapshot"})
+
+        return jsonify({
+            "playbook": playbook,
+            "threat_analysis": f"Confidence high for automated remediation based on score {score}"
+        })
+    except Exception as e:
+        logging.error(f"Playbook generation error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 # 3. Anomaly Detection (Existing)
 @app.route("/analyze-event/<int:event_id>", methods=["POST"])
 @require_auth

@@ -297,6 +297,23 @@ services:
       - nexdefend-net
 
   # --- New Services ---
+  policy-engine:
+    build:
+      context: nexdefend-policy-engine
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-nexdefend_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-nexdefend}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - nexdefend-net
 
   forensics-worker:
     build:
