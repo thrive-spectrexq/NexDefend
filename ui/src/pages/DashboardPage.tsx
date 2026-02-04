@@ -23,7 +23,7 @@ const SystemPulseBar = ({ stats }: { stats: DashboardStats | null }) => (
                         <div className="w-full bg-cyan-500" style={{ height: '40%' }} />
                     </div>
                     <span className="text-3xl font-mono font-black text-white leading-none">
-                        {stats ? stats.global_latency : '-'}
+                        -
                     </span>
                     <span className="text-[10px] text-gray-600 mb-1 font-bold">ms</span>
                 </div>
@@ -35,7 +35,7 @@ const SystemPulseBar = ({ stats }: { stats: DashboardStats | null }) => (
                         <div className="w-full bg-blue-500" style={{ height: '65%' }} />
                     </div>
                     <span className="text-3xl font-mono font-black text-white leading-none">
-                        {stats ? stats.throughput : '-'}
+                        -
                     </span>
                     <span className="text-[10px] text-gray-600 mb-1 font-bold">MB/s</span>
                 </div>
@@ -47,7 +47,7 @@ const SystemPulseBar = ({ stats }: { stats: DashboardStats | null }) => (
                         <div className="w-full bg-green-500" style={{ height: '5%' }} />
                     </div>
                     <span className="text-3xl font-mono font-black text-white leading-none">
-                        {stats ? stats.error_rate : '-'}
+                        -
                     </span>
                     <span className="text-[10px] text-gray-600 mb-1 font-bold">%</span>
                 </div>
@@ -59,9 +59,9 @@ const SystemPulseBar = ({ stats }: { stats: DashboardStats | null }) => (
                         <div className="w-full bg-purple-500" style={{ height: '20%' }} />
                     </div>
                     <span className="text-3xl font-mono font-black text-white leading-none">
-                        {stats ? stats.threat_velocity : '-'}
+                        {stats ? stats.total_events_24h : '-'}
                     </span>
-                    <span className="text-[10px] text-gray-600 mb-1 font-bold">events/s</span>
+                    <span className="text-[10px] text-gray-600 mb-1 font-bold">events/24h</span>
                 </div>
             </div>
         </div>
@@ -88,9 +88,15 @@ const DashboardPage = () => {
                 const dashboardStats = await getDashboardStats();
                 setStats(dashboardStats);
                 if (dashboardStats) {
+                    // Calculate scores from compliance
+                    const score = dashboardStats.compliance?.length
+                        ? Math.round(dashboardStats.compliance.reduce((acc, curr) => acc + curr.score, 0) / dashboardStats.compliance.length)
+                        : 0;
+                    const risk = 100 - score;
+
                     setPostureData([
-                        { name: 'Score', value: dashboardStats.security_score || 85, color: '#10b981' },
-                        { name: 'Risk', value: dashboardStats.risk_score || 15, color: '#333' }
+                        { name: 'Score', value: score, color: '#10b981' },
+                        { name: 'Risk', value: risk, color: '#333' }
                     ]);
                 }
 
