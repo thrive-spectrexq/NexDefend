@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { incidentsApi, Incident } from '../api/incidents';
+import { incidentsApi, type Incident } from '../api/incidents';
 import { GlassCard } from '../components/ui/GlassCard';
 import { RightDrawer } from '../components/ui/RightDrawer';
 import {
     AlertTriangle, Clock,
     ChevronRight, Zap, Activity, Server, User, Sparkles
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown'; // Assuming react-markdown might be available, or just render text
 
 const IncidentsPage = () => {
     const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -98,8 +97,8 @@ const IncidentsPage = () => {
                                         <td className="py-4 px-4 pl-6 font-mono text-cyan-400">INC-{incident.ID}</td>
                                         <td className="py-4 px-4">
                                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${(incident.Severity || '').toLowerCase() === 'critical' ? 'bg-red-500/20 text-red-400' :
-                                                    (incident.Severity || '').toLowerCase() === 'high' ? 'bg-orange-500/20 text-orange-400' :
-                                                        'bg-blue-500/20 text-blue-400'
+                                                (incident.Severity || '').toLowerCase() === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                                                    'bg-blue-500/20 text-blue-400'
                                                 }`}>
                                                 {incident.Severity}
                                             </span>

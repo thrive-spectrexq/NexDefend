@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { getDashboardStats, getSystemMetrics, DashboardStats, SystemMetrics } from '../api/dashboard';
+import { getDashboardStats, getSystemMetrics, type DashboardStats, type SystemMetrics } from '../api/dashboard';
 
 // --- ANIMATION VARIANTS ---
 const containerVariants = {
