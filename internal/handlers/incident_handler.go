@@ -13,6 +13,7 @@ import (
 	"github.com/thrive-spectrexq/NexDefend/internal/models"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"github.com/go-playground/validator/v10"
 )
 
 type IncidentHandler struct {
@@ -20,6 +21,7 @@ type IncidentHandler struct {
 	TheHive        *thehive.Client
 	PythonAPI      string
 	AIServiceToken string
+	Validator      *validator.Validate
 }
 
 func NewIncidentHandler(db *gorm.DB, pythonAPI, aiToken string) *IncidentHandler {
@@ -28,6 +30,7 @@ func NewIncidentHandler(db *gorm.DB, pythonAPI, aiToken string) *IncidentHandler
 		TheHive:        thehive.NewClient(),
 		PythonAPI:      pythonAPI,
 		AIServiceToken: aiToken,
+		Validator:      validator.New(),
 	}
 }
 
@@ -36,6 +39,12 @@ func (h *IncidentHandler) CreateIncident(w http.ResponseWriter, r *http.Request)
 	var incident models.Incident
 	if err := json.NewDecoder(r.Body).Decode(&incident); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	// Validate input
+	if err := h.Validator.Struct(incident); err != nil {
+		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -132,13 +141,19 @@ func (h *IncidentHandler) UpdateIncident(w http.ResponseWriter, r *http.Request)
 	id := vars["id"]
 
 	var updateData struct {
-		Status   string `json:"status"`
-		Assignee string `json:"assignee"`
-		Note     string `json:"note"` // Optional note to append
+		Status   string `json:"status" validate:"omitempty,oneof=Open InProgress Resolved Closed"`
+		Assignee string `json:"assignee" validate:"omitempty,max=100"`
+		Note     string `json:"note" validate:"omitempty,max=1000"` // Optional note to append
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	// Validate update data
+	if err := h.Validator.Struct(updateData); err != nil {
+		http.Error(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 

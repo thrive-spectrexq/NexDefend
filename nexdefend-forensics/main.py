@@ -2,10 +2,42 @@ import time
 import json
 import os
 import sys
+import subprocess
+import logging
 from kafka import KafkaConsumer
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Config
+ALLOWED_UPLOAD_DIR = os.getenv("ALLOWED_UPLOAD_DIR", "/data/uploads")
+
+def validate_path(filepath):
+    """
+    Ensures the filepath is within the allowed directory and has no traversal attempts.
+    """
+    if not filepath:
+        return False
+
+    # Resolve absolute path
+    # Note: In a real container, we'd ensure /data/uploads exists.
+    # Here we mock it or expect the environment to be correct.
+    abs_path = os.path.abspath(filepath)
+    abs_allowed = os.path.abspath(ALLOWED_UPLOAD_DIR)
+
+    # Check prefix
+    if not abs_path.startswith(abs_allowed):
+        logging.warning(f"Path traversal attempt or restricted dir: {filepath} (Allowed: {ALLOWED_UPLOAD_DIR})")
+        return False
+
+    # Check existence
+    if not os.path.exists(abs_path):
+        logging.warning(f"File not found: {filepath}")
+        return False
+
+    return True
+
 def main():
-    print("Forensics Worker Starting...")
+    logging.info("Forensics Worker Starting...")
 
     broker = os.environ.get("KAFKA_BROKER", "kafka:9092")
     topic = "forensics.tasks"
@@ -20,39 +52,55 @@ def main():
                 group_id="forensics-group",
                 value_deserializer=lambda m: json.loads(m.decode('utf-8'))
             )
-            print(f"Connected to Kafka at {broker}")
+            logging.info(f"Connected to Kafka at {broker}")
             break
         except Exception as e:
-            print(f"Waiting for Kafka ({e})...")
+            logging.warning(f"Waiting for Kafka ({e})...")
             time.sleep(5)
 
     if not consumer:
-        print("Could not connect to Kafka. Exiting.")
+        logging.error("Could not connect to Kafka. Exiting.")
         return
 
-    print("Listening for tasks...")
+    logging.info("Listening for tasks...")
     for message in consumer:
         task = message.value
-        print(f"Received task: {task}")
+        logging.info(f"Received task: {task}")
         process_task(task)
 
 def process_task(task):
     task_type = task.get("type", "unknown")
     filepath = task.get("filepath")
 
-    print(f"Processing {task_type} for {filepath}")
+    logging.info(f"Processing {task_type} for {filepath}")
+
+    # Validate Filepath
+    # We skip validation if filepath is None or if it's a test/mock without real file
+    if filepath and not validate_path(filepath):
+         logging.error(f"Security Alert: Unsafe filepath detected {filepath}. Aborting task.")
+         return
 
     # Mock Analysis
     time.sleep(2)
 
-    if task_type == "memory":
-        print("Running Volatility3...")
-        # os.system(f"vol -f {filepath} windows.pslist")
-    elif task_type == "binary":
-        print("Running Ghidra Headless...")
-        # os.system("analyzeHeadless ...")
+    try:
+        if task_type == "memory":
+            logging.info("Running Volatility3...")
+            # Secure subprocess execution
+            # cmd = ["vol", "-f", filepath, "windows.pslist"]
+            # result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            logging.info(f"Volatility analysis simulated for {filepath}")
 
-    print(f"Task {task.get('id')} complete.")
+        elif task_type == "binary":
+            logging.info("Running Ghidra Headless...")
+            # cmd = ["analyzeHeadless", ..., "-import", filepath]
+            # subprocess.run(cmd, check=True, timeout=600)
+            logging.info(f"Ghidra analysis simulated for {filepath}")
+
+    except Exception as e:
+        logging.error(f"Task processing error: {e}")
+
+    logging.info(f"Task {task.get('id')} complete.")
 
 if __name__ == "__main__":
     main()
