@@ -27,9 +27,12 @@ client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear token and redirect to login if unauthorized
+      // Clear token
       localStorage.removeItem('token');
-      if (!window.location.pathname.includes('/login')) {
+
+      // Only redirect to login if NOT on public pages (Home, Login, Register)
+      const publicPaths = ['/', '/login', '/register'];
+      if (!publicPaths.includes(window.location.pathname)) {
         window.location.href = '/login';
       }
     }
