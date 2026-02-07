@@ -34,7 +34,6 @@ import ActivityMonitoringPage from './pages/ActivityMonitoringPage';
 import SystemHealthPage from './pages/SystemHealthPage';
 import ServiceHealthPage from './pages/ServiceHealthPage';
 import ForensicsPage from './pages/ForensicsPage';
-import SecureChatPage from './pages/SecureChatPage';
 import PlaybookEditorPage from './pages/PlaybookEditorPage';
 import HostDetailsPage from './pages/HostDetailsPage';
 
@@ -91,7 +90,6 @@ export const router = createBrowserRouter([
 
       // Advanced Capabilities
       { path: 'forensics', element: <ForensicsPage /> },
-      { path: 'secure-chat', element: <SecureChatPage /> },
 
       // User Management
       { path: 'settings', element: <SettingsPage /> },
